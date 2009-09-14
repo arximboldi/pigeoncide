@@ -1,0 +1,12 @@
+2009-09-14  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
+
+	* src/core/arg_parser.py: Added command line argument parsing
+	utility.
+
+	* src/core/tree.py: Added a cool generic implementation of the
+	composite pattern.
+
+	* src/test/*.py: Unit test for the above classes.
+
+	* *: Project skeleton created.
+
