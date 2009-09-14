@@ -1,0 +1,17 @@
+-*- mode: text -*-
+
+Pidgeoncide - README
+--------------------
+
+Pidgeoncide is a funny game where you control an ill-minded child
+whose imaginary friend tells him to kill all the pidgeons in the
+world.
+
+To be able to Pidgeoncide you should have the Panda3D engine properly
+installed. Once you meet all the requirements you can just execute:
+
+    ./pidgeoncide
+
+For more information, visit our webpage at:
+http://www.nongnu.org/pidgeoncide
+

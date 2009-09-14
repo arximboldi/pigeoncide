@@ -1,0 +1,17 @@
+-*- mode: text -*-
+
+Pidgeoncide - Authors
+---------------------
+
+Project Team:
+  - Juan Pedro Bolívar Puente <raskolnikov@es.gnu.org>
+  - Alberto Villegas Erce <albertovillegaserce@gmail.com>
+  - Marc André Modrow <mmodrow@informatik.uni-bremen.de>
+  - Tapio Noranta <tapio.noranta@kolumbus.fi>
+  - Sari Sariola <sari.Sariola@students.turkuamk.fi>
+
+People who contributed with code or documentation:
+
+Juan Pedro Bolívar Puente: wrote AUTHORS README pidgeoncide
+  src/main.py src/core/__init__.py src/core/arg_parser.py
+  unittests test/run.py test/test_core.py
