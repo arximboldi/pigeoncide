@@ -32,9 +32,9 @@ class TestAutoTree (unittest.TestCase):
         def __init__ (self):
             AutoTree.__init__ (self)
             self.childs = 0
-        def _on_new_child (self, child):
+        def _handle_tree_new_child (self, child):
             self.childs += 1
-        def _on_remove_child (self, child):
+        def _handle_tree_del_child (self, child):
             self.childs -= 1
 
     def setUp (self):

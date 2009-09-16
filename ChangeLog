@@ -1,10 +1,23 @@
+2009-09-17  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
+
+	* src/core/signal.py, test/test_core_signal.py: Slot-Signal
+	implementation of the Observer design pattern.
+
+	* src/core/singleton.py: Generic, meta-class based implementation
+	of the Singleton design pattern.
+
+	* src/core/util.py: Utility functions.
+
+	* src/core/observer.py: A more Javaish but enhanced with pythonic
+	features implementation of the Observer pattern. To-do: Tests.
+
 2009-09-14  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
 
 	* src/core/arg_parser.py: Added command line argument parsing
 	utility.
 
 	* src/core/tree.py: Added a cool generic implementation of the
-	composite pattern.
+	Composite pattern.
 
 	* src/test/*.py: Unit test for the above classes.
 

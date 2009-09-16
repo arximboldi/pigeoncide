@@ -17,13 +17,5 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import unittest
-import sys
-sys.path.append ('src')
-
-from test_core_arg_parser import *
-from test_core_tree import *
-from test_core_signal import *
-
-if __name__ == '__main__':
-    unittest.main ()
+def remove_if (predicate, lst):
+    return [elem for elem in lst if not predicate (elem)]

@@ -17,13 +17,13 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import unittest
-import sys
-sys.path.append ('src')
+class Singleton (type): 
 
-from test_core_arg_parser import *
-from test_core_tree import *
-from test_core_signal import *
-
-if __name__ == '__main__':
-    unittest.main ()
+    def __init__ (cls, name, bases, dct):
+        cls.__instance = None
+        type.__init__(cls, name, bases, dct)
+ 
+    def __call__ (cls, *args, **kw):
+        if cls.__instance is None:
+            cls.__instance = type.__call__(cls, *args,**kw)
+        return cls.__instance

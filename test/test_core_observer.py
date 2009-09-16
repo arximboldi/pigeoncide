@@ -18,12 +18,5 @@
 #
 
 import unittest
-import sys
-sys.path.append ('src')
+from core.observer import *
 
-from test_core_arg_parser import *
-from test_core_tree import *
-from test_core_signal import *
-
-if __name__ == '__main__':
-    unittest.main ()

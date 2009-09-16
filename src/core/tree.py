@@ -71,13 +71,13 @@ class AutoTree:
         child._parent = self
         child._name   = name
         self._childs [name] = child
-        self._on_new_child (child)
+        self._handle_tree_new_child (child)
 
         return child
     
     def remove (self, name):
         child = self._childs [name]
-        self._on_remove_child (child)
+        self._handle_tree_del_child (child)
         del self._childs [name]
         child.parent = None
         child.name = self._traits.name_type ()
@@ -90,9 +90,9 @@ class AutoTree:
             self._parent._childs [name] = self
         self._name = name
     
-    def _on_new_child (self, child):
+    def _handle_tree_new_child (self, child):
         pass
-
-    def _on_remove_child (self, child):
+    
+    def _handle_tree_del_child (self, child):
         pass
 
