@@ -47,7 +47,7 @@ class CleverSlot (Slot):
     def _handle_disconnect (self, signal):
         self._signals = remove_if (lambda x : x () == signal, self._signals)
 
-    def disconnect_all (self):
+    def disconnect (self):
         while len (self._signals) > 0:
             if self._signals [0] ():
                 self._signals [0] ().disconnect (self)
@@ -75,10 +75,13 @@ class Signal:
         return slot
 
     def disconnect (self, slot):
-        slot._handle_disconnect (self)
-        self._slots.remove (slot)
-
-    def disconnect_func (self, func):
+        if isinstance (slot, Slot):
+            slot._handle_disconnect (self)
+            self._slots.remove (slot)
+        else:
+            self._disconnect_func (slot)
+    
+    def _disconnect_func (self, func):
         def pred (slot):
             if slot.func == func:
                 slot._handle_disconnect (self)

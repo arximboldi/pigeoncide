@@ -45,7 +45,7 @@ class TestSignalSlot (unittest.TestCase):
         self.assertEquals (sig.fold (lambda x, y: x+y), 1)
         self.assertEquals (sig.fold (lambda x, y: x+y, 1), 2)
 
-        sig.disconnect_func (cnt.decrease)
+        sig.disconnect (cnt.decrease)
         self.assertEquals (sig.slots (), 1)
         
         sig.notify ()
@@ -70,7 +70,7 @@ class TestSignalSlot (unittest.TestCase):
         sig_b ()
         self.assertEquals (cnt.val, 2)
 
-        slt.disconnect_all ()
+        slt.disconnect ()
         self.assertEquals (slt.signals (), 0)
         self.assertEquals (sig_a.slots (), 0)
         self.assertEquals (sig_b.slots (), 0)

@@ -1,3 +1,16 @@
+2009-09-18  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
+
+	* src/core/observer.py: Added light and clever versions. Enabled
+	class-decorator sintax.
+
+	* src/core/meta.py: Added some meta-programming tools.
+
+	* src/test/test_core_signal.py: Added unit tests.
+
+	* src/test/test_core_observer.py: Added unit tests.
+
+	* src/test/test_core_meta.py: Added unit tests.
+
 2009-09-17  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
 
 	* src/core/signal.py, test/test_core_signal.py: Slot-Signal

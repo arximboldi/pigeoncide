@@ -17,15 +17,19 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import unittest
-import sys
-sys.path.append ('src')
-
-from test_core_arg_parser import *
-from test_core_tree import *
-from test_core_signal import *
-from test_core_meta import *
-from test_core_observer import *
-
-if __name__ == '__main__':
-    unittest.main ()
+def extend_methods (cls, **kws):
+    for name, new_method in kws.items ():
+        if hasattr (cls, name):
+            old_method = getattr (cls, name)
+            if not callable (old_method):
+                raise AttributeError ("Can not extend a non callable attribute")
+            def extended (*args, **kw):
+                new_method (*args, **kw)
+                return old_method (*args, **kw)
+            method = extended
+        else:
+            method = new_method
+            
+        setattr (cls, name, method)
+    
+    return cls 

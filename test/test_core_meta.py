@@ -18,14 +18,32 @@
 #
 
 import unittest
-import sys
-sys.path.append ('src')
+from core.meta import *
 
-from test_core_arg_parser import *
-from test_core_tree import *
-from test_core_signal import *
-from test_core_meta import *
-from test_core_observer import *
+class TestMeta (unittest.TestCase):
 
-if __name__ == '__main__':
-    unittest.main ()
+    class Tester_1:
+        def __init__ (self):
+            self.count = 0
+            
+    class Tester_2 (Tester_1):        
+        def method (self):
+            return "ok"
+
+    def extension (self):
+        self.count += 1
+    
+    extend_methods (Tester_1, extension = extension)
+    extend_methods (Tester_2, method = extension)
+
+    def test_addition (self):
+        a = TestMeta.Tester_1 ()
+        a.extension ()
+        self.assertEqual (a.count, 1)
+        
+    def test_replace (self):
+        a = TestMeta.Tester_2 ()
+        r = a.method ()
+        self.assertEqual (r, "ok")
+        self.assertEqual (a.count, 1)
+
