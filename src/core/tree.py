@@ -35,7 +35,7 @@ class AutoTree:
             child = self._childs [name]
         except KeyError:
             if self._traits.child_cls:
-                child = self._tratis._child_cls ()
+                child = self._traits.child_cls ()
             else:
                 child = self.__class__ ()
             self.adopt (child, name)
@@ -67,11 +67,17 @@ class AutoTree:
     def get_parent (self):
         return self._parent
 
-    def adopt (self, child, name):
+    def reparent (self, parent):
+        parent.adopt (self)
+
+    def adopt (self, child, name = None):
+        if name is None:
+            name = child._name
+        
         old_parent = child.get_parent ()
         if old_parent:
             old_parent.remove (child.get_name ())
-
+        
         child._parent = self
         child._name   = name
         self._childs [name] = child
@@ -112,3 +118,6 @@ class AutoTree:
     
     def _handle_tree_del_child (self, child):
         pass
+
+    name = property (get_name, rename)
+

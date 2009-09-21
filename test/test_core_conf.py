@@ -19,7 +19,6 @@
 
 import unittest
 from core.conf import *
-from core.util import read_file
 
 class TestConfBackend:
 

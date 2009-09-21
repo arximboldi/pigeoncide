@@ -20,8 +20,9 @@
 from tree import AutoTree, AutoTreeTraits
 from observer import make_observer
 from singleton import Singleton
+from error import *
 
-class ConfError (Exception):
+class ConfError (CoreError):
     pass
 
 ConfSubject, ConfListener = \

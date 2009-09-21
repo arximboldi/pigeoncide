@@ -29,6 +29,7 @@ from test_core_observer import *
 from test_core_conf import *
 from test_core_xml_conf import *
 from test_core_singleton import *
+from test_core_log import *
 
 if __name__ == '__main__':
     unittest.main ()

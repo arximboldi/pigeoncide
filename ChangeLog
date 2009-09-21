@@ -1,5 +1,17 @@
 2009-09-21  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
 
+	* src/pigeonide.py: Added main application class.
+	
+	* src/core/app.py: Added application framework.
+
+	* src/core/log.py: Added logging facilities.
+
+	* src/core/error.py: Added Base clases to be used by the whole
+	application.
+
+	* src/test/test_core_log.py: Added testing for the loggin
+	facilities.
+
 	* src/core/conf.py: Finished conf system implementation.
 
 	* src/core/xml_conf.py: Finished xml configuration backend

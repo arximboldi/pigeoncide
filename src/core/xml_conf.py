@@ -18,7 +18,7 @@
 #
 
 from util import flip_dict
-from conf import NullBackend, ConfNode
+from conf import NullBackend, ConfNode, ConfError
 
 from xml.sax import make_parser, SAXException
 from xml.sax.handler import ContentHandler
@@ -30,7 +30,7 @@ XML_CONF_TYPES = { "int"     : int,
 
 XML_CONF_TYPES_INV = flip_dict (XML_CONF_TYPES)
 
-class XmlConfError (Exception):
+class XmlConfError (ConfError):
     pass
 
 class XmlConfBackend (NullBackend):

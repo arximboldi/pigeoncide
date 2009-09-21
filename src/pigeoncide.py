@@ -1,14 +1,14 @@
 #
 #  Copyright (C) 2009 Juan Pedro Bolivar Puente, Alberto Villegas Erce
 #  
-#  This file is part of Pidgeoncide.
+#  This file is part of Pigeoncide.
 #
-#  Pidgeoncide is free software: you can redistribute it and/or
+#  Pigeoncide is free software: you can redistribute it and/or
 #  modify it under the terms of the GNU General Public License as
 #  published by the Free Software Foundation, either version 3 of the
 #  License, or (at your option) any later version.
 #  
-#  Pidgeoncide is distributed in the hope that it will be useful,
+#  Pigeoncide is distributed in the hope that it will be useful,
 #  but WITHOUT ANY WARRANTY; without even the implied warranty of
 #  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #  GNU General Public License for more details.
@@ -17,9 +17,16 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import pigeoncide
+from core.app import AppBase
 
-if __name__ == '__main__':
-    app = pigeoncide.PigeoncideApp ()
-    app.run_and_exit ()
+class PigeoncideApp (AppBase):
+
+    NAME        = "pigeoncide"
+    VERSION     = "0.0.0"
+    AUTHOR      = "Pigeoncide development team"
+    COPYRIGHT   = "(c) 2009 Pigeoncide development team"
+    DESCRIPTION = \
+"""\
+Pigeoncide is a game that leads you to the dreams of an ill-minded child.
+"""
 

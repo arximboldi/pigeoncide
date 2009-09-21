@@ -17,12 +17,14 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-class ArgParserError(Exception):
+from error import *
+
+class ArgParserError (CoreError):
 
     def __init__(self):
         Exception.__init__(self, "Unknown argument parsing error")
 
-class UnknownArgError(ArgParserError):
+class UnknownArgError (ArgParserError):
 
     def __init__(self, arg):
         Exception.__init__(self, "Unknown arg: " + arg)
@@ -70,6 +72,9 @@ class ArgParser:
         self._long_ops = {}
         self._short_ops = {}
 
+    def get_free_args (self):
+        return self._free_args
+    
     def add (self, shortarg, longarg, option):
         if shortarg in self._short_ops:
             self._short_ops[shortarg].append(option)
