@@ -38,7 +38,7 @@ class Naming:
 def make_observer (signals, cls_lexeme = '_Some', 
                    sub_doc = '', lst_doc = '',
                    defret = None, names = Naming):
-    return make_observer_with (make_observer_methods,
+    return make_observer_with (make_subject_methods,
                                make_listener_methods,
                                signals, cls_lexeme,
                                lst_doc, sub_doc, defret, names)

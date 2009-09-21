@@ -17,17 +17,18 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-def remove_if (predicate, lst):
-    return [elem for elem in lst if not predicate (elem)]
+import unittest
+from core.singleton import *
 
-def flip_dict (dct):
-    new_dct = {}
-    for k, v in dct.items ():
-        new_dct [v] = k
-    return new_dct
+class TestSingleton (unittest.TestCase):
 
-def read_file (fname):
-    fh = open (fname, 'r')
-    content = fh.read ()
-    fh.close ()
-    return content
+    class SingletonMock:
+
+        __metaclass__ = Singleton
+
+    def test_singleton (self):
+        a = TestSingleton.SingletonMock ()
+        b = TestSingleton.SingletonMock ()
+
+        self.assertTrue (a is b)
+

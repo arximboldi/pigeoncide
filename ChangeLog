@@ -1,3 +1,14 @@
+2009-09-21  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
+
+	* src/core/conf.py: Finished conf system implementation.
+
+	* src/core/xml_conf.py: Finished xml configuration backend
+	implementation.
+
+	* test/test_core_conf.py: Added conf unit test.
+
+	* test/test_core_xml_conf.py: Added xml backend unit test.
+
 2009-09-18  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
 
 	* src/core/observer.py: Added light and clever versions. Enabled

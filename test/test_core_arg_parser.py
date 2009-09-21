@@ -44,21 +44,21 @@ class TestArgParser (unittest.TestCase):
     def tearDown (self):
         self._args = None
 
-    def test_01 (self):
+    def test_unkown_args (self):
         self.assertRaises (TestArgParser.TestError, self._args.parse, ['test', '-c'])
         self.assertRaises (UnknownArgError, self._args.parse, ['test', '-x'])
         
-    def test_02 (self):
+    def test_int_option_and_multi_flag_argument (self):
         self._args.parse (['test', '-ab', '10'])
         self.assertEqual (self._op_a.value, 10)
         self.assertEqual (self._op_b.value, True)
 
-    def test_03 (self):
+    def test_corner_option (self):
         self._args.parse (['test', '--alpha'])
         self.assertEqual (self._op_a.value, -1)
         self.assertEqual (self._op_b.value, False)
 
-    def test_04 (self):
+    def test_float_option (self):
         self._args.parse (['test', '-ad', '2', '2.5'])
         self.assertEqual (self._op_a.value, 2)
         self.assertEqual (self._op_d.value, 2.5)

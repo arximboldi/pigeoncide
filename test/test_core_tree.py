@@ -45,7 +45,7 @@ class TestAutoTree (unittest.TestCase):
     def tearDown (self):
         self._tree_1 = None
 
-    def test_01 (self):
+    def test_paths_rename (self):
         child_1 = self._tree_1.get_child ('a')
         child_2 = self._tree_1.get_path ('a.b.c')
 
@@ -56,14 +56,14 @@ class TestAutoTree (unittest.TestCase):
         child_1.rename ('d')
         self.assertEqual (child_2.get_path_name (), '.d.b.c')
     
-    def test_02 (self):
+    def test_adopt (self):
         child = self._tree_1.get_path ('a.b')
         self._tree_1.get_child ('d').adopt (child, 'b')
 
         self.assertEqual (self._tree_1.get_path ('a.b.c').value, None)
         self.assertEqual (self._tree_1.get_path ('d.b.c').value, 2)
 
-    def test_03 (self):
+    def test_events (self):
         tree = TestAutoTree.CountingTree ();
 
         tree.get_child ('a')
@@ -77,3 +77,19 @@ class TestAutoTree (unittest.TestCase):
         tree.remove ('b')
         self.assertEqual (tree.childs, 0)
 
+    def test_crawling (self):
+        list_pre  = []
+        list_post = []
+        
+        def mk_appender (list):
+            def appender (x):
+                return list.append (x.get_name ())
+            return appender
+        
+        self._tree_1.dfs_preorder (mk_appender (list_pre))
+        self._tree_1.dfs_postorder (mk_appender (list_post))
+
+        self.assertEqual (list_pre, ["", "a", "b", "c"])
+        self.assertEqual (list_post, ["c", "b", "a", ""])
+    
+        

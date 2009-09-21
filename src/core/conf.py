@@ -17,14 +17,21 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from tree import AutoTree
+from tree import AutoTree, AutoTreeTraits
 from observer import make_observer
+from singleton import Singleton
+
+class ConfError (Exception):
+    pass
 
 ConfSubject, ConfListener = \
-    make_observer ('Conf', ['conf_change',
-                            'conf_nudge'])
+    make_observer (['conf_change',
+                    'conf_nudge',
+                    'conf_new_child',
+                    'conf_del_child'],
+                   'Conf')
 
-class ConfBackend:
+class NullBackend:
 
     def _handle_conf_new_node (self, node):
         pass
@@ -44,38 +51,50 @@ class ConfBackend:
     def _do_save (self, node):
         pass
 
-class ConfNode (ConfSubject, AutoTree):
+    def _attach_on (self, node):
+        pass
 
-    backend = property (get_backend, set_backend)
-    val = property (get_val, set_val)
+    def _detach_from (self, node):
+        pass
+
+class ConfNode (ConfSubject, AutoTree):
     
-    def __init__ (self):
-        AutoTree.__init__ (self)
+    def __init__ (self, name='', auto_tree_traits = AutoTreeTraits):
+        AutoTree.__init__ (self, auto_tree_traits)
         ConfSubject.__init__ (self)
+        self.rename (name)
         self._val = None
-        self._backend = ConfBackend ()
+        self._backend = NullBackend ()
+
+    def parent (self):
+        return self._parent
 
     def default (self, val):
         if self._val is None:
             self._val = val
 
-    def set_val (self, val):
+    def set_value (self, val):
         self._val = val
         self.on_conf_change (self)
         return self
 
-    def get_val (self, val):
+    def get_value (self):
         return self._val
 
     def load (self, overwrite = False):
-        self._backend.do_load (self, overwrite)
+        self._backend._do_load (self, overwrite)
 
     def save (self):
-        self._backend.do_save (self)
+        self._backend._do_save (self)
     
     def set_backend (self, be):
-        pass
-
+        if not self._test_empty_parent_be ():
+            raise ConfError ("Can not set backend to owned nodes")
+        else:
+            self._backend._detach_from (self)   
+            self._set_backend (be)
+            self._backend._attach_on (self)
+        
     def get_backend (self):
         return self._backend
 
@@ -84,8 +103,33 @@ class ConfNode (ConfSubject, AutoTree):
         self._backend._handle_conf_nudge (self)
 
     def _handle_tree_new_child (self, child):
-        self._backend._handle_conf_new_child (child)
-
+        child._backend = self._backend
+        self._backend._handle_conf_new_node (child)
+        self.on_conf_new_child (child)
+        
     def _handle_tree_del_child (self, child):
-        self._backend._handle_conf_new_child (child)
+        self._backend._handle_conf_del_node (child)
+        self.on_conf_del_child (child)
+        
+    def _set_backend (self, be):
+        def assign (self):
+            self._backend = be
+        self.dfs_preorder (assign)
 
+    def _test_empty_parent_be (self):
+        return self._parent is None or \
+               (self._backend.__class__ is NullBackend and
+                self._parent._test_empty_parent_be ())
+    
+    backend = property (get_backend, set_backend)
+    value = property (get_value, set_value)
+
+class GlobalConf (ConfNode):
+
+    __metaclass__ = Singleton
+
+    class Traits (AutoTreeTraits):
+        child_cls = ConfNode
+        
+    def __init__ (self):
+        ConfNode.__init__ (self, '', GlobalConf.Traits)

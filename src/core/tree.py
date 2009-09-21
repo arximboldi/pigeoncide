@@ -20,6 +20,7 @@
 class AutoTreeTraits:
     name_type = str
     separator = '.'
+    child_cls = None
 
 class AutoTree:
     
@@ -33,7 +34,10 @@ class AutoTree:
         try:
             child = self._childs [name]
         except KeyError:
-            child = self.__class__ ()
+            if self._traits.child_cls:
+                child = self._tratis._child_cls ()
+            else:
+                child = self.__class__ ()
             self.adopt (child, name)
         
         return child
@@ -89,10 +93,22 @@ class AutoTree:
             del self._parent._childs [self._name]
             self._parent._childs [name] = self
         self._name = name
+
+    def dfs_preorder (self, func):
+        func (self)
+        for child in self._childs.values ():
+            child.dfs_preorder (func)
+
+    def dfs_postorder (self, func):
+        for child in self._childs.values ():
+            child.dfs_postorder (func)
+        func (self)
+
+    def childs (self):
+        return self._childs.values ()
     
     def _handle_tree_new_child (self, child):
         pass
     
     def _handle_tree_del_child (self, child):
         pass
-
