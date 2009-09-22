@@ -18,7 +18,7 @@
 #
 
 import unittest
-from core.conf import *
+from base.conf import *
 
 class TestConfBackend:
 

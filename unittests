@@ -1,4 +1,4 @@
 #!/bin/sh
 
-python test/run.py $*
+python src/test_main.py $*
 
