@@ -19,15 +19,15 @@
 
 from error import *
 
-class ArgParserError (CoreError):
+class ArgParserError (BaseError):
 
     def __init__(self):
-        Exception.__init__(self, "Unknown argument parsing error")
+        BaseError.__init__(self, "Unknown argument parsing error")
 
 class UnknownArgError (ArgParserError):
 
     def __init__(self, arg):
-        Exception.__init__(self, "Unknown arg: " + arg)
+        BaseError.__init__(self, "Unknown arg: " + arg)
 
 class OptionBase:
 

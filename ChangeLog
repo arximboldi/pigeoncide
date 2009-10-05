@@ -1,7 +1,29 @@
+2009-10-06  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
+
+	* src/core/timer.py: Timer module.
+
+	* src/core/task.py: Task manager module.
+
+	* src/core/app.py: Panda application module.
+
+	* src/core/state.py: Application state management module.
+
+	* src/core/error.py: Basic exceptions for the core module.
+
+	* src/base/*.py: Some interface changes.
+
+	* src/app/pigeoncide.py: Move main application.
+
+	* src/app/sandbox.py: Sandbox state for first experiments.
+
+	* src/test/core_state.py: Unit tests for the core.state module.
+
+	* src/test/core_task.py: Unit tests for the core.task module.
+
 2009-09-21  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
 
 	* src/pigeonide.py: Added main application class.
-	
+
 	* src/core/app.py: Added application framework.
 
 	* src/core/log.py: Added logging facilities.

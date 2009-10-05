@@ -18,21 +18,23 @@
 #
 
 import unittest
-from core.conf import *
-from core.xml_conf import *
-from core.util import read_file
+from base.conf import *
+from base.xml_conf import *
+from base.util import read_file
 import os
+import os.path
 
-XML_TEST_FILENAME = 'test/test_core_xml_conf_test_file.xml'
-XML_TEMP_FILENAME = 'test/test_core_xml_conf_temp_file.xml'
+XML_TEST_PATH = os.path.dirname (__file__)
+XML_TEST_FILENAME = os.path.join (XML_TEST_PATH, 'base_xml_conf_test_file.xml')
+XML_TEMP_FILENAME = os.path.join (XML_TEST_PATH, 'base_xml_conf_temp_file.xml')
 
 class TestXmlConfWrite (unittest.TestCase):
 
     def test_write (self):
         conf = ConfNode ('test')
-        conf.get_path ('a').value = 1
-        conf.get_path ('b.c').value = 2
-        conf.get_path ('b.d').value = 3
+        conf.path ('a').value = 1
+        conf.path ('b.c').value = 2
+        conf.path ('b.d').value = 3
 
         xml = XmlConfBackend (XML_TEMP_FILENAME)
         conf.set_backend (xml)
@@ -54,17 +56,17 @@ class TestXmlConfRead (unittest.TestCase):
     def test_read (self):
         self.conf.load ()
 
-        self.assertEqual (self.conf.get_name (), 'test')
-        self.assertEqual (self.conf.get_path ('a').value, 1)
-        self.assertEqual (self.conf.get_path ('b.c').value, 2)
-        self.assertEqual (self.conf.get_path ('b.d').value, 3)
+        self.assertEqual (self.conf.name, 'test')
+        self.assertEqual (self.conf.path ('a').value, 1)
+        self.assertEqual (self.conf.path ('b.c').value, 2)
+        self.assertEqual (self.conf.path ('b.d').value, 3)
 
     def test_read_default (self):
-        self.conf.get_child ('a').value = 10
+        self.conf.child ('a').value = 10
         self.conf.load (False)
 
-        self.assertEqual (self.conf.get_name (), 'test')
-        self.assertEqual (self.conf.get_path ('a').value, 10)
-        self.assertEqual (self.conf.get_path ('b.c').value, 2)
-        self.assertEqual (self.conf.get_path ('b.d').value, 3)
+        self.assertEqual (self.conf.name, 'test')
+        self.assertEqual (self.conf.path ('a').value, 10)
+        self.assertEqual (self.conf.path ('b.c').value, 2)
+        self.assertEqual (self.conf.path ('b.d').value, 3)
 

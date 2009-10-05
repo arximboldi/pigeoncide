@@ -17,9 +17,9 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import pigeoncide
+from app.pigeoncide import PigeoncideApp
 
 if __name__ == '__main__':
-    app = pigeoncide.PigeoncideApp ()
+    app = PigeoncideApp ()
     app.run_and_exit ()
 

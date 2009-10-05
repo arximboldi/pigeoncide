@@ -19,6 +19,7 @@
 
 from util import flip_dict
 from conf import NullBackend, ConfNode, ConfError
+from log import *
 
 from xml.sax import make_parser, SAXException
 from xml.sax.handler import ContentHandler
@@ -49,7 +50,14 @@ class XmlConfBackend (NullBackend):
         parser = make_parser ()
         parser.setContentHandler (reader)
 
-        fh = open (self.file_name, 'r')
+        try:
+            fh = open (self.file_name, 'r')
+        except IOError, e:
+            raise XmlConfError ('Could not open config file. ' +
+                                'If this is the first time you ' +
+                                'run the application it might be created later.',
+                                LOG_WARNING)
+        
         parser.parse (fh)
         fh.close ()
         
@@ -139,7 +147,7 @@ class XmlSaxConfParser (ContentHandler):
     def _start_element_node (self, name, attrs):
         if self._depth < 1:
             raise XmlConfError ('Unexpected \'node\' tag')
-        self._curr_node = self._curr_node.get_child (attrs ['name'])
+        self._curr_node = self._curr_node.child (attrs ['name'])
         self._fill_node (attrs)
         
     def _end_element_node (self, name, attrs):

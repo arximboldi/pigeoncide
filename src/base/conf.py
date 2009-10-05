@@ -20,9 +20,10 @@
 from tree import AutoTree, AutoTreeTraits
 from observer import make_observer
 from singleton import Singleton
+from arg_parser import OptionBase
 from error import *
 
-class ConfError (CoreError):
+class ConfError (BaseError):
     pass
 
 ConfSubject, ConfListener = \
@@ -31,6 +32,16 @@ ConfSubject, ConfListener = \
                     'conf_new_child',
                     'conf_del_child'],
                    'Conf')
+
+class OptionConf (OptionBase):
+
+    def __init__ (self, conf, func = str):
+        self.conf = conf
+        self.func = func
+
+    def parse_with (self, arg):
+        self.conf.value = self.func (arg)
+        return True
 
 class NullBackend:
 

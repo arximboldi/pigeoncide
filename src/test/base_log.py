@@ -20,7 +20,7 @@
 import unittest
 from StringIO import StringIO
 
-from core.log import *
+from base.log import *
 
 class TestLog (unittest.TestCase):
 
@@ -36,8 +36,8 @@ class TestLog (unittest.TestCase):
                             self.error_out))
 
     def test_message (self):
-        msg_one = "[test.a.b] info: test one\n"
-        msg_two = "[test.a.b] fatal: test two\n"
+        msg_one = "[test.a.b] INFO: test one\n"
+        msg_two = "[test.a.b] FATAL: test two\n"
 
         self.node.get_path ('a.b').log (LOG_INFO, "test one")
         self.node.get_path ('a.b').log (LOG_FATAL, "test two")

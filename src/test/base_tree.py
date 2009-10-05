@@ -19,7 +19,7 @@
 
 import unittest
 
-from core.tree import *
+from base.tree import *
 
 class TestAutoTree (unittest.TestCase):
 
@@ -39,15 +39,15 @@ class TestAutoTree (unittest.TestCase):
 
     def setUp (self):
         self._tree_1 = TestAutoTree.ValueTree ()
-        self._tree_1.get_child ('a').value = 1
-        self._tree_1.get_path ('a.b.c').value = 2
+        self._tree_1.child ('a').value = 1
+        self._tree_1.path ('a.b.c').value = 2
 
     def tearDown (self):
         self._tree_1 = None
 
     def test_paths_rename (self):
-        child_1 = self._tree_1.get_child ('a')
-        child_2 = self._tree_1.get_path ('a.b.c')
+        child_1 = self._tree_1.child ('a')
+        child_2 = self._tree_1.path ('a.b.c')
 
         self.assertEqual (child_1.value, 1)
         self.assertEqual (child_2.value, 2)
@@ -57,20 +57,20 @@ class TestAutoTree (unittest.TestCase):
         self.assertEqual (child_2.get_path_name (), '.d.b.c')
     
     def test_adopt (self):
-        child = self._tree_1.get_path ('a.b')
-        self._tree_1.get_child ('d').adopt (child, 'b')
+        child = self._tree_1.path ('a.b')
+        self._tree_1.child ('d').adopt (child, 'b')
 
-        self.assertEqual (self._tree_1.get_path ('a.b.c').value, None)
-        self.assertEqual (self._tree_1.get_path ('d.b.c').value, 2)
+        self.assertEqual (self._tree_1.path ('a.b.c').value, None)
+        self.assertEqual (self._tree_1.path ('d.b.c').value, 2)
 
     def test_events (self):
         tree = TestAutoTree.CountingTree ();
 
-        tree.get_child ('a')
+        tree.child ('a')
         self.assertEqual (tree.childs, 1)
-        tree.get_child ('b')
+        tree.child ('b')
         self.assertEqual (tree.childs, 2)
-        tree.get_child ('a')
+        tree.child ('a')
         self.assertEqual (tree.childs, 2)
         tree.remove ('a')
         self.assertEqual (tree.childs, 1)

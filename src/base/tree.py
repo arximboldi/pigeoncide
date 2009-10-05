@@ -29,8 +29,8 @@ class AutoTree:
         self._parent = None
         self._childs = {}
         self._name   = traits.name_type ()
-        
-    def get_child (self, name):
+
+    def child (self, name):
         try:
             child = self._childs [name]
         except KeyError:
@@ -41,10 +41,15 @@ class AutoTree:
             self.adopt (child, name)
         
         return child
+
     
-    def get_path (self, path_name):
+    get_child = child
+    
+    def path (self, path_name):
         path = str.split (path_name, self._traits.separator)
-        return reduce (AutoTree.get_child, path, self)
+        return reduce (AutoTree.child, path, self)
+
+    get_path = path
     
     def get_name (self):
         return self._name
@@ -64,7 +69,7 @@ class AutoTree:
             base.append (self._name)
             return base
     
-    def get_parent (self):
+    def parent (self):
         return self._parent
 
     def reparent (self, parent):
@@ -74,7 +79,7 @@ class AutoTree:
         if name is None:
             name = child._name
         
-        old_parent = child.get_parent ()
+        old_parent = child.parent ()
         if old_parent:
             old_parent.remove (child.get_name ())
         

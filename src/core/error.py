@@ -17,16 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from core.app import AppBase
+from base.error import *
 
-class PigeoncideApp (AppBase):
-
-    NAME        = "pigeoncide"
-    VERSION     = "0.0.0"
-    AUTHOR      = "Pigeoncide development team"
-    COPYRIGHT   = "(c) 2009 Pigeoncide development team"
-    DESCRIPTION = \
-"""\
-Pigeoncide is a game that leads you to the dreams of an ill-minded child.
-"""
-
+class CoreError (LoggableError):
+    pass

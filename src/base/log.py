@@ -44,7 +44,9 @@ class StdLogListener (LogListener):
     def handle_message (self, node, level, msg):
         if level >= self.level:
             out = self.info_output if level <= LOG_INFO else self.error_output
-            out.write ('[' + node.get_path_name () + '] ' + level[1] + ': ' + msg + '\n')
+            out.write ('[' + node.get_path_name () + '] ' +
+                       level[1].upper () + ': '
+                       + msg + '\n')
     
 class LogNode (AutoTree, LogSubject):
 
@@ -56,8 +58,23 @@ class LogNode (AutoTree, LogSubject):
         curr = self
         while curr:
             curr.on_message (self, level, msg)
-            curr = curr.get_parent ()
+            curr = curr.parent ()
 
+    def info (self, msg):
+        self.log (LOG_INFO, msg)
+
+    def warning (self, msg):
+        self.log (LOG_WARNING, msg)
+
+    def error (self, msg):
+        self.log (LOG_ERROR, msg)
+
+    def fatal (self, msg):
+        self.log (LOG_FATAL, msg)
+
+    def debug (self, msg):
+        self.log (LOG_DEBUG, msg)
+    
 class GlobalLog (LogNode):
 
     __metaclass__ = Singleton
@@ -69,4 +86,8 @@ class GlobalLog (LogNode):
         LogNode.__init__ (self, GlobalLog.Traits)
 
 def log (path, level, msg):
-    GlobalLog ().get_path (path).log (level, msg)
+    GlobalLog ().path (path).log (level, msg)
+
+def get_log (path):
+    return GlobalLog ().path (path)
+

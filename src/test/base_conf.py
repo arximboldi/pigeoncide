@@ -42,7 +42,7 @@ class TestConfBackend:
         self.assertEqual (c.backend.called, "_do_load")
         c.save ()
         self.assertEqual (c.backend.called, "_do_load")
-        c.get_child ("x")
+        c.child ("x")
         self.assertEqual (c.backend.called, "_handle_cond_new_child")
         c.remove ("x")
         self.assertEqual (c.backend.called, "_handle_conf_del_child")
@@ -53,21 +53,21 @@ class TestConfBackend:
 
     def test_set_backend (self):
         c = ConfNode ()
-        c.get_child ("a")
+        c.child ("a")
         c.backend = TestConfBackend.MockBanckend ()
-        c.get_child ("b")
+        c.child ("b")
 
         self.assertTrue (isinstance (c.backend,
                                      TestConfBackend.MockBanckend))
-        self.assertTrue (isinstance (c.get_child ("a").backend,
+        self.assertTrue (isinstance (c.child ("a").backend,
                                       TestConfBackend.MockBanckend))
-        self.assertTrue (isinstance (c.get_child ("b").backend,
+        self.assertTrue (isinstance (c.child ("b").backend,
                                       TestConfBackend.MockBanckend))
         self.assertRaises (ConfError,
-                           c.get_child ("a").set_backend, ConfBackend ())
+                           c.child ("a").set_backend, ConfBackend ())
         
     def test_global_conf (self):
         cfg = GlobalConf ()
 
-        self.asserTrue (isinstance (cfg.get_path ("h.o.l.a"), ConfNode))
-        self.asserTrue (not isinstance (cfg.get_path ("h.o.l.a"), GlobalConf))
+        self.asserTrue (isinstance (cfg.path ("h.o.l.a"), ConfNode))
+        self.asserTrue (not isinstance (cfg.path ("h.o.l.a"), GlobalConf))

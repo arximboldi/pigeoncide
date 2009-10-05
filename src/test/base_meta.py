@@ -18,7 +18,7 @@
 #
 
 import unittest
-from core.meta import *
+from base.meta import *
 
 class TestMeta (unittest.TestCase):
 

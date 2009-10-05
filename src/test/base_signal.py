@@ -18,7 +18,7 @@
 #
 
 import unittest
-from core.signal import *
+from base.signal import *
 
 class TestSignalSlot (unittest.TestCase):
 
