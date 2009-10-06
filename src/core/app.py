@@ -20,10 +20,13 @@
 from base.log import get_log
 from base.app import *
 
-from core.timer import *
-from core.state import *
-from core.task import *
+from timer import *
+from state import *
+from task import *
+from event import *
 
+
+import patch_messenger
 from direct.showbase.ShowBase import ShowBase
 
 _log = get_log (__name__)
@@ -70,7 +73,8 @@ class PandaApp (AppBase):
         
         _log.info ("Setting up engine...")
         self._base = ShowBase ()
-        
+        messenger._patch_add_forwarder (self._states.events)
+                
         _log.info ("Running main loop...")
         self._timer.reset ()
         self._timer.fps = GlobalConf ().path ('panda.fps').value
@@ -83,5 +87,5 @@ class PandaApp (AppBase):
     def _panda_task (self, timer):
         if self._states.current:
             taskMgr.step ()
-        else:
-            return Task.KILLED
+            return Task.RUNNING
+        return Task.KILLED

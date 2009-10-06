@@ -1,13 +1,25 @@
 2009-10-06  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
 
-	* src/test/core_state.py: Added more unit tests.
+	* src/core/event.py: Added EventManager for a dynamic
+	signal group with forwarding support.
+
+	* src/core/patch_messenger.py, src/core/messenger_patch.py: Added
+	dirty monkeypatching to solve direct.showbase.Messenger <->
+	core.event impedance problem.
 
 	* src/base/signal.py: Added nice decorators for declaring signals
 	and slots.
 
+	* src/base/meta.py: Added new monkey patching facilies and
+	decorating tools.
+
 	* src/test/base_signal.py: Added test cases for the new signal
 	features.
-	
+
+	* src/test/core_event.py: Added test cases for the EventManager.
+
+	* src/test/core_state.py: Added more unit tests.
+
 2009-10-06  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
 
 	* src/core/timer.py: Timer module.

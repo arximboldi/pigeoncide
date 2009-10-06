@@ -19,7 +19,8 @@
 
 from weakref import proxy
 from task import *
-from core.error import *
+from error import *
+from event import *
 
 class StateError (CoreError):
     pass
@@ -30,6 +31,11 @@ class State (Task):
         Task.__init__ (self)
         self._tasks = TaskGroup ()
         self._manager = proxy (manager)
+        self._events = EventManager ()
+        
+    @property
+    def events (self):
+        return self._events
     
     @property
     def tasks (self):
@@ -61,6 +67,7 @@ class StateManager (Task):
         Task.__init__ (self)
         
         self._tasks = TaskGroup ()
+        self._events = EventManager ()
         self._current_state = None
         self._state_factory = {}
         self._state_stack = []
@@ -75,6 +82,10 @@ class StateManager (Task):
     def tasks (self):
         return self._tasks
 
+    @property
+    def events (self):
+        return self._events
+    
     def add (self, name, factory):
         self._state_factory [name] = factory
         return self
@@ -121,11 +132,13 @@ class StateManager (Task):
     def _push_state (self, state_cls):        
         state = state_cls (self)
         self._tasks.add (state)
+        self._events.add_forwarder (state.events)
         state.setup ()
         self._state_stack.append (state)
 
     def _pop_state (self):
         state = self._state_stack.pop ()
+        self._events.del_forwarder (state.events)
         state.kill ()
         state.release ()
         

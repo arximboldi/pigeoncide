@@ -22,6 +22,7 @@ from weakref import *
 from util import *
 from meta import *
 
+
 class Slot (object):
 
     def __init__ (self, func):
@@ -150,6 +151,7 @@ def signal (obj, func):
             return res
 
     return ExtendedSignal ()
+
 
 @instance_decorator
 def signal_before (obj, func):

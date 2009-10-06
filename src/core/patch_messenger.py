@@ -17,12 +17,6 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from core.state import State
-
-class Sandbox (State):
-
-    def do_update (self, timer):
-        State.do_update (self, timer)
-        #print "Time: ", timer.elapsed, " FPS: ", timer.fps
-        #print "Rate: ", timer.frames / timer.elapsed
-
+import sys
+import messenger_patch
+sys.modules ['direct.showbase.Messenger'] = messenger_patch

@@ -18,8 +18,33 @@
 #
 
 
-def instance_decorator (decorator):
+def monkeypatch (target, name = None):
+    def patcher (func):
+        patchname = func.__name__ if name is None else name
+        setattr (target, patchname, func)
+        return func
+    return patcher
 
+
+def monkeypatch_extend (target, name = None):
+    def patcher (func):
+        newfunc = func
+        patchname = func.__name__ if name is None else name
+        if hasattr (target, patchname):
+            oldfunc = getattr (target, patchname)
+            if not callable (oldfunc):
+                raise AttributeError ('Can not extend non callable attribute')
+            def extended (*a, **k):
+                ret = oldfunc (*a, **k)
+                func (*a, **k)
+                return ret
+            newfunc = extended
+        setattr (target, patchname, newfunc)
+        return func
+    return patcher
+
+
+def instance_decorator (decorator):
     class Decorator (object):
         def __init__ (self, func, *args, **kws):
             self.__name__ = func.__name__

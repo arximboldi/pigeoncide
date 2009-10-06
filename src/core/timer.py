@@ -90,8 +90,6 @@ class Timer (TimerBase):
         self._total_frame_count += 1
         
         if self._fps > 0:
-            _log.debug ('Ticking with FPS limit.')
-            
             self._total_frame_count += 1
             self._frame_count += 1
             self._target_time = self._last_time + self._frame_count * self._rate
@@ -104,7 +102,6 @@ class Timer (TimerBase):
                 self._last_time = self._time_count
                 self._frame_count = 0
         else:
-            _log.debug ('Ticking normally.')
             self._update_ticks ()
 
     def _update_ticks (self):

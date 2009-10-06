@@ -31,6 +31,7 @@ from test.base_log import *
 
 from test.core_task import *
 from test.core_state import *
+from test.core_event import *
 
 if __name__ == '__main__':
     unittest.main ()
