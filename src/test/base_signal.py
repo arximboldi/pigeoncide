@@ -113,3 +113,26 @@ class TestSignalSlot (unittest.TestCase):
         d.disconnect ()
         self.assertEqual (s.count, 0)
 
+    def test_decorator_signal (self):
+        class Decorated (object):
+            def __init__ (self):
+                self.value = 1
+            @signal
+            def after (self, param):
+                self.value = self.value + param
+                return self.value
+            @signal_before
+            def before (self, param):
+                self.value = self.value - param
+                return self.value
+
+        d = Decorated ()
+
+        d.after += lambda _: self.assertEquals (d.value, 2)
+        d.before += lambda _: self.assertEquals (d.value, 2)
+        
+        res = d.after (1)
+        self.assertEquals (res, 2)
+        res = d.before (1)
+        self.assertEquals (res, 1)
+

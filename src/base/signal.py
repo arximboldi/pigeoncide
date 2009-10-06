@@ -20,6 +20,7 @@
 from functools import partial
 from weakref import *
 from util import *
+from meta import *
 
 class Slot (object):
 
@@ -132,28 +133,32 @@ class Slotable (object):
             s.disconnect ()
 
 
-class SlotDescriptor (object):
+@instance_decorator
+def slot (obj, func):
+    s = CleverSlot (lambda *a, **k: func (obj, *a, **k))
+    if isinstance (obj, Slotable):
+        obj._slots.append (s)
+    return s
 
-    def __init__ (self, func, prefix = '_slot_'):
-        self._func = func
-        self._slot = prefix + self._func.func_name
+
+@instance_decorator
+def signal (obj, func):    
+    class ExtendedSignal (Signal):
+        def __call__ (self, *args, **kws):
+            res = func (obj, *args, **kws)
+            Signal.__call__ (self, *args, **kws)
+            return res
+
+    return ExtendedSignal ()
+
+@instance_decorator
+def signal_before (obj, func):
+    class ExtendedSignalBefore (Signal):
+        def __call__ (self, *args, **kws):
+            Signal.__call__ (self, *args, **kws)
+            res = func (obj, *args, **kws)
+            return res
         
-    def __set__ (self, obj, value):
-        raise AttributeError ("Can not set attribute.")
-
-    def __delete__ (self, obj):
-        raise AttributeError ("Can't delete this attribute.")
-        
-    def __get__ (self, obj, cls = None):
-        if obj is None:
-            return self
-        elif hasattr (obj, self._slot):
-            return getattr (obj, self._slot)
-        slot = CleverSlot (lambda *a, **k: self._func (obj, *a, **k))
-        setattr (obj, self._slot, slot)
-        if isinstance (obj, Slotable):
-            obj._slots.append (slot)
-        return slot
+    return ExtendedSignalBefore ()
 
 
-slot = SlotDescriptor
