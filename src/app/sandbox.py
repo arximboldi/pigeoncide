@@ -67,8 +67,7 @@ class Sandbox (State):
         self.separation = 1.1 # Pixels
         self.filters = CommonFilters (base.win, base.cam)
         filterok = self.filters.setCartoonInk (separation=self.separation)
-        if filterok == False:
-            print "NOOOOOOOOOOOOOOOOOOOOO"
+        
 
     def do_update (self, timer):
         State.do_update (self, timer)

@@ -49,11 +49,12 @@ class OptionWith (OptionBase):
 
 class OptionFlag (OptionBase):
 
-    def __init__(self, default=False):
-        self.value = False
-
+    def __init__(self, default = False, flag = True):
+        self.value = default
+        self.flag = flag
+        
     def parse_flag(self):
-        self.value = True
+        self.value = self.flag
         return True
          
 class OptionFunc (OptionBase):

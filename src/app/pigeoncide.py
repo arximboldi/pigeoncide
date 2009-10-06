@@ -33,8 +33,9 @@ Pigeoncide is a game that leads you to the dreams of an ill-minded child.
 """
 
     OPTIONS    = PandaApp.OPTIONS + \
-"""\
-  -s, --state <name>      Set the initial state.
+"""
+Extra options:
+  -s, --state <name>   Set the initial state.
 """
     
     def __init__ (self):

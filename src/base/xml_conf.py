@@ -24,12 +24,14 @@ from log import *
 from xml.sax import make_parser, SAXException
 from xml.sax.handler import ContentHandler
 
+def read_bool (msg):
+    return True if msg.lower () == 'true' else False
+
 XML_CONF_TYPES = { "int"     : int,
                    "string"  : str,
                    "float"   : float,
+                   "bool"    : read_bool,
                    "default" : str }
-
-XML_CONF_TYPES_INV = flip_dict (XML_CONF_TYPES)
 
 class XmlConfError (ConfError):
     pass
@@ -89,8 +91,8 @@ class XmlConfWriter:
 
         if node.get_name ():
             self._fh.write (' name="' + node.get_name() + '"')
-        if node.value:
-            self._fh.write (' type="' + XML_CONF_TYPES_INV [node.value.__class__] + '"')
+        if not node.value is None:
+            self._fh.write (' type="' + node.value.__class__.__name__ + '"')
             self._fh.write (' value="' + str (node.value) + '"')
                     
         childs = node.childs ()

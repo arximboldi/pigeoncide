@@ -84,7 +84,7 @@ class Timer (TimerBase):
     def _set_fps (self, val):
         self._fps = val
         if self._fps > 0:
-            self._rate = 2.0 / float (self._fps)
+            self._rate = 1.0 / float (self._fps)
         
     def tick (self):
         self._total_frame_count += 1

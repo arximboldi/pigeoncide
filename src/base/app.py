@@ -59,9 +59,9 @@ Usage: %(program)s [options]
     OPTIONS     = \
 """\
 Options:
-  -h, --help              Display this information.
-  -v, --version           Display program version.
-  -V, --verbose           Display debugging information.
+  -h, --help       Display this information.
+  -v, --version    Display program version.
+  -V, --verbose    Display debugging information.
 """
 
     def do_prepare (self, argparser):

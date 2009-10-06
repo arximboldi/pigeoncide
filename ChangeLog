@@ -1,3 +1,14 @@
+2009-10-07  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
+
+	* src/core/app.py, src/core/panda_controller.py: Enabled usage of
+	configuration file and command line parameters for window
+	settings.
+
+	* src/base/conf.py, src/base/xml_conf.py: Enabled boolean conf
+	values.
+
+	* *: Added pigeon model cartoon shaded in sandbox.
+
 2009-10-06  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
 
 	* src/core/event.py: Added EventManager for a dynamic

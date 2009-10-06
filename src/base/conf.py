@@ -33,7 +33,7 @@ ConfSubject, ConfListener = \
                     'conf_del_child'],
                    'Conf')
 
-class OptionConf (OptionBase):
+class OptionConfWith (OptionBase):
 
     def __init__ (self, conf, func = str):
         self.conf = conf
@@ -42,6 +42,18 @@ class OptionConf (OptionBase):
     def parse_with (self, arg):
         self.conf.value = self.func (arg)
         return True
+
+
+class OptionConfFlag (OptionBase):
+
+    def __init__ (self, conf, flag = True):
+        self.conf = conf
+        self.flag = flag
+
+    def parse_flag (self):
+        self.conf.value = self.flag
+        return True
+
 
 class NullBackend:
 

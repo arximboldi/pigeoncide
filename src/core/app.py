@@ -20,14 +20,9 @@
 from base.log import get_log
 from base.app import *
 
-from timer import *
 from state import *
-from task import *
-from event import *
 
-
-import patch_messenger
-from direct.showbase.ShowBase import ShowBase
+from panda_controller import PandaController
 
 _log = get_log (__name__)
 
@@ -35,59 +30,49 @@ class PandaApp (AppBase):
 
     OPTIONS = AppBase.OPTIONS + \
 """
-  -F, --fps <value>   Set the running frames per second to value.
+Display options:
+  -F, --fps <value>    Set the update frames per second.
+  -f, --fullscreen     Enable fullscreen mode.
+  -w, --window         Enable windowed mode.
+  -W, --width <value>  Set window width.
+  -H, --height <value> Set window height.
+  -m, --frame-meter    Show frames per second meter.
+  -M, --hide-meter     Hide the frames per second meter.
 """
     
     def __init__ (self):
         self.root_state = 'root'
-        
-        self._tasks = TaskGroup ()
+
         self._states = StateManager ()
-        self._timer = Timer ()
-        
-        self._tasks.add (self._states)
-        self._tasks.add (self._panda_task)
+        self._panda = PandaController ()
+        self._panda.tasks.add (self._states)
 
-        self._base = None
         self._quit = False
-
-    @property
-    def timer (self):
-        return self._timer
 
     @property
     def states (self):
         return self._states
 
-    @property
-    def tasks (self):
-        return self._tasks
-
     def do_prepare (self, args):
-        args.add ('F', 'fps', OptionConf (
-            GlobalConf ().get_path ('panda.fps'), int))
-    
+        cfg = GlobalConf ().child ('panda')
+        
+        args.add ('F', 'fps', OptionConfWith (cfg.child ('fps'), int))
+        args.add ('f', 'fullscreen', OptionConfFlag (cfg.child ('fullscreen')))
+        args.add ('w', 'window', OptionConfFlag (cfg.child ('fullscreen'), False))
+        args.add ('W', 'width', OptionConfWith (cfg.child ('width'), int))
+        args.add ('H', 'height', OptionConfWith (cfg.child ('height'), int))
+        args.add ('m', 'frame-meter', OptionConfFlag (cfg.child ('frame-meter')))
+        args.add ('M', 'hide-meter', OptionConfFlag (cfg.child ('frame-meter'), False))
+        
     def do_execute (self, args):
-        self._set_defaults ()
         
         _log.info ("Setting up engine...")
-        self._base = ShowBase ()
+        self._panda.start (self.NAME + ' ' + self.VERSION)
         messenger._patch_add_forwarder (self._states.events)
                 
         _log.info ("Running main loop...")
         self._states.start (self.root_state)
-        self._timer.reset ()
-        self._timer.fps = GlobalConf ().path ('panda.fps').value
-        self._timer.loop (self._tasks.update)
-
+        self._panda.loop ()
+        
         _log.info ("Quiting... Have a nice day ;)")
         
-    def _set_defaults (self):
-        cfg = GlobalConf ().child ('panda')
-        cfg.child ('fps').default (0)
-        
-    def _panda_task (self, timer):
-        if self._states.current:
-            taskMgr.step ()
-            return Task.RUNNING
-        return Task.KILLED
