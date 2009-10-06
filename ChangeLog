@@ -1,5 +1,15 @@
 2009-10-06  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
 
+	* src/test/core_state.py: Added more unit tests.
+
+	* src/base/signal.py: Added nice decorators for declaring signals
+	and slots.
+
+	* src/test/base_signal.py: Added test cases for the new signal
+	features.
+	
+2009-10-06  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
+
 	* src/core/timer.py: Timer module.
 
 	* src/core/task.py: Task manager module.

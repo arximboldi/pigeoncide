@@ -32,13 +32,13 @@ class TestSignalSlot (unittest.TestCase):
             self.val -= 1
             return self.val
 
-    def test_00 (self):
+    def test_signal (self):
         sig = Signal ()
         cnt = TestSignalSlot.Counter ()
 
         slt_a = sig.connect (cnt.increase)
         sig += cnt.decrease
-        self.assertEquals (sig.slots (), 2)
+        self.assertEquals (sig.count, 2)
 
         sig.notify ()
         self.assertEquals (cnt.val, 0)
@@ -46,15 +46,15 @@ class TestSignalSlot (unittest.TestCase):
         self.assertEquals (sig.fold (lambda x, y: x+y, 1), 2)
 
         sig.disconnect (cnt.decrease)
-        self.assertEquals (sig.slots (), 1)
+        self.assertEquals (sig.count, 1)
         
         sig.notify ()
         self.assertEquals (cnt.val, 1)
 
         sig.disconnect (slt_a)
-        self.assertEquals (sig.slots (), 0)
+        self.assertEquals (sig.count, 0)
 
-    def test_01 (self):
+    def test_cleverness (self):
         sig_a = Signal ()
         sig_b = Signal ()
         cnt = TestSignalSlot.Counter ()
@@ -63,7 +63,7 @@ class TestSignalSlot (unittest.TestCase):
         sig_a += slt
         sig_a += slt
         sig_b += slt
-        self.assertEquals (slt.signals (), 2)
+        self.assertEquals (slt.count, 2)
 
         sig_a ()
         self.assertEquals (cnt.val, 1)
@@ -71,7 +71,45 @@ class TestSignalSlot (unittest.TestCase):
         self.assertEquals (cnt.val, 2)
 
         slt.disconnect ()
-        self.assertEquals (slt.signals (), 0)
-        self.assertEquals (sig_a.slots (), 0)
-        self.assertEquals (sig_b.slots (), 0)
+        self.assertEquals (slt.count, 0)
+        self.assertEquals (sig_a.count, 0)
+        self.assertEquals (sig_b.count, 0)
+
+    def test_decorator (self):
+        class Decorated:
+            @slot
+            def function (self):
+                return "called"
+
+        d = Decorated ()
+        self.assertEquals (d.function (), "called")
+        self.assertTrue (isinstance (d.function, CleverSlot))
+        self.assertEquals (d.function, d.function)
+        
+    def test_decorator_slotable (self):
+        class Decorated (Slotable):
+            @slot
+            def one (self):
+                return "one"
+            @slot
+            def two (self):
+                return "two"
+
+        d = Decorated ()
+        s = Signal ()
+
+        s += d.one
+        self.assertEqual (d._slots, [d.one])
+        self.assertEqual (s.count, 1)
+        
+        s += d.two
+        self.assertEqual (d._slots, [d.one, d.two])
+        self.assertEqual (s.count, 2)
+
+        s += d.two
+        self.assertEqual (d._slots, [d.one, d.two])
+        self.assertEqual (s.count, 2)
+
+        d.disconnect ()
+        self.assertEqual (s.count, 0)
 

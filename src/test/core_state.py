@@ -58,5 +58,30 @@ class TestState (unittest.TestCase):
         self.mgr.start ('one')
         self.assertRaises (StateError, self.mgr.start, 'one')
         
-    # TODO
+    def test_machine (self):
+        self.mgr.start ('one')
+        self.assertTrue (isinstance (self.mgr.current, DummyStateOne))
+        self.assertEqual (self.mgr.current.st, 'setup')
+        da = self.mgr.current
+        
+        self.mgr.enter_state ('two')
+        self.assertTrue (isinstance (self.mgr.current, DummyStateOne))
+        self.assertEqual (self.mgr.current.st, 'setup')
+        self.mgr.update (None)
+        self.assertTrue (isinstance (self.mgr.current, DummyStateTwo))
+        self.assertEqual (self.mgr.current.st, 'setup')
+        self.assertEqual (da.st, 'sink')
+        db = self.mgr.current
 
+        self.mgr.leave_state ()
+        self.mgr.update (None)
+        self.assertEqual (da.st, 'unsink')
+        self.assertEqual (self.mgr.current, da)
+        self.assertEqual (db.st, 'release')
+
+        self.mgr.change_state ('one')
+        self.mgr.update (None)
+        self.assertTrue (isinstance (self.mgr.current, DummyStateOne))
+        self.assertNotEqual (self.mgr.current, da)
+        self.assertEqual (self.mgr.current.st, 'setup')
+        self.assertEqual (da.st, 'release')

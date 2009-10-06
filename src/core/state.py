@@ -116,7 +116,7 @@ class StateManager (Task):
     def _change_state (self, name):
         state = self._fetch_state (name)
         self._pop_state ()
-        self._push_state (self, state)
+        self._push_state (state)
     
     def _push_state (self, state_cls):        
         state = state_cls (self)

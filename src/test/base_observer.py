@@ -106,16 +106,16 @@ class TestObserver (unittest.TestCase):
 
     def test_add_listener (self):
         self.sub.add_listener (self.lst)
-        self.assertEqual (self.sub.on_sig_one.slots (), 1)
-        self.assertEqual (self.sub.on_sig_two.slots (), 1)
-        self.assertEqual (self.sub.on_sig_three.slots (), 1)
+        self.assertEqual (self.sub.on_sig_one.count, 1)
+        self.assertEqual (self.sub.on_sig_two.count, 1)
+        self.assertEqual (self.sub.on_sig_three.count, 1)
 
     def test_del_listener (self):
         self.test_add_listener ()
         self.sub.del_listener (self.lst)
-        self.assertEqual (self.sub.on_sig_one.slots (), 0)
-        self.assertEqual (self.sub.on_sig_two.slots (), 0)
-        self.assertEqual (self.sub.on_sig_three.slots (), 0)
+        self.assertEqual (self.sub.on_sig_one.count, 0)
+        self.assertEqual (self.sub.on_sig_two.count, 0)
+        self.assertEqual (self.sub.on_sig_three.count, 0)
 
 
 class TestCleverObserver (TestObserver):
@@ -126,9 +126,9 @@ class TestCleverObserver (TestObserver):
     def test_disconnect_all (self):
         self.sub.add_listener (self.lst)
         self.lst.disconnect ()
-        self.assertEqual (self.sub.on_sig_one.slots (), 0)
-        self.assertEqual (self.sub.on_sig_two.slots (), 0)
-        self.assertEqual (self.sub.on_sig_three.slots (), 0)
+        self.assertEqual (self.sub.on_sig_one.count, 0)
+        self.assertEqual (self.sub.on_sig_two.count, 0)
+        self.assertEqual (self.sub.on_sig_three.count, 0)
 
 
 class TestLightObserver (TestObserver):

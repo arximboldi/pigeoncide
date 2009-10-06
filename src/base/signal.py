@@ -17,10 +17,11 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from functools import partial
 from weakref import *
 from util import *
 
-class Slot:
+class Slot (object):
 
     def __init__ (self, func):
         self.func = func
@@ -52,10 +53,12 @@ class CleverSlot (Slot):
             if self._signals [0] ():
                 self._signals [0] ().disconnect (self)
 
-    def signals (self):
+    @property
+    def count (self):
         return len (self._signals)
 
-class Signal:
+
+class Signal (object):
 
     def __init__ (self):
         self._slots = []
@@ -114,5 +117,43 @@ class Signal:
     def clear (self):
         del self._slots [:]
 
-    def slots (self):
+    @property
+    def count (self):
         return len (self._slots)
+
+
+class Slotable (object):
+
+    def __init__ (self):
+         self._slots = []
+
+    def disconnect (self):
+        for s in self._slots:
+            s.disconnect ()
+
+
+class SlotDescriptor (object):
+
+    def __init__ (self, func, prefix = '_slot_'):
+        self._func = func
+        self._slot = prefix + self._func.func_name
+        
+    def __set__ (self, obj, value):
+        raise AttributeError ("Can not set attribute.")
+
+    def __delete__ (self, obj):
+        raise AttributeError ("Can't delete this attribute.")
+        
+    def __get__ (self, obj, cls = None):
+        if obj is None:
+            return self
+        elif hasattr (obj, self._slot):
+            return getattr (obj, self._slot)
+        slot = CleverSlot (lambda *a, **k: self._func (obj, *a, **k))
+        setattr (obj, self._slot, slot)
+        if isinstance (obj, Slotable):
+            obj._slots.append (slot)
+        return slot
+
+
+slot = SlotDescriptor
