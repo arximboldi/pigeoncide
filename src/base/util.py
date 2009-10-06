@@ -17,14 +17,21 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
+def printer (message):
+    print message
+
+
 def remove_if (predicate, lst):
     return [elem for elem in lst if not predicate (elem)]
+
 
 def flip_dict (dct):
     new_dct = {}
     for k, v in dct.items ():
         new_dct [v] = k
     return new_dct
+
 
 def read_file (fname):
     fh = open (fname, 'r')

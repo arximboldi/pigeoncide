@@ -17,9 +17,58 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from base.util import printer
+from core.task import Task
 from core.state import State
 
+from direct.showbase.ShowBase import ShowBase
+
+from pandac.PandaModules import (
+    PointLight,
+    Vec3,
+    Vec4,
+    NodePath,
+    PandaNode,
+    LightRampAttrib,
+    AmbientLight
+)
+
+from direct.filter.CommonFilters import CommonFilters
+
+
 class Sandbox (State):
+
+    def setup (self):
+        self.events.connect ('panda-escape', self.kill)
+
+        m = loader.loadModel ('../data/mesh/pigeon.x')
+        m.reparentTo(render)
+        m.setPos (0, 70, -20)
+
+        plightnode = PointLight("point light")
+        plightnode.setAttenuation(Vec3(1,0,0))
+        plight = render.attachNewNode(plightnode)
+        plight.setPos(30,-50,0)
+        alightnode = AmbientLight("ambient light")
+        alightnode.setColor(Vec4(0.8,0.8,0.8,1))
+        alight = render.attachNewNode(alightnode)
+        render.setLight(alight)
+        render.setLight(plight)
+        
+        base.setBackgroundColor (Vec4 (.4, .6, .9, 1))
+        
+        # light ramp
+        tempnode = NodePath(PandaNode("temp-node"))
+        tempnode.setAttrib (LightRampAttrib.makeSingleThreshold(0.5, 0.4))
+        tempnode.setShaderAuto()
+        base.cam.node().setInitialState (tempnode.getState ())
+
+        # ink
+        self.separation = 1.1 # Pixels
+        self.filters = CommonFilters (base.win, base.cam)
+        filterok = self.filters.setCartoonInk (separation=self.separation)
+        if filterok == False:
+            print "NOOOOOOOOOOOOOOOOOOOOO"
 
     def do_update (self, timer):
         State.do_update (self, timer)

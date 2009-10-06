@@ -107,7 +107,8 @@ class StateManager (Task):
     
     def do_update (self, timer):
         self._tasks.update (timer)
-        
+        if self.current.state == Task.KILLED:
+            self._leave_state ()
         if not self._state_stack:
             self.kill ()
     

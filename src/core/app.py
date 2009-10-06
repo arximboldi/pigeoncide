@@ -68,7 +68,6 @@ class PandaApp (AppBase):
             GlobalConf ().get_path ('panda.fps'), int))
     
     def do_execute (self, args):
-        self._states.start (self.root_state)
         self._set_defaults ()
         
         _log.info ("Setting up engine...")
@@ -76,10 +75,13 @@ class PandaApp (AppBase):
         messenger._patch_add_forwarder (self._states.events)
                 
         _log.info ("Running main loop...")
+        self._states.start (self.root_state)
         self._timer.reset ()
         self._timer.fps = GlobalConf ().path ('panda.fps').value
         self._timer.loop (self._tasks.update)
-    
+
+        _log.info ("Quiting... Have a nice day ;)")
+        
     def _set_defaults (self):
         cfg = GlobalConf ().child ('panda')
         cfg.child ('fps').default (0)

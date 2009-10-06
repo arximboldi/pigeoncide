@@ -44,7 +44,7 @@ def _patch_del_forwarder (self, forwarder):
 
 @monkeypatch_extend (Messenger)
 def send (self, orig_event, sent_args=[], task_chain=None):
-    event = 'panda_' + orig_event
+    event = 'panda-' + orig_event
     self.lock.acquire()
     try:
         if task_chain:

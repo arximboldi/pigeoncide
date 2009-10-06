@@ -36,6 +36,9 @@ class EventManager (object):
                 self._events [name].notify (*args, **kw)
             else:
                 self._forward (name, *args, **kw)
+
+    def connect (self, name, slot):
+        return self.event (name).connect (slot)
     
     def event (self, name):
         if name in self._events:
