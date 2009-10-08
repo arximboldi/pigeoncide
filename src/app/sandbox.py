@@ -20,6 +20,7 @@
 from base.util import printer
 from core.task import Task
 from core.state import State
+from base.conf import GlobalConf
 
 from direct.showbase.ShowBase import ShowBase
 
@@ -45,6 +46,11 @@ class Sandbox (State):
         m.reparentTo(render)
         m.setPos (0, 70, -20)
 
+        def rotate_task (t):
+            m.setHpr (t.elapsed * 10, 0, 0)
+            return Task.RUNNING
+        self.tasks.add (rotate_task)
+        
         plightnode = PointLight("point light")
         plightnode.setAttenuation(Vec3(1,0,0))
         plight = render.attachNewNode(plightnode)
@@ -58,16 +64,21 @@ class Sandbox (State):
         base.setBackgroundColor (Vec4 (.4, .6, .9, 1))
         
         # light ramp
-        tempnode = NodePath(PandaNode("temp-node"))
-        tempnode.setAttrib (LightRampAttrib.makeSingleThreshold(0.5, 0.4))
-        tempnode.setShaderAuto()
-        base.cam.node().setInitialState (tempnode.getState ())
+        tempnode1 = NodePath(PandaNode("temp-node1"))
+        tempnode1.setAttrib (LightRampAttrib.makeSingleThreshold(0.5, 0.4))
+        tempnode1.setShaderAuto()
+        base.cam.node().setInitialState (tempnode1.getState ())
 
         # ink
-        self.separation = 1.1 # Pixels
+        self.separation = 0.75 # Pixels
         self.filters = CommonFilters (base.win, base.cam)
         filterok = self.filters.setCartoonInk (separation=self.separation)
-        
+
+        self.events.connect (
+            'panda-f',
+            lambda:
+            GlobalConf ().path ('panda.frame-meter').set_value (
+                not GlobalConf ().path ('panda.frame-meter').value))
 
     def do_update (self, timer):
         State.do_update (self, timer)

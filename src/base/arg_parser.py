@@ -17,66 +17,173 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+This module provides facilities to parse the command line arguments in
+a more convenient way than getopt.
+"""
+
 from error import *
 
 class ArgParserError (BaseError):
-
+    """
+    Common exception base for all argument parsing errors.
+    """
+    
     def __init__(self):
+        """ Constructor """
         BaseError.__init__(self, "Unknown argument parsing error")
 
 class UnknownArgError (ArgParserError):
+    """
+    Error thrown when an unknown option is passed as an argument.
+    """
 
     def __init__(self, arg):
+        """
+        Constructor.
+
+        Parameters:
+        arg -- The unknown argument string.
+        """
         BaseError.__init__(self, "Unknown arg: " + arg)
 
-class OptionBase:
-
+class OptionBase (object):
+    """
+    Common base for all kind of options. An 'option' is a handler for
+    a detected flag.
+    """
+    
     def parse_with(self, arg):
+        """
+        Parses the flag receiving one argument. Return False if the
+        option should not receive an argument or True if it correctly
+        parsed the argument.
+
+        Parameters:
+        arg -- Argument passed to the flag.
+        """
         return False
 
     def parse_flag(self):
+        """
+        Parses a flag receiving no argument. Return False if the
+        option should receive an argument or True if it correctly
+        handled the flag.
+        """
         return False
 
 class OptionWith (OptionBase):
+    """
+    An option that parses the flag argument using a given function,
+    storing it in the 'value' attribute.
 
+    Attributes:
+    value -- The value parsed.
+    """
+    
     def __init__(self, func, default=None):
+        """
+        Constructor.
+
+        Arguments:
+        func    -- The function to use to parse the string.
+        default -- The default value to assign to the value attribute. 
+        """
         self.value = default
         self._func = func
 
     def parse_with(self, arg):
+        """
+        Parses the option and returns True.
+        """
         self.value = self._func (arg)
         return True
 
 class OptionFlag (OptionBase):
+    """
+    This option parses a flag, storing a fixed result in the value
+    attribute.
 
+    Attributes:
+    value -- The resulting value.
+    """
+    
     def __init__(self, default = False, flag = True):
+        """
+        Constructor.
+
+        Arguments:
+        default -- The initial value for the value attribute.
+        flag    -- The value to assing to the value attribute in
+                   presence of a flag.
+        """
         self.value = default
         self.flag = flag
         
     def parse_flag(self):
+        """
+        Parses the flag.
+        """
         self.value = self.flag
         return True
          
 class OptionFunc (OptionBase):
-
+    """
+    This option runs a given function in the presence of a flag.
+    """
+    
     def __init__(self, func):
+        """
+        Constructor.
+
+        Arguments:
+        func -- The function to be run.
+        """
         self._func = func
     
     def parse_flag(self):
+        """
+        Runs the function.
+        """
         self._func ()
         return True
-     
-class ArgParser:
 
+
+class ArgParser (object):
+    """
+    Given a set of options this class parses the command line
+    arguments. Any free non flag arguments are stored in a list.
+
+    One can register more than one option in the same flag. In
+    presence of the flag, all the options will be called with no
+    arguments and, if more than option takes an argument, they will
+    consume the subsequent arguments one each in the order in which
+    they where registered. This allows you to have flags that take
+    multiple arguments.
+    """
+    
     def __init__(self):
+        """ Constructor """
         self._free_args = []
         self._long_ops = {}
         self._short_ops = {}
 
-    def get_free_args (self):
+    @property
+    def free_args (self):
+        """ Returns the list of free arguments, that should be ready
+        after parsing."""
         return self._free_args
     
     def add (self, shortarg, longarg, option):
+        """
+        Registers a new option into the parser.
+
+        Arguments:
+        shortarg -- Once character for the short version of the
+                    flag. Can be None.
+        longarg  -- Long version of the flag. Can be None.
+        option   -- Option object to parse the flag.
+        """
         if shortarg in self._short_ops:
             self._short_ops[shortarg].append(option)
         else:
@@ -90,6 +197,13 @@ class ArgParser:
         return self
     
     def parse (self, argv):
+        """
+        Parses a given list of command line arguments, invoking the
+        options and filling the free_args list.
+
+        Arguments:
+        argv -- The list of command line arguments.
+        """
         i = 1
         self._argc = len (argv)
         self._argv = argv
