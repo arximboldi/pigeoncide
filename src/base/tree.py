@@ -17,18 +17,19 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-class AutoTreeTraits:
+class AutoTreeTraits (object):
     name_type = str
     separator = '.'
     child_cls = None
 
-class AutoTree:
+class AutoTree (object):
     
-    def __init__ (self, traits = AutoTreeTraits):
-        self._traits = traits
+    def __init__ (self, *a, **k):
+        super (AutoTree, self).__init__ (*a, **k)
+        self._traits = k.get ('auto_tree_traits', AutoTreeTraits)
         self._parent = None
         self._childs = {}
-        self._name   = traits.name_type ()
+        self._name   = k.get ('name', self._traits.name_type ())
 
     def child (self, name):
         try:
@@ -41,7 +42,6 @@ class AutoTree:
             self.adopt (child, name)
         
         return child
-
     
     get_child = child
     
@@ -79,7 +79,7 @@ class AutoTree:
         if name is None:
             name = child._name
         
-        old_parent = child.parent ()
+        old_parent = child._parent
         if old_parent:
             old_parent.remove (child.get_name ())
         
@@ -95,12 +95,12 @@ class AutoTree:
         self._handle_tree_del_child (child)
         del self._childs [name]
         child.parent = None
-        child.name = self._traits.name_type ()
+        child._name = self._traits.name_type ()
 
         return child
 
     def rename (self, name):
-        if (self._parent):
+        if self._parent:
             del self._parent._childs [self._name]
             self._parent._childs [name] = self
         self._name = name

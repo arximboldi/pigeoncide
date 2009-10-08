@@ -1,5 +1,8 @@
 2009-10-09  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
 
+	* *.py: Solved conflicts with super, new-style classes and
+	multiple inheritance.
+
 	* *: Mayor refactoring in all the signaling and events
 	mechanism. Now it uses mixins to combine features that before lead
 	to exponential grouth of classes and to impose the receiver weight

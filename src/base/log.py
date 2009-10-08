@@ -33,10 +33,12 @@ LOG_DEBUG   = 2,  "debug"
 
 class StdLogListener (LogListener):
 
-    def __init__ (self,
+    def __init__ (self, 
                   level = LOG_INFO,
                   info_out = sys.stdout,
-                  error_out = sys.stderr):
+                  error_out = sys.stderr,
+                  *a, **k):
+        super (StdLogListener, self).__init__ (*a, **k)
         self.level = level
         self.info_output = info_out
         self.error_output = error_out
@@ -50,9 +52,8 @@ class StdLogListener (LogListener):
     
 class LogNode (AutoTree, LogSubject):
 
-    def __init__ (self, auto_tree_traits = AutoTreeTraits):
-        AutoTree.__init__ (self, auto_tree_traits)
-        LogSubject.__init__ (self)
+    def __init__ (self, *a, **k):
+        super (LogNode, self).__init__ (*a, **k)
 
     def log (self, level, msg):
         curr = self
@@ -84,7 +85,7 @@ class GlobalLog (LogNode):
         child_cls = LogNode
         
     def __init__ (self):
-        LogNode.__init__ (self, GlobalLog.Traits)
+        super (GlobalLog, self).__init__ (auto_tree_traits = GlobalLog.Traits)
 
 def log (path, level, msg):
     GlobalLog ().path (path).log (level, msg)

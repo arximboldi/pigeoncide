@@ -31,7 +31,7 @@ XML_TEMP_FILENAME = os.path.join (XML_TEST_PATH, 'base_xml_conf_temp_file.xml')
 class TestXmlConfWrite (unittest.TestCase):
 
     def test_write (self):
-        conf = ConfNode ('test')
+        conf = ConfNode (name = 'test')
         conf.path ('a').value = 1
         conf.path ('b.c').value = 2
         conf.path ('b.d').value = 3

@@ -28,7 +28,8 @@ class Receiver (Destiny):
 
 class Sender (Source):
 
-    def __init__ (self):
+    def __init__ (self, *a, **kw):
+        super (Sender, self).__init__ (*a, **kw)
         self._receivers = []
 
     def __del__ (self):

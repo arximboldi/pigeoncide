@@ -38,11 +38,10 @@ class XmlConfError (ConfError):
 
 class XmlConfBackend (NullBackend):
 
-    def __init__ (self, fname,
-                  update_on_change = False,
-                  update_on_nudge  = False):
-        self.save_on_change = update_on_change
-        self.save_on_nudge  = update_on_nudge
+    def __init__ (self, fname, *a, **k):
+        super (XmlConfBackend, self).__init__ (*a, **k)
+        self.save_on_change = k.get ('update_on_change', False)
+        self.save_on_nudge  = k.get ('update_on_nudge', False)
         self.file_name = fname
         
     def _do_load (self, node, overwrite):
@@ -77,8 +76,11 @@ class XmlConfBackend (NullBackend):
         if self.save_on_nudge:
             self._do_save (node)
 
-class XmlConfWriter:
+class XmlConfWriter (object):
+    
     def __init__ (self, fh):
+        super (XmlConfWriter, self).__init__ ()
+        
         self._fh = fh
         self._depth = 0
         
@@ -110,7 +112,9 @@ class XmlConfWriter:
         
 class XmlSaxConfParser (ContentHandler):
 
-    def __init__ (self, conf_node = None, setter = ConfNode.set_value):
+    def __init__ (self,
+                  conf_node = None,
+                  setter = ConfNode.set_value):
         self._curr_node = conf_node if conf_node else ConfNode ()
         self._curr_type = None
         self._depth = 0

@@ -25,12 +25,12 @@ class TestAutoTree (unittest.TestCase):
 
     class ValueTree (AutoTree):
         def __init__ (self, default = None):
-            AutoTree.__init__ (self)
+            super (TestAutoTree.ValueTree, self).__init__ ()
             self.value = default
 
     class CountingTree (AutoTree):
         def __init__ (self):
-            AutoTree.__init__ (self)
+            super (TestAutoTree.CountingTree, self).__init__ ()
             self.childs = 0
         def _handle_tree_new_child (self, child):
             self.childs += 1

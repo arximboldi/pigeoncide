@@ -60,7 +60,7 @@ class OptionConfFlag (OptionBase):
         return True
 
 
-class NullBackend:
+class NullBackend (object):
 
     def _handle_conf_new_node (self, node):
         pass
@@ -88,10 +88,9 @@ class NullBackend:
 
 class ConfNode (ConfSubject, AutoTree):
     
-    def __init__ (self, name='', auto_tree_traits = AutoTreeTraits):
-        AutoTree.__init__ (self, auto_tree_traits)
-        ConfSubject.__init__ (self)
-        self.rename (name)
+    def __init__ (self, *a, **k):
+        super (ConfNode, self).__init__ (*a, **k)
+        self.rename (k.get ('name', ''))
         self._val = None
         self._backend = NullBackend ()
 
@@ -161,4 +160,5 @@ class GlobalConf (ConfNode):
         child_cls = ConfNode
         
     def __init__ (self):
-        ConfNode.__init__ (self, '', GlobalConf.Traits)
+        super (GlobalConf, self).__init__ (name = '',
+                                           auto_tree_traits = GlobalConf.Traits)
