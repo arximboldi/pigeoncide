@@ -1,3 +1,10 @@
+2009-10-09  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
+
+	* *: Mayor refactoring in all the signaling and events
+	mechanism. Now it uses mixins to combine features that before lead
+	to exponential grouth of classes and to impose the receiver weight
+	on the emitters.
+
 2009-10-08  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
 
 	* src/base/arg_parser.py: Module documented.
