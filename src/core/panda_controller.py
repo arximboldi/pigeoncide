@@ -69,6 +69,7 @@ class PandaController (object):
 
     def listen_conf (self, cfg):
         cfg.on_conf_nudge += self.update_properties
+        
         cfg.child ('fps').on_conf_change += self.update_fps
         cfg.child ('frame-meter').on_conf_change += self.update_frame_meter
     

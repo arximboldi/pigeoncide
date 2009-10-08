@@ -27,11 +27,16 @@ class ConfError (BaseError):
     pass
 
 ConfSubject, ConfListener = \
-    make_observer (['conf_change',
-                    'conf_nudge',
-                    'conf_new_child',
-                    'conf_del_child'],
-                   'Conf')
+    make_observer ({'on_conf_change' :
+                    """ A new value is asigned """,
+                    'on_conf_nudge' :
+                    """ A nudge is sent to the node. """,
+                    'on_conf_new_child' :
+                    """ A new child has been created. """,
+                    'on_conf_del_child' :
+                    """ A child has been deleted. """},
+                   'Conf'
+                   )
 
 class OptionConfWith (OptionBase):
 

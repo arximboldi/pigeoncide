@@ -19,11 +19,16 @@
 
 import unittest
 from base.signal import *
+from base.meta import mixin
+
+
+CleverSlot = mixin (Trackable, Slot)
 
 class TestSignalSlot (unittest.TestCase):
 
-    class Counter:
+    class Counter (object):
         def __init__ (self, val = 0):
+            super (TestSignalSlot.Counter, self).__init__ ()
             self.val = val
         def increase (self):
             self.val += 1
@@ -55,6 +60,7 @@ class TestSignalSlot (unittest.TestCase):
         self.assertEquals (sig.count, 0)
 
     def test_cleverness (self):
+        
         sig_a = Signal ()
         sig_b = Signal ()
         cnt = TestSignalSlot.Counter ()
@@ -63,15 +69,15 @@ class TestSignalSlot (unittest.TestCase):
         sig_a += slt
         sig_a += slt
         sig_b += slt
-        self.assertEquals (slt.count, 2)
+        self.assertEquals (slt.source_count, 2)
 
         sig_a ()
         self.assertEquals (cnt.val, 1)
         sig_b ()
         self.assertEquals (cnt.val, 2)
 
-        slt.disconnect ()
-        self.assertEquals (slt.count, 0)
+        slt.disconnect_sources ()
+        self.assertEquals (slt.source_count, 0)
         self.assertEquals (sig_a.count, 0)
         self.assertEquals (sig_b.count, 0)
 
@@ -83,11 +89,12 @@ class TestSignalSlot (unittest.TestCase):
 
         d = Decorated ()
         self.assertEquals (d.function (), "called")
-        self.assertTrue (isinstance (d.function, CleverSlot))
+        self.assertTrue (isinstance (d.function, Trackable))
         self.assertEquals (d.function, d.function)
         
     def test_decorator_slotable (self):
-        class Decorated (Slotable):
+
+        class Decorated (Tracker):
             @slot
             def one (self):
                 return "one"
@@ -99,21 +106,22 @@ class TestSignalSlot (unittest.TestCase):
         s = Signal ()
 
         s += d.one
-        self.assertEqual (d._slots, [d.one])
+        self.assertEqual (d._trackables, [d.one])
         self.assertEqual (s.count, 1)
         
         s += d.two
-        self.assertEqual (d._slots, [d.one, d.two])
+        self.assertEqual (d._trackables, [d.one, d.two])
         self.assertEqual (s.count, 2)
 
         s += d.two
-        self.assertEqual (d._slots, [d.one, d.two])
+        self.assertEqual (d._trackables, [d.one, d.two])
         self.assertEqual (s.count, 2)
 
-        d.disconnect ()
+        d.disconnect_all ()
         self.assertEqual (s.count, 0)
 
     def test_decorator_signal (self):
+
         class Decorated (object):
             def __init__ (self):
                 self.value = 1
@@ -136,3 +144,34 @@ class TestSignalSlot (unittest.TestCase):
         res = d.before (1)
         self.assertEquals (res, 1)
 
+    def test_auto_signaler_set (self):
+        self._test_auto_signaler (AutoSignalSender)
+
+    def test_auto_forward_get (self):
+        self._test_auto_signaler (AutoSignalSenderGet)
+
+    def _test_auto_signaler (self, base_class):
+
+        class Tester (Receiver, base_class):
+            def __init__ (self):
+                base_class.__init__ (self)
+                self.value = 0
+                self.signal = Signal ()
+                self.signal += self.non_decorated
+                
+            @signal
+            def decorated (self, param):
+                self.value += param
+
+            def non_decorated (self, param):
+                self.value += -param
+
+        source = Tester ()
+        dest = Tester ()
+
+        source.connect (dest)
+        source.signal (1)
+        self.assertEqual (dest.value, -1)
+
+        source.decorated (2)
+        self.assertEqual (dest.value, 1)

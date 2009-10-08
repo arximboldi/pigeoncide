@@ -19,10 +19,10 @@
 
 """
 This module provides facilities to parse the command line arguments in
-a more convenient way than getopt.
+a more convenient way than 'getopt'.
 """
 
-from error import *
+from error import BaseError
 
 class ArgParserError (BaseError):
     """

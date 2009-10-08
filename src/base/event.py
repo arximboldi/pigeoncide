@@ -17,16 +17,17 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from base.log import get_log
-from base.signal import Signal
+from log import get_log
+from signal import Signal
+from sender import Sender, Receiver
 
 
 _log = get_log (__name__)
 
-class EventManager (object):
+class EventManager (Sender, Receiver):
 
     def __init__ (self):
-        self._forwarders = []
+        super (EventManager, self).__init__ ()
         self._events = {}
         self.quiet = False
         
@@ -35,10 +36,9 @@ class EventManager (object):
             if name in self._events:
                 self._events [name].notify (*args, **kw)
             else:
-                self._forward (name, *args, **kw)
+                self.send (name, *args, **kw)
 
-    def connect (self, name, slot):
-        return self.event (name).connect (slot)
+    receive = notify
     
     def event (self, name):
         if name in self._events:
@@ -46,28 +46,12 @@ class EventManager (object):
 
         _log.debug ('Creating event: ' + name)
         signal = Signal ()
-        signal += lambda *a, **k: self._forward (name, *a, **k)
+        signal += lambda *a, **k: self.send (name, *a, **k)
         self._events [name] = signal
         return signal
 
-    def add_forwarder (self, forwarder):
-        self._forwarders.append (forwarder)
-
-    def del_forwarder (self, forwarder):
-        self._forwarders.remove (forwarder)
-
-    @property
-    def forwarder_count (self):
-        return len (self._forwarders)
-
-    def clear (self, name = None):
+    def clear_events (self, name = None):
         if name:
             del self._events [name]
         else:
             self._events.clear ()
-    
-    def _forward (self, event, *args, **kw):
-        for f in self._forwarders:
-            f.notify (event, *args, **kw)
-    
-    

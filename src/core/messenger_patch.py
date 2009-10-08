@@ -68,7 +68,7 @@ def send (self, orig_event, sent_args=[], task_chain=None):
 def _patch_forward (self, event, sent_args=[]):
     _log.debug ('Forwarding panda event: ' + event)
     for f in self._patch_forwarders:
-        f.notify (event, *sent_args)
+        f.receive (event, *sent_args)
 
 
 @monkeypatch (Messenger)
@@ -84,7 +84,7 @@ def _patch_task_chain_forward (self, task_chain, task):
             if not event_tuple:
                 return task.done
                 
-            self.__patch_forward (*event_tuple)
+            self._patch_forward (*event_tuple)
         finally:
             self.lock.release ()
     assert False, 'Should not reach!'

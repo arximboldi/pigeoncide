@@ -17,10 +17,17 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Provides some error base clases to be used in all the project.
+"""
+
 from log import *
 
 class LoggableError (Exception):
-
+    """
+    Prueba
+    """
+    
     LEVEL      = LOG_ERROR
     MESSAGE    = ""
     ERROR_CODE = -1

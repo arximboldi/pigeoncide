@@ -18,9 +18,10 @@
 #
 
 from weakref import proxy
+
+from base.event import *
 from task import *
 from error import *
-from event import *
 
 class StateError (CoreError):
     pass
@@ -133,13 +134,13 @@ class StateManager (Task):
     def _push_state (self, state_cls):        
         state = state_cls (self)
         self._tasks.add (state)
-        self._events.add_forwarder (state.events)
+        self._events.connect (state.events)
         state.setup ()
         self._state_stack.append (state)
 
     def _pop_state (self):
         state = self._state_stack.pop ()
-        self._events.del_forwarder (state.events)
+        self._events.disconnect (state.events)
         state.kill ()
         state.release ()
         

@@ -17,6 +17,16 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from util import memoize
+
+@memoize
+def mixin (one, two):
+    class Mixin (one, two):
+        def __init__ (self, *args, **kws):
+            super (Mixin, self).__init__ (*args, **kws)
+
+    return Mixin
+
 
 def monkeypatch (target, name = None):
     def patcher (func):

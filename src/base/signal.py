@@ -17,84 +17,48 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from functools import partial
-from weakref import *
+from connection import *
+from sender import *
 from util import *
 from meta import *
+from proxy import *
 
-
-class Slot (object):
+class Slot (Destiny):
 
     def __init__ (self, func):
+        super (Slot, self).__init__ ()
         self.func = func
 
     def __call__ (self, *args, **kw):
         return self.func (*args, **kw)
 
-    def _handle_connect (self, signal):
-        pass
 
-    def _handle_disconnect (self, signal):
-        pass
-
-
-class CleverSlot (Slot):
-
-    def __init__ (self, func):
-        Slot.__init__ (self, func)
-        self._signals = []
-
-    def _handle_connect (self, signal):
-        self._signals.append (ref (signal))
-
-    def _handle_disconnect (self, signal):
-        self._signals = remove_if (lambda x : x () == signal, self._signals)
-
-    def disconnect (self):
-        while len (self._signals) > 0:
-            if self._signals [0] ():
-                self._signals [0] ().disconnect (self)
-
-    @property
-    def count (self):
-        return len (self._signals)
-
-
-class Signal (object):
+class Signal (Source):
 
     def __init__ (self):
         self._slots = []
 
     def __del__ (self):
         for slot in self._slots:
-            slot._handle_disconnect (self)
-       
+            slot.handle_disconnect (self)
+
     def connect (self, slot):
         if not isinstance (slot, Slot): 
             slot = Slot (slot)
 
         if not slot in self._slots:
             self._slots.append (slot)
-            slot._handle_connect (self)
+            slot.handle_connect (self)
         
         return slot
 
     def disconnect (self, slot):
         if isinstance (slot, Slot):
-            slot._handle_disconnect (self)
+            slot.handle_disconnect (self)
             self._slots.remove (slot)
         else:
             self._disconnect_func (slot)
-    
-    def _disconnect_func (self, func):
-        def pred (slot):
-            if slot.func == func:
-                slot._handle_disconnect (self)
-                return True
-            return False
-            
-        self._slots = remove_if (pred, self._slots)
-    
+        
     def notify (self, *args, **kw):
         for slot in self._slots:
             slot (*args, **kw)
@@ -114,52 +78,118 @@ class Signal (object):
         return self
         
     def __call__ (self, *args, **kw):
-        self.notify (*args, **kw)
+        return self.notify (*args, **kw)
     
     def clear (self):
+        for slot in self._slots:
+            slot.handle_disconnect (self)
         del self._slots [:]
 
     @property
     def count (self):
         return len (self._slots)
 
+    def _disconnect_func (self, func):
+        def pred (slot):
+            if slot.func == func:
+                slot.handle_disconnect (self)
+                return True
+            return False
+            
+        self._slots = remove_if (pred, self._slots)
 
-class Slotable (object):
 
-    def __init__ (self):
-         self._slots = []
+class AutoSignalSenderGet (Sender):
 
-    def disconnect (self):
-        for s in self._slots:
-            s.disconnect ()
+    def __getattribute__ (self, name):
+        attr = object.__getattribute__ (self, name)
+        if isinstance (attr, Signal):
+            return SenderSignalProxy (attr, self, name)
+        return attr
+
+
+class AutoSignalSender (Sender):
+
+    def __setattr__ (self, name, attr):
+        if isinstance (attr, Signal):
+            object.__setattr__ (self, name,
+                                SenderSignalProxy (attr, self, name))
+        else:
+            object.__setattr__ (self, name, attr)        
+        return attr
+
+
+class SenderSignal (Signal):
+
+    def __init__ (self, sender, message):
+        super (SenderSignal, self).__init__ ()
+        self._sender = sender
+        self._signame = signame
+    
+    def notify (self, *args, **kws):
+        super (SenderSignal, self).notify (self, *args, **kws)
+        self._sender.send (message, *args, **kws)
+
+
+class SenderSignalProxy (AutoProxy):
+    
+    def __init__ (self, signal, sender, signame):
+        super (SenderSignalProxy, self).__init__ (signal)
+        self._sender = sender
+        self._signame = signame
+
+    def __call__ (self, *args, **kws):
+        self.notify (*args, **kws)
+
+    def notify (self, *args, **kws):
+        self.proxied.notify (*args, **kws)
+        self._sender.send (self._signame, *args, **kws)
 
 
 @instance_decorator
 def slot (obj, func):
-    s = CleverSlot (lambda *a, **k: func (obj, *a, **k))
-    if isinstance (obj, Slotable):
-        obj._slots.append (s)
+    s = mixin (Trackable, Slot) (lambda *a, **k: func (obj, *a, **k))
+    if isinstance (obj, Tracker):
+        obj.register_trackable (s)
     return s
 
 
 @instance_decorator
-def signal (obj, func):    
-    class ExtendedSignal (Signal):
-        def __call__ (self, *args, **kws):
-            res = func (obj, *args, **kws)
-            Signal.__call__ (self, *args, **kws)
-            return res
+def signal (obj, func):
+    if isinstance (obj, Sender) and not \
+       isinstance (obj, AutoSignalSenderGet):
+        class ExtendedSignal (Signal):
+            def notify (self, *args, **kws):
+                res = func (obj, *args, **kws)
+                obj.send (func.__name__, *args, **kws)
+                Signal.notify (self, *args, **kws)
+                return res
+    else:
+        class ExtendedSignal (Signal):
+            def notify (self, *args, **kws):
+                res = func (obj, *args, **kws)
+                Signal.notify (self, *args, **kws)
+                return res
 
     return ExtendedSignal ()
 
 
 @instance_decorator
 def signal_before (obj, func):
-    class ExtendedSignalBefore (Signal):
-        def __call__ (self, *args, **kws):
-            Signal.__call__ (self, *args, **kws)
-            res = func (obj, *args, **kws)
-            return res
+    if isinstance (obj, Sender) and not\
+       isinstance (obj, AutoSignalSenderGet):
+        class ExtendedSignalBefore (Signal):
+            def notify (self, *args, **kws):
+                obj.send (func.__name__, *args, **kws)
+                Signal.notify (self, *args, **kws)
+                res = func (obj, *args, **kws)
+                return res
+    else:
+        class ExtendedSignalBefore (Signal):
+            def notify (self, *args, **kws):
+                Signal.notify (self, *args, **kws)
+                res = func (obj, *args, **kws)
+                return res
         
     return ExtendedSignalBefore ()
 

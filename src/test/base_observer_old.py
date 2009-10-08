@@ -18,7 +18,7 @@
 #
 
 import unittest
-from base.observer import *
+from base.observer_old import *
 
 TEST_SIGNALS = ["sig_one", "sig_two", "sig_three"]
 

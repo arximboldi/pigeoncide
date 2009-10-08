@@ -17,216 +17,64 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import new
+
 from signal import *
 from meta import *
-
+from connection import *
 
 class Naming:
     SUBJECT_CLASS_POSTFIX  = 'Subject'
     LISTENER_CLASS_POSTFIX = 'Listener'
 
-    SIGNAL_PREFIX          = 'on_'
-    SLOT_PREFIX            = '_slot_'
-    HANDLER_PREFIX         = 'handle_'
-
-    DISCONNECT_FUNCTION    = 'disconnect'
-    ADD_LISTENER_FUNCTION  = 'add_listener'
-    DEL_LISTENER_FUNCTION  = 'del_listener'
-    CLEAR_FUNCTION         = 'clear'
-
-
-def make_observer (signals, cls_lexeme = '_Some', 
-                   sub_doc = '', lst_doc = '',
-                   defret = None, names = Naming):
-    return make_observer_with (make_subject_methods,
-                               make_listener_methods,
-                               signals, cls_lexeme,
-                               lst_doc, sub_doc, defret, names)
-
-
-def make_clever_observer (signals, cls_lexeme = '_Some',
-                          lst_doc = '', sub_doc = '',
-                          defret = None, names = Naming):
-    return make_observer_with (make_clever_subject_methods,
-                               make_clever_listener_methods,
-                               signals, cls_lexeme,
-                               lst_doc, sub_doc, defret, names)
-
-
-def make_light_observer (signals, cls_lexeme = '_Some', 
-                          lst_doc = '', sub_doc = '',
-                          defret = None, names = Naming):
-    return make_observer_with (make_light_observer_methods,
-                               make_light_listener_methods,
-                               signals, cls_lexeme,
-                               lst_doc, sub_doc, defret, names)
+def make_observer (signals,
+                   prefix = 'Some',
+                   subject_doc = '',
+                   listener_doc = '',
+                   default_ret = None,
+                   use_signals = True,
+                   names = Naming):
     
-def make_observer_with (sub_mthd_fn, lst_mthd_fn,
-                        signals, cls_lexeme = '_Some',
-                        sub_doc = '', lst_doc = '',
-                        defret = None, names = Naming):
-    sub_dir = sub_mthd_fn (signals, names)
-    sub_dir ['__doc__'] = sub_doc
-    sub_cls = type (cls_lexeme + names.SUBJECT_CLASS_POSTFIX,
-                    (object,), sub_dir)
+    listener = type (
+        prefix + names.LISTENER_CLASS_POSTFIX,
+        (Receiver,),
+        { '__doc__' : listener_doc
+        , 'SIGNALS' : signals
+        , 'DEFAULT_RETURN' : default_ret
+        })
 
-    lst_dir = lst_mthd_fn (signals, defret, names)
-    lst_dir ['__doc__'] = lst_doc
-    lst_cls = type (cls_lexeme + names.LISTENER_CLASS_POSTFIX,
-                    (object,), lst_dir)
-
-    return sub_cls, lst_cls
+    _extend_observer_class (listener, _listener_make_signal)
     
+    subject = type (
+        prefix + names.LISTENER_CLASS_POSTFIX,
+        (Sender,),
+        { '__doc__' : subject_doc
+        , 'SIGNALS' : signals
+        , 'DEFAULT_RETURN' : default_ret
+        })
 
-def clever_observer (subject_cls, listener_cls, signals,
-                     defret = None, names = Naming):
-    clever_subject (subject_cls, signals, names)
-    clever_listener (listener_cls, signals, defret, names)
+    _extend_observer_class (subject,
+                            _signal_subject_make_signal if use_signals else
+                            _subject_make_signal)
 
-    return subject_cls, listener_cls
+    return subject, listener
 
+def _extend_observer_class (cls, build_signal_fn):
+    for message in cls.SIGNALS:
+        method = build_signal_fn (cls, message)
+        method.__name__ = message
+        if isinstance (cls.SIGNALS, dict):
+            method.__doc__ = cls.SIGNALS [message]
+        setattr (cls, message, method)
 
-def light_observer (subject_cls, listener_cls, signals,
-                    defret = None, names = Naming):
-    light_subject (subject_cls, signals, names)
-    light_listener (listener_cls, signals, defret, names)
-
-    return subject_cls, listener_cls
-
-
-def observer (subject_cls, listener_cls, signals,
-              defret = None, names = Naming):
-    subject (subject_cls, signals, names)
-    listener (listener_cls, signals, defret, names)
-
-    return subject_cls, listener_cls
-
-
-def subject (cls, signals, names = Naming):
-    return extend_methods (
-        cls, **make_subject_methods (signals, names))
-
-
-def listener (cls, signals, defret = None, names = Naming):
-    return extend_methods (
-        cls, **make_listener_methods (signals, defret, names))
-
-
-def clever_listener (cls, signals, defret = None, names = Naming):
-    return extend_methods (
-        cls, **make_clever_listener_methods (signals, defret, names))
-
-
-clever_subject = subject
-
-
-light_listener = listener
-
-
-def light_subject (cls, signals, names = Naming):
-    return extend_methods (
-        cls, **make_light_subject_methods (signals, names))
-
-
-def make_clever_listener_methods (signals, defret = None, names = Naming):
-    def init (self):
-        for sig in signals:
-            setattr (self, names.SLOT_PREFIX + sig, CleverSlot (
-                getattr (self, names.HANDLER_PREFIX + sig)))
-    def disconnect (self):
-        for sig in signals:
-            getattr (self, names.SLOT_PREFIX + sig).disconnect ()
-
-    methods = { '__init__' : init,
-               names.DISCONNECT_FUNCTION : disconnect }
+def _listener_make_signal (cls, name):
+    return lambda self, *a, **k: cls.DEFAULT_RETURN
     
-    methods.update (make_listener_methods (signals, defret, names))
-    return methods
+def _subject_make_signal (cls, name):
+    return lambda self, *a, **k: self.send (name, a, k)
 
-
-def make_clever_subject_methods (signals, names = Naming):
-
-    def add_listener (self, listener):
-        for sig in signals:
-            getattr (self, names.SIGNAL_PREFIX + sig).connect (
-                getattr (listener, names.SLOT_PREFIX + sig))
-
-    methods = make_subject_methods (signals, names)
-    methods [names.ADD_LISTENER_FUNCTION] = add_listener
-    
-    return methods
-
-
-def make_light_subject_methods (signals, names = Naming):
-    def init (self):
-        self._listeners = []
-
-    def add_listener (self, listener):
-        self._listeners.append (listener)
-        return listener
-
-    def del_listener (self, listener):
-        self._listeners.remove (listener)
-        return listener
-
-    def clear (self):
-        del self._listeners [:]
-    
-    methods = {'__init__' : init,
-               names.ADD_LISTENER_FUNCTION : add_listener,
-               names.DEL_LISTENER_FUNCTION : del_listener,
-               names.CLEAR_FUNCTION : clear }
-
-    for sig in signals:
-        handler = names.HANDLER_PREFIX + sig
-        def signal_func (self, __handler = handler, *args, **kw):
-            for listener in self._listeners:
-                getattr (listener, __handler) (*args, **kw)
-        methods [names.SIGNAL_PREFIX + sig] = signal_func
-
-    return methods 
-
-
-def make_listener_methods (signals, defret = None, names = Naming):
-
-    def empty_method (self, *args, **kw):
-        return defret
-
-    methods = {} 
-    for sig in signals:
-        methods [names.HANDLER_PREFIX + sig] = empty_method
-
-    return methods
-
-
-def make_subject_methods (signals, names = Naming):
-
-    def init (self):
-        for sig in signals:
-            setattr (self, names.SIGNAL_PREFIX + sig, Signal ())
-
-    def add_listener (self, listener):
-        for sig in signals:
-            getattr (self, names.SIGNAL_PREFIX + sig).connect (
-                getattr (listener, names.HANDLER_PREFIX + sig))
-
-    def del_listener (self, listener):
-        for sig in signals:
-            getattr (self, names.SIGNAL_PREFIX + sig).disconnect (
-                getattr (listener, names.HANDLER_PREFIX + sig))
-
-    def clear (self):
-        for sig in signals:
-            getattr (self, names.SIGNAL_PREFIX + sig).clear ()
-
-    methods = {'__init__' : init,
-               names.ADD_LISTENER_FUNCTION : add_listener,
-               names.DEL_LISTENER_FUNCTION : del_listener,
-               names.CLEAR_FUNCTION : del_listener }
-    
-    return methods
-
-
-make_light_listener_methods = make_listener_methods
-
+def _signal_subject_make_signal (cls, name):
+    func = lambda *a, **k: None
+    func.__name__ = name
+    return signal (func)
 

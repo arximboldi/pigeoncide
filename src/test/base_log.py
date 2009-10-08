@@ -30,7 +30,7 @@ class TestLog (unittest.TestCase):
 
         self.node = LogNode ()
         self.node.name = "test"
-        self.node.add_listener (
+        self.node.connect (
             StdLogListener (LOG_INFO,
                             self.info_out,
                             self.error_out))

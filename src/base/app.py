@@ -84,7 +84,7 @@ Options:
             self._std_logger = StdLogListener ()
             GlobalConf ().rename (self.NAME)
             GlobalLog ().rename (self.NAME)
-            GlobalLog ().add_listener (self._std_logger)
+            GlobalLog ().connect (self._std_logger)
         
         args = self.make_args ()
         self.do_prepare (args)
@@ -94,7 +94,7 @@ Options:
             self.setup_folders ()
             self.setup_log ()
             self.load_config ()
-            ret_val = self.do_execute (args.get_free_args ())
+            ret_val = self.do_execute (args.free_args)
             self.save_config ()
             self.close_log ()
         except AppSuccess, e:

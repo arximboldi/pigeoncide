@@ -23,7 +23,7 @@ from singleton import Singleton
 import sys
 
 LogSubject, LogListener = \
-    make_observer (["message"], "Log")
+    make_observer (['on_message'], 'Log')
 
 LOG_FATAL   = 10, "fatal"
 LOG_ERROR   = 8,  "error"
@@ -41,7 +41,7 @@ class StdLogListener (LogListener):
         self.info_output = info_out
         self.error_output = error_out
 
-    def handle_message (self, node, level, msg):
+    def on_message (self, node, level, msg):
         if level >= self.level:
             out = self.info_output if level <= LOG_INFO else self.error_output
             out.write ('[' + node.get_path_name () + '] ' +
@@ -74,6 +74,7 @@ class LogNode (AutoTree, LogSubject):
 
     def debug (self, msg):
         self.log (LOG_DEBUG, msg)
+
     
 class GlobalLog (LogNode):
 

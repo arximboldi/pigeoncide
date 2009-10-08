@@ -40,7 +40,7 @@ from direct.filter.CommonFilters import CommonFilters
 class Sandbox (State):
 
     def setup (self):
-        self.events.connect ('panda-escape', self.kill)
+        self.events.event ('panda-escape').connect (self.kill)
 
         m = loader.loadModel ('../data/mesh/pigeon.x')
         m.reparentTo(render)
@@ -74,8 +74,7 @@ class Sandbox (State):
         self.filters = CommonFilters (base.win, base.cam)
         filterok = self.filters.setCartoonInk (separation=self.separation)
 
-        self.events.connect (
-            'panda-f',
+        self.events.event ('panda-f').connect (
             lambda:
             GlobalConf ().path ('panda.frame-meter').set_value (
                 not GlobalConf ().path ('panda.frame-meter').value))
