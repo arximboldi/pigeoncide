@@ -45,7 +45,7 @@ class UnknownArgError (ArgParserError):
         Parameters:
         arg -- The unknown argument string.
         """
-        BaseError.__init__(self, "Unknown arg: " + arg)
+        super (ArgParserError, self).__init__("Unknown arg: " + arg)
 
 class OptionBase (object):
     """
@@ -89,6 +89,7 @@ class OptionWith (OptionBase):
         func    -- The function to use to parse the string.
         default -- The default value to assign to the value attribute. 
         """
+        super (OptionWith, self).__init__ ()
         self.value = default
         self._func = func
 
@@ -117,6 +118,7 @@ class OptionFlag (OptionBase):
         flag    -- The value to assing to the value attribute in
                    presence of a flag.
         """
+        super (OptionFlag, self).__init__ ()
         self.value = default
         self.flag = flag
         
@@ -139,6 +141,7 @@ class OptionFunc (OptionBase):
         Arguments:
         func -- The function to be run.
         """
+        super (OptionFunc, self).__init__ ()
         self._func = func
     
     def parse_flag(self):
@@ -162,8 +165,9 @@ class ArgParser (object):
     multiple arguments.
     """
     
-    def __init__(self):
+    def __init__(self, *a, **k):
         """ Constructor """
+        super (ArgParser, self).__init__ (*a, **k)
         self._free_args = []
         self._long_ops = {}
         self._short_ops = {}

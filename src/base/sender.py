@@ -26,34 +26,8 @@ class Receiver (Destiny):
             raise AttributeError ('Uncaugh message: ' + message)
         return getattr (self, message) (*args, **kws)
 
-class Sender (Source):
+class Sender (Container):
 
-    def __init__ (self, *a, **kw):
-        super (Sender, self).__init__ (*a, **kw)
-        self._receivers = []
-
-    def __del__ (self):
-        for receiver in self._receivers:
-            receiver.handle_disconnect (self)
-
-    def connect (self, receiver):
-        if not receiver in self._receivers:
-            receiver.handle_connect (self)
-            self._receivers.append (receiver)
-
-    def disconnect (self, receiver):
-        self._receivers.remove (receiver)
-        receiver.handle_disconnect (self)
-        
     def send (self, signal_name, *args, **kws):
-        for f in self._receivers:    
+        for f in self._destinies:    
             f.receive (signal_name, *args, **kws)
-
-    def clear (self):
-        for receiver in self._receivers:
-            receiver.handle_disconnect (self)
-        del self._receivers [:]
-
-    @property
-    def receiver_count (self):
-        return len (self._receivers)

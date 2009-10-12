@@ -33,34 +33,21 @@ class Slot (Destiny):
         return self.func (*args, **kw)
 
 
-class Signal (Source):
-
-    def __init__ (self):
-        self._slots = []
-
-    def __del__ (self):
-        for slot in self._slots:
-            slot.handle_disconnect (self)
+class Signal (Container):
 
     def connect (self, slot):
         if not isinstance (slot, Slot): 
             slot = Slot (slot)
-
-        if not slot in self._slots:
-            self._slots.append (slot)
-            slot.handle_connect (self)
-        
-        return slot
+        return super (Signal, self).connect (slot)
 
     def disconnect (self, slot):
         if isinstance (slot, Slot):
-            slot.handle_disconnect (self)
-            self._slots.remove (slot)
+            super (Signal, self).disconnect (slot)
         else:
-            self._disconnect_func (slot)
+            super (Signal, self).disconnect_if (lambda x: x.func == slot)
         
     def notify (self, *args, **kw):
-        for slot in self._slots:
+        for slot in self._destinies:
             slot (*args, **kw)
     
     def fold (self, folder, ac = None):
@@ -68,10 +55,10 @@ class Signal (Source):
             return folder (ac, func ())
             
         if ac is None:
-            ac = self._slots[0] ()
-            return reduce (executor, self._slots [1:], ac)
+            ac = self._destinies[0] ()
+            return reduce (executor, self._destinies [1:], ac)
         else:    
-            return reduce (executor, self._slots, ac)
+            return reduce (executor, self._destinies, ac)
     
     def __iadd__ (self, slot):
         self.connect (slot)
@@ -79,24 +66,6 @@ class Signal (Source):
         
     def __call__ (self, *args, **kw):
         return self.notify (*args, **kw)
-    
-    def clear (self):
-        for slot in self._slots:
-            slot.handle_disconnect (self)
-        del self._slots [:]
-
-    @property
-    def count (self):
-        return len (self._slots)
-
-    def _disconnect_func (self, func):
-        def pred (slot):
-            if slot.func == func:
-                slot.handle_disconnect (self)
-                return True
-            return False
-            
-        self._slots = remove_if (pred, self._slots)
 
 
 class AutoSignalSenderGet (Sender):

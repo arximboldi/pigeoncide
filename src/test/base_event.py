@@ -28,13 +28,13 @@ class TestEventManager (unittest.TestCase):
         x = Receiver ()
         y = Receiver ()
         e.connect (x)
-        self.assertEqual (e.receiver_count, 1)
+        self.assertEqual (e.count, 1)
         e.connect (y)
-        self.assertEqual (e.receiver_count, 2)
+        self.assertEqual (e.count, 2)
         e.disconnect (x)
-        self.assertEqual (e.receiver_count, 1)
+        self.assertEqual (e.count, 1)
         e.disconnect (y)
-        self.assertEqual (e.receiver_count, 0)
+        self.assertEqual (e.count, 0)
         self.assertRaises (ValueError, e.disconnect, x)
 
     def test_forward_and_quiet (self):

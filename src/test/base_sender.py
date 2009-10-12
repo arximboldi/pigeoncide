@@ -36,19 +36,19 @@ class TestSender (unittest.TestCase):
         self.sender = Sender ()
 
     def test_add_del (self):
-        self.assertEqual (self.sender.receiver_count, 0)
+        self.assertEqual (self.sender.count, 0)
         self.sender.connect (self.one)
-        self.assertEqual (self.sender.receiver_count, 1)
+        self.assertEqual (self.sender.count, 1)
         self.sender.connect (self.two)
-        self.assertEqual (self.sender.receiver_count, 2)
+        self.assertEqual (self.sender.count, 2)
         self.sender.connect (self.two)
-        self.assertEqual (self.sender.receiver_count, 2)
+        self.assertEqual (self.sender.count, 2)
 
         self.sender.disconnect (self.two)
-        self.assertEqual (self.sender.receiver_count, 1)
+        self.assertEqual (self.sender.count, 1)
         self.assertRaises (ValueError, self.sender.disconnect, self.two)
         self.sender.disconnect (self.one)
-        self.assertEqual (self.sender.receiver_count, 0)
+        self.assertEqual (self.sender.count, 0)
 
     def test_sending (self):
         self.sender.connect (self.one)

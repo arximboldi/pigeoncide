@@ -1,3 +1,12 @@
+2009-10-12  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
+
+	* src/base/tree.py: Documented.
+
+	* src/base/connection.py: Added new class Container that is in
+	charge of managing a collection of destinies. This simplifies the
+	implementation of Receiver and Signal, which both shared too much
+	behaviour.
+
 2009-10-09  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
 
 	* *.py: Solved conflicts with super, new-style classes and

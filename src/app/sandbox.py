@@ -46,6 +46,12 @@ class Sandbox (State):
         m.reparentTo(render)
         m.setPos (0, 70, -20)
 
+        m2 = loader.loadModel ('../data/mesh/cloud.x')
+        m2.reparentTo(render)
+        m2.setPos (0, 0, -100)
+        m2.setScale (3, 3, 3)
+
+
         def rotate_task (t):
             m.setHpr (t.elapsed * 10, 0, 0)
             return Task.RUNNING
@@ -54,9 +60,9 @@ class Sandbox (State):
         plightnode = PointLight("point light")
         plightnode.setAttenuation(Vec3(1,0,0))
         plight = render.attachNewNode(plightnode)
-        plight.setPos(30,-50,0)
+        plight.setPos(100, -100, 1000)
         alightnode = AmbientLight("ambient light")
-        alightnode.setColor(Vec4(0.8,0.8,0.8,1))
+        alightnode.setColor(Vec4(0.4,0.4,0.4,1))
         alight = render.attachNewNode(alightnode)
         render.setLight(alight)
         render.setLight(plight)
@@ -65,14 +71,17 @@ class Sandbox (State):
         
         # light ramp
         tempnode1 = NodePath(PandaNode("temp-node1"))
-        tempnode1.setAttrib (LightRampAttrib.makeSingleThreshold(0.5, 0.4))
+        #  tempnode1.setAttrib (LightRampAttrib.makeDoubleThreshold(0.4, 0.5, 0.5, 0.9))
+        tempnode1.setAttrib (LightRampAttrib.makeHdr0())
+        tempnode1.setAttrib (LightRampAttrib.makeHdr1())
+        tempnode1.setAttrib (LightRampAttrib.makeHdr2())
         tempnode1.setShaderAuto()
         base.cam.node().setInitialState (tempnode1.getState ())
 
         # ink
-        self.separation = 0.75 # Pixels
-        self.filters = CommonFilters (base.win, base.cam)
-        filterok = self.filters.setCartoonInk (separation=self.separation)
+        # self.separation = 1.3 # Pixels
+        # self.filters = CommonFilters (base.win, base.cam)
+        # filterok = self.filters.setCartoonInk (separation=self.separation)
 
         self.events.event ('panda-f').connect (
             lambda:

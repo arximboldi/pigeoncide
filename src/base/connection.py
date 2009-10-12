@@ -38,6 +38,46 @@ class Destiny (object):
         pass
 
 
+class Container (Source):
+
+    def __init__ (self, *a, **kw):
+        super (Container, self).__init__ (*a, **kw)
+        t = kw.get ('container_type', list)
+        self._destinies = t ()
+
+    def __del__ (self):
+        for dest in self._destinies:
+            dest.handle_disconnect (self)
+
+    def connect (self, destiny):
+        if destiny not in self._destinies:
+            self._destinies.append (destiny)
+            destiny.handle_connect (self)
+        return destiny
+    
+    def disconnect (self, destiny):
+        self._destinies.remove (destiny)
+        destiny.handle_disconnect (self)
+
+    def disconnect_if (self, predicate):
+        def pred (dest):
+            if predicate (dest):
+                dest.handle_disconnect (self)
+                return True
+            return False
+        
+        self._destinies = remove_if (pred, self._destinies)
+
+    def clear (self):
+        for dest in self._destinies:
+            dest.handle_disconnect (self)
+        del self._destinies [:]
+
+    @property
+    def count (self):
+        return len (self._destinies)
+
+
 class Trackable (object):
 
     def __init__ (self, *a, **kw):

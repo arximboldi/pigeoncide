@@ -17,21 +17,74 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+This module provides a generic implementation of the Composite
+pattern.
+"""
+
 class AutoTreeTraits (object):
+    """
+    This class encapsulates the parameters for an AutoTree
+    hierachy. Inherit from it and overried the required parameters to
+    obtain a new object that you can pass to AutoTree's constructor.
+
+    Class members:
+
+    - name_type: The class to be used to build the name objects to
+    label the nodes of the auto tree.
+
+    - separator: When building the path name of a tree it will be
+    formed concatenating the names of the childs in the path using
+    this as separator.
+
+    - child_cls: Class to be used when the auto_tree has to create a
+    new object. If None, AutoTree will use self.__class__ as the class
+    to use, which is the proper behaviour in most cases as you are
+    supposed to inherit your nodes from AutoTree.
+    """
+
     name_type = str
     separator = '.'
     child_cls = None
 
+
 class AutoTree (object):
+    """
+    This class provides a way to create a hierarchy of objects. This
+    can be considered a generic implementation of the Composite design pattern.
+
+    Usage: A tree is not a normal tree, it is not intended to be used
+    as a container. It is inteded to be used to create objects that
+    contain their own childs in the hierarchy. This is a typical
+    approach, for example, in Widget frameworks. This class can be
+    used both as a mix-in or inheriting from it. As an invariant, a
+    node can only belong to one AutoTree.
+    """
     
     def __init__ (self, *a, **k):
+        """
+        Constructor.
+
+        Keyword parameters:
+        - auto_tree_traits: Object containing the behaviour parameters
+        of the auto-tree. By default it is the AutoTreeTraits class.
+        - name: Name to give to this node.
+        """
+
         super (AutoTree, self).__init__ (*a, **k)
         self._traits = k.get ('auto_tree_traits', AutoTreeTraits)
         self._parent = None
         self._childs = {}
-        self._name   = k.get ('name', self._traits.name_type ())
+        self._name = k.get ('name', self._traits.name_type ())
 
     def child (self, name):
+        """
+        Return a child given its name. If it does not exist, it
+        creates a new instance of self.__class__ or the class
+        specified in the traits, gives it the specified name, inserts
+        it into the tree, and returns it.
+        """
+        
         try:
             child = self._childs [name]
         except KeyError:
@@ -39,25 +92,43 @@ class AutoTree (object):
                 child = self._traits.child_cls ()
             else:
                 child = self.__class__ ()
-            self.adopt (child, name)
+                self.adopt (child, name)
         
         return child
     
     get_child = child
     
     def path (self, path_name):
+        """
+        Returns the child that is specified in the given path.  All
+        the non existing nodes along the path are created using de
+        rules described in 'child'.
+        """
+        
         path = str.split (path_name, self._traits.separator)
         return reduce (AutoTree.child, path, self)
 
     get_path = path
     
     def get_name (self):
+        """
+        Returns the name of this node.
+        """
         return self._name
 
     def get_path_name (self):
+        """
+        Returns the absolute path of this node starting from the root.
+        """
         return self._traits.separator.join (self.get_path_list ())
 
     def get_path_list (self, base = None):
+        """
+        Appends the absolute path of this node starting from the root
+        as a list of strings (names of the intermediate nodes) to the
+        list passed in the parameter 'base'.
+        """
+        
         if base is None:
             base = []
             
@@ -68,14 +139,29 @@ class AutoTree (object):
         else:
             base.append (self._name)
             return base
-    
+
     def parent (self):
+        """
+        Returns the parent of this node.
+        """
         return self._parent
 
     def reparent (self, parent):
-        parent.adopt (self)
+        """
+        Changes the parent of this node to 'parent'. Note that if the
+        node had a parent already it is extracted from that tree. Be
+        careful because this method does not check agains circular
+        references.
+        """
+        return parent.adopt (self)
 
     def adopt (self, child, name = None):
+        """
+        Adopts a the node 'child' value renaming it to 'name'. Note
+        that the child won't be renamed if 'name' is None. Also, if
+        the child had a parent already, it is removed from that tree.
+        """
+        
         if name is None:
             name = child._name
         
@@ -91,31 +177,53 @@ class AutoTree (object):
         return child
     
     def remove (self, name):
+        """        
+        Removes the child named 'name' from the tree. That child is
+        now a root value.
+        """
+        
         child = self._childs [name]
         self._handle_tree_del_child (child)
         del self._childs [name]
-        child.parent = None
+        child._parent = None
         child._name = self._traits.name_type ()
 
         return child
 
     def rename (self, name):
+        """
+        Changes the name of this node to 'name'
+        """
+        
         if self._parent:
             del self._parent._childs [self._name]
             self._parent._childs [name] = self
         self._name = name
 
     def dfs_preorder (self, func):
+        """
+        Crawls the tree in preorder deep-first-search calling func ()
+        on every node. 'func' should therefore accept a node as a
+        parameter.
+        """
+        
         func (self)
         for child in self._childs.values ():
             child.dfs_preorder (func)
 
     def dfs_postorder (self, func):
+        """
+        Same as 'dfs_preorder', but using postorder deep-first-search.
+        """
+        
         for child in self._childs.values ():
             child.dfs_postorder (func)
         func (self)
 
     def childs (self):
+        """
+        Returns a iterator over the childs of this node.
+        """
         return self._childs.values ()
     
     def _handle_tree_new_child (self, child):
@@ -124,5 +232,8 @@ class AutoTree (object):
     def _handle_tree_del_child (self, child):
         pass
 
-    name = property (get_name, rename)
+    name = property (get_name, rename, doc =
+                     """
+                     Name of the this node.
+                     """)
 
