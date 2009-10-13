@@ -71,7 +71,6 @@ def make_observer (signals,
     receiven all the signals by just connecting one object.
 
     Parameters:
-
       - signals: This can be either an a list or a dictionary. The
         list just contains the names of the signals that you want to
         have in your observer. If you provide a diccionary, the keys

@@ -60,14 +60,11 @@ class StdLogListener (LogListener):
         Constructor.
 
         Parameters:
-
           - level: The cut-off level. No message under this level will
             be registered. By default this is LOG_INFO.
-
           - info_out: File where to write messages for every message
             which is in a level below or equal LOG_INFO. By default
             this is sys.stdout.
-
           - error_out: File where to write the messages for all the
             received messages with a level over LOG_INFO. By default
             this is sys.stderr.
@@ -112,9 +109,7 @@ class LogNode (AutoTree, LogSubject):
         this log.
 
         Parameters:
-
           - level: Level of importance of this message.
-
           - msg: Message to be sent to be logged.
         """
         curr = self
@@ -164,11 +159,8 @@ def log (path, level, msg):
     Logs a message into the global logger.
 
     Parameters:
-
       - path: Node of the global log where to register the message.
-
       - level: Importance of the registered message.
-
       - msg: Message to register.
     """
     GlobalLog ().path (path).log (level, msg)

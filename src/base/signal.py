@@ -98,11 +98,9 @@ class Signal (Container):
         returned after that, or 'start' if no slot was invoked.
 
         Parameters:
-
           - folder: Binary function that merges to values values into
             one. The first parameter is the result returned by folder
             in the last call.
-
           - start: By default this is None. If 'start' is not None, it
             will be treated as a slot return value that is previous to
             any slot in the signal.
@@ -192,10 +190,8 @@ class SenderSignal (Signal):
         Constructor.
 
         Parameters:
-
           - sender: The sender.Sender instance to which this signal
             should notify about its invocation.
-
           - message: The message name that will be sent to the sender
             when notified.
         """
@@ -224,12 +220,9 @@ class SenderSignalProxy (AutoProxy):
         Constructor.
 
         Parameters:
-
           - signal: The signal to proxy.
-
           - sender: The sender.Sender instance to which this signal
             should notify about its invocation.
-
           - message: The message name that will be sent to the sender
             when notified.
         """
