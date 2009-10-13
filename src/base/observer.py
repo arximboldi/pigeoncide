@@ -139,6 +139,7 @@ def make_observer (signals,
 
 def _extend_observer_class (cls, build_signal_fn):
     for message in cls.SIGNALS:
+
         method = build_signal_fn (cls, message)
         method.__name__ = message
         if isinstance (cls.SIGNALS, dict):

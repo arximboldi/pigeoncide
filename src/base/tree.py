@@ -94,7 +94,7 @@ class AutoTree (object):
                 child = self._traits.child_cls ()
             else:
                 child = self.__class__ ()
-                self.adopt (child, name)
+            self.adopt (child, name)
         
         return child
     

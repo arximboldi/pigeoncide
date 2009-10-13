@@ -20,9 +20,29 @@
 import unittest
 from base.observer import *
 
-class TestObserver (unittest.TestCase):
 
-    """
-    TODO: The observer module has been deeply refactored and its
-    observable interface changed. Therefore it needs new unit tests.
-    """
+_Subject, _Listener = \
+    make_observer (['on_test'], '_', __name__)
+
+class AListener (_Listener):
+
+    def __init__ (self):
+        super (AListener, self).__init__ ()
+        self.message = None
+        
+    def on_test (self):
+        self.message = "test"
+
+class TestObserver (unittest.TestCase):
+        
+    def test_emit (self):
+        
+        sub = _Subject ()
+        lis = AListener ()
+        
+        sub.connect (lis)
+        self.assertEquals (sub.count, 1)
+        
+        sub.on_test ()
+        self.assertEquals (lis.message, "test")
+

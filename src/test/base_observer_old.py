@@ -34,7 +34,7 @@ class LightSubjectTester: pass
 class LightListenerTester: pass
 light_observer (LightSubjectTester, LightListenerTester, TEST_SIGNALS)
 
-class TestListener (unittest.TestCase):
+class TestListenerOld (unittest.TestCase):
 
     KLASS = ListenerTester
 
@@ -54,7 +54,7 @@ class TestListener (unittest.TestCase):
         self.assertEqual (self.listener.handle_sig_two (), "ok")
         self.assertEqual (self.listener.handle_sig_three (), "ok")
 
-class TestSubject (unittest.TestCase):
+class TestSubjectOld (unittest.TestCase):
 
     KLASS = SubjectTester
     
@@ -73,17 +73,17 @@ class TestSubject (unittest.TestCase):
         self.assertEqual (hasattr (self.observer, 'clear'), True)
 
 
-class TestCleverListener (TestListener):
+class TestCleverListenerOld (TestListenerOld):
     
     KLASS = CleverListenerTester
 
 
-class TestCleverSubject (TestSubject):
+class TestCleverSubjectOld (TestSubjectOld):
     
     KLASS = CleverSubjectTester
 
 
-class TestObserver (unittest.TestCase):
+class TestObserverOld (unittest.TestCase):
 
     LISTENER_KLASS = ListenerTester
     SUBJECT_KLASS = SubjectTester
@@ -118,7 +118,7 @@ class TestObserver (unittest.TestCase):
         self.assertEqual (self.sub.on_sig_three.count, 0)
 
 
-class TestCleverObserver (TestObserver):
+class TestCleverObserverOld (TestObserverOld):
 
     LISTENER_KLASS = CleverListenerTester
     SUBJECT_KLASS = CleverSubjectTester
@@ -131,7 +131,7 @@ class TestCleverObserver (TestObserver):
         self.assertEqual (self.sub.on_sig_three.count, 0)
 
 
-class TestLightObserver (TestObserver):
+class TestLightObserverOld (TestObserverOld):
 
     class Counter (LightListenerTester):
         def __init__ (self):

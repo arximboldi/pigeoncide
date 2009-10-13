@@ -35,7 +35,7 @@ class memoize:
         return self.memoized[args]
 
 
-def printer (message):
+def printf (message):
     print message
 
 

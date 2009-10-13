@@ -41,7 +41,6 @@ class Receiver (Destiny):
         AtttributeError if there is no method with that name in this
         receiver.
         """
-        
         if not hasattr (self, message):
             raise AttributeError ('Uncaugh message: ' + message)
         return getattr (self, message) (*args, **kws)
@@ -59,5 +58,5 @@ class Sender (Container):
         function will be sent to the receivers as well.
         """
         
-        for f in self._destinies:    
+        for f in self._destinies:
             f.receive (message, *args, **kws)
