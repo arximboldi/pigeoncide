@@ -19,6 +19,7 @@
 
 from util import memoize
 
+
 @memoize
 def mixin (one, two):
     class Mixin (one, two):

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+MODULES="base core game menu app test"
+
+cd src
+epydoc -o ../doc/html -n "Pigeoncide" $MODULES $*
+
+

@@ -1,3 +1,15 @@
+2009-10-13  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
+
+	* src/base/log.py: Documented.
+
+	* src/base/signal.py: Documented.
+
+	* src/base/connection.py: Documented.
+
+	* src/base/sender.py: Documented.
+
+	* src/base/observer.py: Documented.
+
 2009-10-12  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
 
 	* src/base/tree.py: Documented.

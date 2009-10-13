@@ -78,16 +78,18 @@ class OptionWith (OptionBase):
     storing it in the 'value' attribute.
 
     Attributes:
-    value -- The value parsed.
+    
+      - value: The value parsed.
     """
     
     def __init__(self, func, default=None):
         """
         Constructor.
 
-        Arguments:
-        func    -- The function to use to parse the string.
-        default -- The default value to assign to the value attribute. 
+        Parameters:
+
+          - func: The function to use to parse the string.
+          - default: The default value to assign to the value attribute. 
         """
         super (OptionWith, self).__init__ ()
         self.value = default
@@ -106,7 +108,8 @@ class OptionFlag (OptionBase):
     attribute.
 
     Attributes:
-    value -- The resulting value.
+    
+      - value: The resulting value.
     """
     
     def __init__(self, default = False, flag = True):
@@ -114,9 +117,11 @@ class OptionFlag (OptionBase):
         Constructor.
 
         Arguments:
-        default -- The initial value for the value attribute.
-        flag    -- The value to assing to the value attribute in
-                   presence of a flag.
+
+          - default: The initial value for the value attribute.
+
+          - flag: The value to assing to the value attribute in
+          presence of a flag.
         """
         super (OptionFlag, self).__init__ ()
         self.value = default
@@ -139,7 +144,7 @@ class OptionFunc (OptionBase):
         Constructor.
 
         Arguments:
-        func -- The function to be run.
+          - func: The function to be run.
         """
         super (OptionFunc, self).__init__ ()
         self._func = func
@@ -174,19 +179,22 @@ class ArgParser (object):
 
     @property
     def free_args (self):
-        """ Returns the list of free arguments, that should be ready
-        after parsing."""
+        """
+        Returns the list of free arguments, that should be ready
+        after parsing.
+        """
+        
         return self._free_args
     
     def add (self, shortarg, longarg, option):
         """
         Registers a new option into the parser.
 
-        Arguments:
-        shortarg -- Once character for the short version of the
-                    flag. Can be None.
-        longarg  -- Long version of the flag. Can be None.
-        option   -- Option object to parse the flag.
+        Parameters:        
+          - shortarg: Once character for the short version of the
+          flag. Can be None.
+          - longarg: Long version of the flag. Can be None.
+          - option: Option object to parse the flag.
         """
         if shortarg in self._short_ops:
             self._short_ops[shortarg].append(option)
@@ -205,8 +213,8 @@ class ArgParser (object):
         Parses a given list of command line arguments, invoking the
         options and filling the free_args list.
 
-        Arguments:
-        argv -- The list of command line arguments.
+        Parameters:
+          - argv: The list of command line arguments.
         """
         i = 1
         self._argc = len (argv)

@@ -30,17 +30,17 @@ class AutoTreeTraits (object):
 
     Class members:
 
-    - name_type: The class to be used to build the name objects to
-    label the nodes of the auto tree.
+      - name_type: The class to be used to build the name objects to
+        label the nodes of the auto tree.
 
-    - separator: When building the path name of a tree it will be
-    formed concatenating the names of the childs in the path using
-    this as separator.
+      - separator: When building the path name of a tree it will be
+        formed concatenating the names of the childs in the path using
+        this as separator.
 
-    - child_cls: Class to be used when the auto_tree has to create a
-    new object. If None, AutoTree will use self.__class__ as the class
-    to use, which is the proper behaviour in most cases as you are
-    supposed to inherit your nodes from AutoTree.
+      - child_cls: Class to be used when the auto_tree has to create a
+        new object. If None, AutoTree will use self.__class__ as the
+        class to use, which is the proper behaviour in most cases as you
+        are supposed to inherit your nodes from AutoTree.
     """
 
     name_type = str
@@ -66,9 +66,11 @@ class AutoTree (object):
         Constructor.
 
         Keyword parameters:
-        - auto_tree_traits: Object containing the behaviour parameters
-        of the auto-tree. By default it is the AutoTreeTraits class.
-        - name: Name to give to this node.
+
+          - auto_tree_traits: Object containing the behaviour parameters
+            of the auto-tree. By default it is the AutoTreeTraits class.
+
+          - name: Name to give to this node.
         """
 
         super (AutoTree, self).__init__ (*a, **k)
