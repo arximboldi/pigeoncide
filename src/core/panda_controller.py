@@ -34,6 +34,7 @@ class PandaController (object):
     DEFAULT_FRAME_METER = False
 
     def __init__ (self):
+        super (PandaController, self).__init__ ()
         self._timer = Timer ()
         self._tasks = TaskGroup ()
         self._tasks.add (self._panda_task)

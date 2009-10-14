@@ -138,7 +138,7 @@ class AutoSignalSender (Sender):
     """
     This can be used to map signals to messages of a sender. The
     intended usage of this is to inherit from this class when you want
-    an object to be both a sender.Sender and contain several as
+    an object to be both a sender.Sender and contain several signals as
     attributes. Whenever you create a signal in your subclass this
     will substitute it by a proxy that invoques the 'send' method of
     the object whenever it is notified, using the attribute name as

@@ -51,7 +51,6 @@ class Sandbox (State):
         m2.setPos (0, 0, -100)
         m2.setScale (3, 3, 3)
 
-
         def rotate_task (t):
             m.setHpr (t.elapsed * 10, 0, 0)
             return Task.RUNNING
@@ -70,26 +69,26 @@ class Sandbox (State):
         base.setBackgroundColor (Vec4 (.4, .6, .9, 1))
         
         # light ramp
-        tempnode1 = NodePath(PandaNode("temp-node1"))
-        #  tempnode1.setAttrib (LightRampAttrib.makeDoubleThreshold(0.4, 0.5, 0.5, 0.9))
-        tempnode1.setAttrib (LightRampAttrib.makeHdr0())
-        tempnode1.setAttrib (LightRampAttrib.makeHdr1())
-        tempnode1.setAttrib (LightRampAttrib.makeHdr2())
-        tempnode1.setShaderAuto()
-        base.cam.node().setInitialState (tempnode1.getState ())
+        #tempnode1 = NodePath(PandaNode("temp-node1"))
+        render.setAttrib (LightRampAttrib.makeDoubleThreshold(0.4, 0.5, 0.5, 0.9))
+        #render.setAttrib (LightRampAttrib.makeHdr0())
+        #render.setAttrib (LightRampAttrib.makeHdr1())
+        #render.setAttrib (LightRampAttrib.makeHdr2())
+        render.setShaderAuto()
+        #base.cam.node().setInitialState (tempnode1.getState ())
 
         # ink
-        # self.separation = 1.3 # Pixels
-        # self.filters = CommonFilters (base.win, base.cam)
-        # filterok = self.filters.setCartoonInk (separation=self.separation)
+        self.separation = 1.3 # Pixels
+        self.filters = CommonFilters (base.win, base.cam)
+        filterok = self.filters.setCartoonInk (separation=self.separation)
 
         self.events.event ('panda-f').connect (
             lambda:
             GlobalConf ().path ('panda.frame-meter').set_value (
                 not GlobalConf ().path ('panda.frame-meter').value))
 
-    def do_update (self, timer):
-        State.do_update (self, timer)
+    def state_update (self, timer):
         #print "Time: ", timer.elapsed, " FPS: ", timer.fps
         #print "Rate: ", timer.frames / timer.elapsed
+        pass
 

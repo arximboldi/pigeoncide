@@ -28,10 +28,10 @@ class StateError (CoreError):
 
 class State (Task):
 
-    def __init__ (self, manager):
-        Task.__init__ (self)
+    def __init__ (self, *a, **k):
+        super (State, self).__init__ (*a, **k)
         self._tasks = TaskGroup ()
-        self._manager = proxy (manager)
+        self._manager = proxy (k ['state_manager'])
         self._events = EventManager ()
         
     @property
@@ -50,7 +50,11 @@ class State (Task):
         pass
 
     def do_update (self, timer):
-        self._tasks.update (timer)
+        self.state_update (timer)
+        self._tasks.update (timer)        
+
+    def state_update (self, timer):
+        pass
 
     def sink (self):
         pass
@@ -97,14 +101,14 @@ class StateManager (Task):
         self._push_state (self._fetch_state (name))
         self.restart ()
         
-    def enter_state (self, name):
-        self._tasks.add (lambda: self._enter_state (name))
+    def enter_state (self, name, *a, **k):
+        self._tasks.add (lambda: self._enter_state (name, *a, **k))
 
     def leave_state (self):
         self._tasks.add (lambda: self._leave_state ())
 
-    def change_state (self, name):
-        self._tasks.add (lambda: self._change_state (name))
+    def change_state (self, name, *a, **k):
+        self._tasks.add (lambda: self._change_state (name, *a, **k))
     
     def do_update (self, timer):
         self._tasks.update (timer)
@@ -113,11 +117,11 @@ class StateManager (Task):
         if not self._state_stack:
             self.kill ()
     
-    def _enter_state (self, name):
+    def _enter_state (self, name, *a, **k):
         state = self._fetch_state (name)
         if self._state_stack:
             self._state_stack [-1].sink ()
-        self._push_state (state)
+        self._push_state (state, *a, **k)
 
     def _leave_state (self):
         if not self._state_stack:
@@ -126,13 +130,13 @@ class StateManager (Task):
         if self._state_stack:
             self._state_stack [-1].unsink ()
     
-    def _change_state (self, name):
+    def _change_state (self, name, *a, **k):
         state = self._fetch_state (name)
         self._pop_state ()
-        self._push_state (state)
+        self._push_state (state, *a, **k)
     
-    def _push_state (self, state_cls):        
-        state = state_cls (self)
+    def _push_state (self, state_cls, *a, **k):        
+        state = state_cls (state_manager = self, *a, **k)
         self._tasks.add (state)
         self._events.connect (state.events)
         state.setup ()

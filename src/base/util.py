@@ -29,10 +29,10 @@ class memoize:
 
     def __call__(self, *args):
         try:
-            return self.memoized[args]
+            ret = self.memoized[args]
         except KeyError:
-            self.memoized[args] = self.function(*args)
-        return self.memoized[args]
+            ret = self.memoized[args] = self.function(*args)
+        return ret
 
 
 def printf (message):

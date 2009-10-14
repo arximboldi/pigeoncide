@@ -25,7 +25,7 @@ It also defines the following log levels:
 """
 
 from observer import make_observer
-from tree import *
+from tree import AutoTree, AutoTreeTraits
 from singleton import Singleton
 import sys
 

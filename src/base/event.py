@@ -21,6 +21,10 @@ from log import get_log
 from signal import Signal
 from sender import Sender, Receiver
 
+"""
+This module defines the EventManager class for managing a dynamic
+group of signals with forwarding capabilities.
+"""
 
 _log = get_log (__name__)
 
@@ -33,7 +37,7 @@ class EventManager (Sender, Receiver):
         
     def notify (self, name, *args, **kw):
         if not self.quiet:
-            if name in self._events:
+            if name in self._events: 
                 self._events [name].notify (*args, **kw)
             else:
                 self.send (name, *args, **kw)

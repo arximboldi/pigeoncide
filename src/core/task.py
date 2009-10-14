@@ -33,7 +33,8 @@ class Task (object):
     RUNNING = 1
     PAUSED  = 2
     
-    def __init__ (self):
+    def __init__ (self, *a, **k):
+        super (Task, self).__init__ (*a, **k)
         self._state = Task.RUNNING
         self._next  = []
         self._manager = None
