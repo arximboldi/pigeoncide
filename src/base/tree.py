@@ -73,11 +73,12 @@ class AutoTree (object):
           - name: Name to give to this node.
         """
 
-        super (AutoTree, self).__init__ (*a, **k)
-        self._traits = k.get ('auto_tree_traits', AutoTreeTraits)
+        self._traits = k.pop ('auto_tree_traits', AutoTreeTraits)
+        self._name = k.pop ('name', self._traits.name_type ())
         self._parent = None
         self._childs = {}
-        self._name = k.get ('name', self._traits.name_type ())
+        super (AutoTree, self).__init__ (*a, **k)
+        
 
     def child (self, name):
         """

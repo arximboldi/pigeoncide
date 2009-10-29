@@ -90,7 +90,6 @@ class ConfNode (ConfSubject, AutoTree):
     
     def __init__ (self, *a, **k):
         super (ConfNode, self).__init__ (*a, **k)
-        self.rename (k.get ('name', ''))
         self._val = None
         self._backend = NullBackend ()
 

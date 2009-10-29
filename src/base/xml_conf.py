@@ -39,10 +39,10 @@ class XmlConfError (ConfError):
 class XmlConfBackend (NullBackend):
 
     def __init__ (self, fname, *a, **k):
-        super (XmlConfBackend, self).__init__ (*a, **k)
-        self.save_on_change = k.get ('update_on_change', False)
-        self.save_on_nudge  = k.get ('update_on_nudge', False)
+        self.save_on_change = k.pop ('update_on_change', False)
+        self.save_on_nudge  = k.pop ('update_on_nudge', False)
         self.file_name = fname
+        super (XmlConfBackend, self).__init__ (*a, **k)
         
     def _do_load (self, node, overwrite):
         setter = ConfNode.set_value if overwrite else ConfNode.default

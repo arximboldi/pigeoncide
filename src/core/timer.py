@@ -90,14 +90,13 @@ class Timer (TimerBase):
         self._total_frame_count += 1
         
         if self._fps > 0:
-            self._total_frame_count += 1
             self._frame_count += 1
-            self._target_time = self._last_time + self._frame_count * self._rate
-
+            target_time = self._last_time + self._frame_count * self._rate
+            
             self._update_ticks ()
             
-            if self._time_count < self._target_time:
-                time.sleep (self._target_time - self._time_count)                
+            if self._time_count < target_time:
+                time.sleep (target_time - self._time_count)                
             else:
                 self._last_time = self._time_count
                 self._frame_count = 0
