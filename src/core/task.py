@@ -90,9 +90,9 @@ class Task (object):
 
 class FuncTask (Task):
 
-    def __init__ (self, func):
-        Task.__init__ (self)
-        self._set_func (func)
+    def __init__ (self, *a, **k):
+        self._set_func (k.pop ('func'))
+        super (FuncTask, self).__init__ (*a, **k)
         
     def _set_func (self, func):
         if func.func_code.co_argcount < 1:
@@ -133,7 +133,7 @@ class TaskGroup (Task):
         if not isinstance (task, Task):
             if not callable (task):
                 raise TaskError ('You can add either tasks or callables.')
-            task = FuncTask (task)
+            task = FuncTask (func = task)
         self._tasks.append (task)
         return task
 

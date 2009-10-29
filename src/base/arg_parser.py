@@ -31,7 +31,7 @@ class ArgParserError (BaseError):
     
     def __init__(self):
         """ Constructor """
-        BaseError.__init__(self, "Unknown argument parsing error")
+        BaseError.__init__(self, message = "Unknown argument parsing error")
 
 class UnknownArgError (ArgParserError):
     """
@@ -45,7 +45,7 @@ class UnknownArgError (ArgParserError):
         Parameters:
         arg -- The unknown argument string.
         """
-        super (ArgParserError, self).__init__("Unknown arg: " + arg)
+        super (ArgParserError, self).__init__(message = "Unknown arg: " + arg)
 
 class OptionBase (object):
     """
@@ -82,7 +82,7 @@ class OptionWith (OptionBase):
       - value: The value parsed.
     """
     
-    def __init__(self, func, default=None):
+    def __init__(self, func, default = None):
         """
         Constructor.
 
@@ -230,7 +230,7 @@ class ArgParser (object):
                 else:
                     self._free_args.append (arg)
         except KeyError, e:
-            raise UnknownArgError (e.message)
+            raise UnknownArgError (str (e))
 
     def _parse_long (self, i):
         arg = self._argv[i][2:]

@@ -32,12 +32,10 @@ class LoggableError (Exception):
     MESSAGE    = ""
     ERROR_CODE = -1
 
-    def __init__ (self, msg = None, level = None):
-        Exception.__init__ (self, self.MESSAGE if msg is None else msg)
-        if level is None:
-            self.level = self.LEVEL
-        else:
-            self.level = level
+    def __init__ (self, *a, **k):
+        self._message = k.pop ('message', self.MESSAGE)
+        self.level   = k.pop ('level', self.LEVEL)
+        super (Exception, self).__init__ (*a, **k)
     
     def log (self, level = None, msg = None):
         if msg is None:
@@ -52,6 +50,14 @@ class LoggableError (Exception):
 
     def get_code (self):
         return self.ERROR_CODE
+
+    def _get_message (self):
+        return self._message
+
+    def _set_message (self, message):
+        self._message = message
+
+    message = property (_get_message, _set_message)
 
 class BaseError (LoggableError):
     pass

@@ -23,7 +23,7 @@ from core.state import *
 class DummyStateBase (State):
 
     def __init__ (self, *a, **k):
-        super (DummyStateBase, self).__init__ (self, *a, **k)
+        super (DummyStateBase, self).__init__ (*a, **k)
         self.st = "init"
 
     def setup (self):

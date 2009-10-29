@@ -24,7 +24,7 @@ class TestTask (unittest.TestCase):
 
     class Counter (Task):
         def __init__ (self):
-            Task.__init__ (self)
+            super (TestTask.Counter, self).__init__ ()
             self._count = 0
         def do_update (self, x):
             self._count += x
@@ -76,7 +76,7 @@ class TestTask (unittest.TestCase):
         self.assertEqual (c._count, 3)
     
     def test_func (self):
-        t = FuncTask (lambda: None)
+        t = FuncTask (func = lambda: None)
         self.assertEqual (t.state, Task.RUNNING)
 
         t.update (None)
