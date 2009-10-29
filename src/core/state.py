@@ -29,10 +29,10 @@ class StateError (CoreError):
 class State (Task):
 
     def __init__ (self, *a, **k):
-        super (State, self).__init__ (*a, **k)
         self._tasks = TaskGroup ()
-        self._manager = proxy (k ['state_manager'])
+        self._manager = proxy (k.pop ('state_manager'))
         self._events = EventManager ()
+        super (State, self).__init__ (*a, **k)
         
     @property
     def events (self):
