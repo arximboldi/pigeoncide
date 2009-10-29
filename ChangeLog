@@ -1,3 +1,7 @@
+2009-10-29  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
+
+	* src/base/*.py: Solved incompatibilities with Python 2.6.
+
 2009-10-13  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
 
 	* src/base/log.py: Documented.
