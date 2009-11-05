@@ -90,9 +90,10 @@ class Task (object):
 
 class FuncTask (Task):
 
-    def __init__ (self, *a, **k):
-        self._set_func (k.pop ('func'))
+    def __init__ (self, func = None, *a, **k):
+        assert func != None
         super (FuncTask, self).__init__ (*a, **k)
+        self._set_func (func)
         
     def _set_func (self, func):
         if func.func_code.co_argcount < 1:

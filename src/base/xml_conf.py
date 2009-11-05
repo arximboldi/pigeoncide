@@ -38,11 +38,15 @@ class XmlConfError (ConfError):
 
 class XmlConfBackend (NullBackend):
 
-    def __init__ (self, fname, *a, **k):
-        self.save_on_change = k.pop ('update_on_change', False)
-        self.save_on_nudge  = k.pop ('update_on_nudge', False)
-        self.file_name = fname
+    def __init__ (self, fname,
+                  update_on_change = False,
+                  update_on_nudge  = False,
+                  *a, **k):
         super (XmlConfBackend, self).__init__ (*a, **k)
+        
+        self.save_on_change = update_on_change
+        self.save_on_nudge  = update_on_nudge
+        self.file_name = fname
         
     def _do_load (self, node, overwrite):
         setter = ConfNode.set_value if overwrite else ConfNode.default
@@ -54,10 +58,11 @@ class XmlConfBackend (NullBackend):
         try:
             fh = open (self.file_name, 'r')
         except IOError, e:
-            raise XmlConfError ('Could not open config file. ' +
+            raise XmlConfError (message =
+                                'Could not open config file. ' +
                                 'If this is the first time you ' +
                                 'run the application it might be created later.',
-                                LOG_WARNING)
+                                level = LOG_WARNING)
         
         parser.parse (fh)
         fh.close ()
