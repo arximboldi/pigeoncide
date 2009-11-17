@@ -20,6 +20,7 @@
 from base.arg_parser import OptionWith
 from core.app import PandaApp
 from sandbox import Sandbox
+from menu.menu import Menu
 
 class PigeoncideApp (PandaApp):
 
@@ -42,7 +43,9 @@ Extra options:
         PandaApp.__init__ (self)
 
         self.root_state = 'sandbox'
+        #self.root_state = 'menu'
         self.states.add ('sandbox', Sandbox)
+        self.states.add ('menu', Menu)
         
     def do_prepare (self, args):
         self._arg_state = OptionWith (str)
@@ -52,6 +55,6 @@ Extra options:
         
     def do_execute (self, freeargs):
         if self._arg_state.value:
-            self._root_state = self._arg_state.value
+            self.root_state = self._arg_state.value
                 
         PandaApp.do_execute (self, freeargs)

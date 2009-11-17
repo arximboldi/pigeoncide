@@ -17,3 +17,9 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from menu.menu import Menu
+
+if __name__ == '__main__':
+    menu = Menu ()
+    menu.run_and_exit ()
+
