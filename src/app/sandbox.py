@@ -17,7 +17,6 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from base.util import printf
 from core.task import Task
 from core.state import State
 from base.conf import GlobalConf

@@ -19,20 +19,15 @@
 
 import unittest
 
+from util import *
 from base.arg_parser import *
 
 class TestArgParser (unittest.TestCase):
     
-    class TestError (Exception):
-        pass
-    
     def setUp (self):
-        def raiser ():
-            raise TestArgParser.TestError
-        
         self._op_a = OptionWith (int, -1)
         self._op_b = OptionFlag ()
-        self._op_c = OptionFunc (raiser)
+        self._op_c = OptionFunc (mock_raiser)
         self._op_d = OptionWith (float, -1.0)
         
         self._args = ArgParser ()
@@ -45,7 +40,7 @@ class TestArgParser (unittest.TestCase):
         self._args = None
 
     def test_unkown_args (self):
-        self.assertRaises (TestArgParser.TestError, self._args.parse, ['test', '-c'])
+        self.assertRaises (MockError, self._args.parse, ['test', '-c'])
         self.assertRaises (UnknownArgError, self._args.parse, ['test', '-x'])
         
     def test_int_option_and_multi_flag_argument (self):
