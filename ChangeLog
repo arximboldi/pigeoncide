@@ -1,3 +1,9 @@
+2009-11-17 Alberto Villegas Erce <albertovillegaserce@gmail.com>
+
+	* src/menu/menu.py: Added menu state
+
+	* src/app/pigeoncide.py: Solved bug loading a initial state
+
 2009-10-29  Juan Pedro Bolivar Puente  <raskolnikov@es.gnu.org>
 
 	* src/base/*.py: Solved incompatibilities with Python 2.6.
