@@ -17,14 +17,23 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ent.physical import StaticPhysicalEntity
-from ent.model   import ModelEntity
-import phys.geom as geom
+from pandac.PandaModules import Vec3
+from base.util import bound
+from observer import EntityListener
 
-class Level (StaticPhysicalEntity, ModelEntity):
+class EntityFollower (EntityListener):
 
-    def __init__ (self, model = '../data/mesh/cloud.x', *a, **k):
-        super (Level, self).__init__ (model = model,
-                                      geometry = geom.mesh (model),
-                                      *a, **k)
+    def __init__ (self, camera = None, *a, **k):
+        super (EntityFollower, self).__init__ (*a, **k)
+        self._camera = camera
+        
+    def on_entity_set_position (self, ent, pos):
+        self._camera.lookAt (*pos)
+
+        camvec = Vec3 (*pos) - self._camera.getPos ()
+        camvec.setZ (0)
+        camvec.normalize ()
+        camdist = bound (camvec.length (), 5., 10.)
+        
+        #self._camera.setPos (self._camera.getPos () + camvec * camdist)
 

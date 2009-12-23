@@ -17,14 +17,12 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ent.physical import StaticPhysicalEntity
-from ent.model   import ModelEntity
-import phys.geom as geom
+from pandac.PandaModules import *
+from base.util import delayed, selflast
 
-class Level (StaticPhysicalEntity, ModelEntity):
-
-    def __init__ (self, model = '../data/mesh/cloud.x', *a, **k):
-        super (Level, self).__init__ (model = model,
-                                      geometry = geom.mesh (model),
-                                      *a, **k)
+box      = delayed (selflast (OdeMass.setBox))
+capsule  = delayed (selflast (OdeMass.setCapsule))
+cylinder = delayed (selflast (OdeMass.setCylinder))
+sphere   = delayed (selflast (OdeMass.setSphere))
+zero     = delayed (OdeMass.setZero)
 

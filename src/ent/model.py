@@ -17,14 +17,28 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ent.physical import StaticPhysicalEntity
-from ent.model   import ModelEntity
-import phys.geom as geom
+from direct.showbase.ShowBase import ShowBase
+from entity import Entity
 
-class Level (StaticPhysicalEntity, ModelEntity):
+class ModelEntity (Entity):
 
-    def __init__ (self, model = '../data/mesh/cloud.x', *a, **k):
-        super (Level, self).__init__ (model = model,
-                                      geometry = geom.mesh (model),
-                                      *a, **k)
+    def __init__ (self,
+                  render = None,
+                  model = None,
+                  *a, **k):
+        super (ModelEntity, self).__init__ (*a, **k)
 
+        self._model = loader.loadModel (model)
+        self._model.reparentTo (render)
+        
+    def set_position (self, pos):
+        super (ModelEntity, self).set_position (pos)
+        self._model.setPos (*pos)
+        
+    def set_hpr (self, hpr):
+        super (ModelEntity, self).set_hpr (hpr)
+        self._model.setHpr (*hpr)
+
+    def dispose (self):
+        super (StaticPhysicalEntity, self).dispose ()
+        self._model.removeNode ()

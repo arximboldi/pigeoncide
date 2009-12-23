@@ -17,14 +17,21 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ent.physical import StaticPhysicalEntity
-from ent.model   import ModelEntity
+from ent.observer import ObservableEntity
+from ent.model import ModelEntity
+from ent.physical import DynamicPhysicalEntity
+
 import phys.geom as geom
 
-class Level (StaticPhysicalEntity, ModelEntity):
+class Boy (ObservableEntity,
+           ModelEntity,
+           DynamicPhysicalEntity):
 
-    def __init__ (self, model = '../data/mesh/cloud.x', *a, **k):
-        super (Level, self).__init__ (model = model,
-                                      geometry = geom.mesh (model),
-                                      *a, **k)
-
+    MODEL = '../data/mesh/ralph.egg.pz'
+    
+    def __init__ (self, model = MODEL, *a, **k):
+        super (Boy, self).__init__ (geometry = geom.capsule (1.0, 7.0),
+                                    model    = model,
+                                    *a, **k)
+        self.offset_position = (.0, .0, 3.5)
+        

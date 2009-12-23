@@ -17,9 +17,23 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+def bound (val, vmin, vmax):
+    if val < vmin: return vmin
+    if val > vmax: return vmax
+    return val
+
+def union (d1, d2):
+    d1.update (d2)
+    return d1
+
+def selflast (func):
+    return lambda *a, **k: func (* ([a[-1]] + list(a[:-1])), ** k)
+
+def delayed (func):
+    return lambda *a1, **k1: lambda *a2, **k2: \
+        func (* (a1 + a2), ** union (k1, k2))
 
 _multimethod_registry = {}
-
 
 class MultiMethod (object):
 

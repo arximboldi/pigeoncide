@@ -22,26 +22,79 @@ from core.state import State
 from base.conf import GlobalConf
 
 from direct.showbase.ShowBase import ShowBase
-
-from pandac.PandaModules import (
-    PointLight,
-    Vec3,
-    Vec4,
-    NodePath,
-    PandaNode,
-    LightRampAttrib,
-    AmbientLight
-)
+from pandac.PandaModules import *
 
 from direct.filter.CommonFilters import CommonFilters
 
+from base.meta import mixin
+from core.keyboard import KeyboardTask
+from game.boy import Boy
+from game.level import Level
+from ent.controller import PlayerSubject, PlayerController
+from phys.physics import Physics
+from ent.camera import EntityFollower
 
 class Sandbox (State):
 
     def setup (self):
+        keyboard = mixin (KeyboardTask, PlayerSubject) (
+            { 'on_steer_left'    : 'panda-a',
+              'on_steer_right'   : 'panda-d',
+              'on_move_forward'  : 'panda-w',
+              'on_move_backward' : 'panda-s' })
+
+        self.events.connect (keyboard)
         self.events.event ('panda-escape').connect (self.kill)
 
-        m = loader.loadModel ('../data/mesh/pigeon.x')
+        physics = Physics ()
+
+        boy = Boy (model = '../data/mesh/ralph.egg.pz',
+                   physics = physics,
+                   render = render)
+        boy.set_position ((0, 70, 20))
+
+        level = Level (model = '../data/mesh/cloud.x',
+                       physics = physics,
+                       render = render)
+        level.set_position ((0, 0, -100))
+
+        self.tasks.add (keyboard)
+        self.tasks.add (boy)
+        self.tasks.add (level)
+        self.tasks.add (physics)
+
+        boy.connect (EntityFollower (base.camera))
+        keyboard.connect (PlayerController (boy))
+        
+        plightnode = PointLight("point light")
+        plightnode.setAttenuation(Vec3(1,0.0000001,0.0000001))
+        plight = render.attachNewNode(plightnode)
+        plight.setPos(100, -100, 1000)
+        alightnode = AmbientLight("ambient light")
+        alightnode.setColor(Vec4(0.4,0.4,0.4,1))
+        alight = render.attachNewNode(alightnode)
+        render.setLight(alight)
+        render.setLight(plight)
+
+        ## light ramp
+        #tempnode1 = NodePath(PandaNode("temp-node1"))
+        #render.setAttrib (LightRampAttrib.makeDoubleThreshold(0.4, 0.5, 0.5, 0.9))
+        #render.setAttrib (LightRampAttrib.makeHdr0())
+        #render.setAttrib (LightRampAttrib.makeHdr1())
+        #render.setAttrib (LightRampAttrib.makeHdr2())
+        #render.setShaderAuto()
+        #base.cam.node().setInitialState (tempnode1.getState ())
+
+        ## ink
+        # self.separation = 1.3 # Pixels
+        # self.filters = CommonFilters (base.win, base.cam)
+        # filterok = self.filters.setCartoonInk (separation=self.separation)
+    
+        
+    def setup_old (self):
+        self.events.event ('panda-escape').connect (self.kill)
+
+        m = loader.loadModel ('../data/mesh/ralph.egg.pz')
         m.reparentTo(render)
         m.setPos (0, 70, -20)
 
@@ -56,7 +109,7 @@ class Sandbox (State):
         self.tasks.add (rotate_task)
         
         plightnode = PointLight("point light")
-        plightnode.setAttenuation(Vec3(1,0,0))
+        plightnode.setAttenuation(Vec3(1,0.0000001,0.0000001))
         plight = render.attachNewNode(plightnode)
         plight.setPos(100, -100, 1000)
         alightnode = AmbientLight("ambient light")
@@ -69,17 +122,17 @@ class Sandbox (State):
         
         # light ramp
         #tempnode1 = NodePath(PandaNode("temp-node1"))
-        render.setAttrib (LightRampAttrib.makeDoubleThreshold(0.4, 0.5, 0.5, 0.9))
+        #render.setAttrib (LightRampAttrib.makeDoubleThreshold(0.4, 0.5, 0.5, 0.9))
         #render.setAttrib (LightRampAttrib.makeHdr0())
         #render.setAttrib (LightRampAttrib.makeHdr1())
         #render.setAttrib (LightRampAttrib.makeHdr2())
-        render.setShaderAuto()
+        #render.setShaderAuto()
         #base.cam.node().setInitialState (tempnode1.getState ())
 
         # ink
-        self.separation = 1.3 # Pixels
-        self.filters = CommonFilters (base.win, base.cam)
-        filterok = self.filters.setCartoonInk (separation=self.separation)
+        # self.separation = 1.3 # Pixels
+        # self.filters = CommonFilters (base.win, base.cam)
+        # filterok = self.filters.setCartoonInk (separation=self.separation)
 
         self.events.event ('panda-f').connect (
             lambda:

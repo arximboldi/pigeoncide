@@ -17,14 +17,22 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ent.physical import StaticPhysicalEntity
-from ent.model   import ModelEntity
-import phys.geom as geom
+from base.observer import make_observer
+from entity import Entity
 
-class Level (StaticPhysicalEntity, ModelEntity):
+EntitySubject, EntityListener = make_observer (
+    [ 'on_entity_set_position',
+      'on_entity_set_hpr' ],
+    'Entity', __name__)
 
-    def __init__ (self, model = '../data/mesh/cloud.x', *a, **k):
-        super (Level, self).__init__ (model = model,
-                                      geometry = geom.mesh (model),
-                                      *a, **k)
+class ObservableEntity (Entity, EntitySubject):
 
+    def set_position (self, pos):
+        super (ObservableEntity, self).set_position (pos)
+        self.on_entity_set_position (self, pos)
+
+    def set_hpr (self, hpr):
+        super (ObservableEntity, self).set_hpr (hpr)
+        self.on_entity_set_hpr (self, hpr)
+
+    

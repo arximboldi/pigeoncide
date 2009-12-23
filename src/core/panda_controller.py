@@ -53,6 +53,7 @@ class PandaController (object):
 
         self.set_defaults (cfg)
         self._base = ShowBase ()
+        self._base.disableMouse ()
         self.create_properties (title)
         self.update_properties (cfg)
         self.listen_conf (cfg)
