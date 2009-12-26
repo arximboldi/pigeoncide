@@ -42,33 +42,32 @@ def times (vec, scalar):
 
 class PlayerController (PlayerListener):
 
-    FORCE        = 1000.0
+    FORCE        = 1000000.0
     BW_FORCE     = -1.0
-    ANGLE_SPEED  = 1000.0
+    ANGLE_SPEED  = 10.0
     STRAFE_FORCE = 1000.0
     
     def __init__ (self, entity = None, *a, **k):
         super (PlayerController, self).__init__ (*a, **k)
         self.entity = entity
-        self.angle  = 0
+        self.entity.angle  = 0
         
     def on_steer_left (self, timer):
-        self.angle += timer.delta * self.ANGLE_SPEED
-        self._update_angle ()
+        self.entity.angle -= timer.delta * self.ANGLE_SPEED
         
     def on_steer_right (self, timer):
-        self.angle -= timer.delta * self.ANGLE_SPEED
-        self._update_angle ()
+        self.entity.angle += timer.delta * self.ANGLE_SPEED
 
-    def _update_angle (self):
-        self.entity.set_hpr ((math.cos (self.angle), 0,
-                              math.sin (self.angle)))
-        
     def on_move_forward (self, timer):
-        self.entity.apply_force (times (self.entity.get_hpr (), self.FORCE))
+        self.entity.apply_force (times ((math.sin (self.entity.angle),
+                                         math.cos (self.entity.angle),
+                                         0),
+                                         
+                                        self.FORCE * timer.delta))
         
     def on_move_backward (self, timer):
-        self.entity.apply_force (times (self.entity.get_hpr (), self.BW_FORCE))
+        self.entity.apply_force (times (self.entity.get_hpr (),
+                                        self.BW_FORCE * timer.delta))
 
     def on_strafe_left (self, timer):
         pass

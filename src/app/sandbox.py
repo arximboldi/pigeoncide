@@ -67,14 +67,16 @@ class Sandbox (State):
         keyboard.connect (PlayerController (boy))
         
         plightnode = PointLight("point light")
-        plightnode.setAttenuation(Vec3(1,0.0000001,0.0000001))
-        plight = render.attachNewNode(plightnode)
-        plight.setPos(100, -100, 1000)
+        plightnode.setAttenuation (Vec3(1,0.0000005,0.0000005))
+        plight = render.attachNewNode (plightnode)
+        plight.setPos (100, -100, 1000)
+
         alightnode = AmbientLight("ambient light")
-        alightnode.setColor(Vec4(0.4,0.4,0.4,1))
-        alight = render.attachNewNode(alightnode)
-        render.setLight(alight)
-        render.setLight(plight)
+        alightnode.setColor (Vec4(0.4,0.4,0.4,1))
+        alight = render.attachNewNode (alightnode)
+
+        render.setLight (alight)
+        render.setLight (plight)
 
         ## light ramp
         #tempnode1 = NodePath(PandaNode("temp-node1"))

@@ -19,7 +19,7 @@
 
 from entity import Entity
 from pandac.PandaModules import *
-
+import math
 import phys.mass as mass
 
 class StaticPhysicalEntity (Entity):
@@ -53,6 +53,7 @@ class StaticPhysicalEntity (Entity):
         return self._geom.setOffsetPosition ()
 
     offset_position = property (get_offset_position, set_offset_position)
+
 
 class DynamicPhysicalEntity (Entity):
 
@@ -94,8 +95,8 @@ class DynamicPhysicalEntity (Entity):
     def apply_force (self, force):
         self._body.addForce (*force)
             
-    def update (self, dt):
-        super (DynamicPhysicalEntity, self).update (dt)
+    def update (self, timer):
+        super (DynamicPhysicalEntity, self).update (timer)
 
         pos = self._body.getPosition ()
         hpr = self._body.getQuaternion ()
@@ -111,5 +112,20 @@ class DynamicPhysicalEntity (Entity):
         self.set_hpr ((hpr.getX (), hpr.getY (), hpr.getZ ()))
         self._updating = False
     
-        
 
+class StandingPhysicalEntity (DynamicPhysicalEntity):
+
+    def __init__ (self, *a, **k):
+        super (StandingPhysicalEntity, self).__init__ (*a, **k)
+        self.angle = 0
+
+    def update (self, timer):
+        hpr = self._body.getQuaternion ()
+        # http://www.euclideanspace.com/maths/geometry/rotations/
+        # conversions/angleToQuaternion/index.htm      
+        self._body.setQuaternion (Quat (math.sin (self.angle / 2), 0, 0,
+                                        math.cos (self.angle / 2)))
+        self._body.setTorque (0, 0, 0)
+        self._body.setAngularVel (0, 0, 0)
+
+        super (StandingPhysicalEntity, self).update (timer)

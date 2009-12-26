@@ -19,13 +19,13 @@
 
 from ent.observer import ObservableEntity
 from ent.model import ModelEntity
-from ent.physical import DynamicPhysicalEntity
+from ent.physical import StandingPhysicalEntity
 
 import phys.geom as geom
 
 class Boy (ObservableEntity,
            ModelEntity,
-           DynamicPhysicalEntity):
+           StandingPhysicalEntity):
 
     MODEL = '../data/mesh/ralph.egg.pz'
     
