@@ -26,17 +26,17 @@ class Physics (Task):
         super (Physics, self).__init__ (*a, **k)
 
         self._world = OdeWorld ()
-        self._world.setGravity (0, 0, -9.81)
+        self._world.setGravity (0, 0, -100)
         self._world.initSurfaceTable (1)
         self._world.setSurfaceEntry (
-            0,
-            0,
-            1.0,          # u
-            .35,          # elasticity
-            .01,          # minimum threshold for physical movement
-            .01,          #
-            .00000001,    # softening
-            .01,          #
+            0,            # pos1
+            0,            # pos2
+            1.0,          # mu
+            .35,          # bounce
+            .01,          # bounce_vel (minimum vel for bounce)
+            .0,           # soft_erp contact normal softness
+            .0,           # soft_cfm ...
+            .01,          # 
             .01)          # dampening
         
         self._space = OdeHashSpace ()

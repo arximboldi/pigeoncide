@@ -17,30 +17,33 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from pandac.PandaModules import Vec3
-from base.util import bound
-from observer import EntityListener
-import math
+from entity import Entity
+from pandac.PandaModules import *
 
-class EntityFollower (EntityListener):
+class PandaEntity (Entity):
 
-    HANGLE   = math.pi / 12
-    DISTANCE = 20
-    
-    def __init__ (self, camera = None, *a, **k):
-        super (EntityFollower, self).__init__ (*a, **k)
-        self.camera = camera
-        self.distance = self.DISTANCE
-        self.hangle   = self.HANGLE
+    def __init__ (self,
+                  render = None,
+                  name   = 'entity',
+                  *a, **k):
+        super (PandaEntity, self).__init__ (*a, **k)
         
-    def on_entity_set_position (self, ent, pos):
-        angle = ent.angle
-        direction = Vec3 (math.sin (angle),
-                          math.cos (angle),
-                          - math.sin  (self.hangle))
-        position  = Vec3 (* ent.position)
+        self._node = NodePath (PandaNode ("holder"))
+        self._node.reparentTo (render)
 
-        self.camera.setPos (position + direction * (- self.distance))
-        self.camera.lookAt (*pos)
+    @property
+    def node (self):
+        return self._node
         
+    def set_position (self, pos):
+        super (PandaEntity, self).set_position (pos)
+        self._node.setPos (*pos)
+        
+    def set_hpr (self, hpr):
+        super (PandaEntity, self).set_hpr (hpr)
+        self._node.setHpr (*hpr)
+
+    def dispose (self):
+        super (PandaEntity, self).dispose ()
+        self._node.removeNode ()
 

@@ -18,27 +18,44 @@
 #
 
 from direct.showbase.ShowBase import ShowBase
-from entity import Entity
+from panda import PandaEntity
+from pandac.PandaModules import *
+from direct.actor.Actor import Actor
 
-class ModelEntity (Entity):
+class ModelEntity (PandaEntity):
 
     def __init__ (self,
-                  render = None,
                   model = None,
+                  anims = [],
                   *a, **k):
         super (ModelEntity, self).__init__ (*a, **k)
 
-        self._model = loader.loadModel (model)
-        self._model.reparentTo (render)
-        
-    def set_position (self, pos):
-        super (ModelEntity, self).set_position (pos)
+        self._model = Actor (loader.loadModel (model),
+                             dict ((anim, model) for anim in anims))
+        self._model.reparentTo (self._node)
+    
+    def set_model_position (self, pos):
         self._model.setPos (*pos)
-        
-    def set_hpr (self, hpr):
-        super (ModelEntity, self).set_hpr (hpr)
+
+    def get_model_position (self):
+        off = self._model.getPos ()
+        return (off.getX (), off.getY (), off.getZ ())
+
+    def set_model_hpr (self, hpr):
         self._model.setHpr (*hpr)
 
-    def dispose (self):
-        super (StaticPhysicalEntity, self).dispose ()
-        self._model.removeNode ()
+    def get_model_hpr (self):
+        off = self._model.getHpr ()
+        return (off.getX (), off.getY (), off.getZ ())
+
+    def set_model_scale (self, scale):
+        self._model.setScale (*scale)
+
+    def get_model_scale (self):
+        off = self._model.getScale ()
+        return (off.getX (), off.getY (), off.getZ ())
+
+    model_position = property (get_model_position, set_model_position)
+    model_hpr      = property (get_model_hpr,      set_model_hpr)
+    model_scale    = property (get_model_scale,    set_model_scale)
+

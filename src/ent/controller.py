@@ -20,6 +20,7 @@
 import math
 from core.task import Task
 from base.observer import make_observer
+from pandac.PandaModules import Vec3
 
 DEFAULT_KEYMAP = { 'on_move_forward'  : 'panda-w',
                    'on_move_backward' : 'panda-s',
@@ -40,12 +41,16 @@ PlayerSubject, PlayerListener = make_observer (
 def times (vec, scalar):
     return map (lambda x: x * scalar, vec)
 
+def vec2tuple (vec):
+    return (vec.getX (), vec.getY (), vec.getZ ())
+
 class PlayerController (PlayerListener):
 
     FORCE        = 1000000.0
-    BW_FORCE     = -1.0
-    ANGLE_SPEED  = 10.0
+    BW_FORCE     = 1000000.0
+    ANGLE_SPEED  = 2.0
     STRAFE_FORCE = 1000.0
+    MAX_SPEED    = 100000
     
     def __init__ (self, entity = None, *a, **k):
         super (PlayerController, self).__init__ (*a, **k)
@@ -59,16 +64,21 @@ class PlayerController (PlayerListener):
         self.entity.angle += timer.delta * self.ANGLE_SPEED
 
     def on_move_forward (self, timer):
-        self.entity.apply_force (times ((math.sin (self.entity.angle),
-                                         math.cos (self.entity.angle),
-                                         0),
-                                         
-                                        self.FORCE * timer.delta))
+        self._do_force (timer, self.FORCE, 1.0)
         
     def on_move_backward (self, timer):
-        self.entity.apply_force (times (self.entity.get_hpr (),
-                                        self.BW_FORCE * timer.delta))
+        self._do_force (timer, self.BW_FORCE, -1.0)
 
+    def _do_force (self, timer, force, fact):
+        direction = Vec3 (fact * math.sin (self.entity.angle),
+                          fact * math.cos (self.entity.angle), 0)
+        speed     = Vec3 (self.entity.speed)
+        speeddir  = speed * speed.dot (direction)
+        
+        if speeddir.lengthSquared () < self.MAX_SPEED:
+            self.entity.apply_force (vec2tuple (
+                direction * force * timer.delta))
+        
     def on_strafe_left (self, timer):
         pass
         

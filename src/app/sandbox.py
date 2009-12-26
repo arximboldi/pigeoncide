@@ -43,18 +43,18 @@ class Sandbox (State):
               'on_move_forward'  : 'panda-w',
               'on_move_backward' : 'panda-s' })
 
+        base.setBackgroundColor (Vec4 (.4, .6, .9, 1))
+        
         self.events.connect (keyboard)
         self.events.event ('panda-escape').connect (self.kill)
 
         physics = Physics ()
 
-        boy = Boy (model = '../data/mesh/ralph.egg.pz',
-                   physics = physics,
+        boy = Boy (physics = physics,
                    render = render)
         boy.set_position ((0, 70, 20))
 
-        level = Level (model = '../data/mesh/cloud.x',
-                       physics = physics,
+        level = Level (physics = physics,
                        render = render)
         level.set_position ((0, 0, -100))
 
@@ -67,7 +67,7 @@ class Sandbox (State):
         keyboard.connect (PlayerController (boy))
         
         plightnode = PointLight("point light")
-        plightnode.setAttenuation (Vec3(1,0.0000005,0.0000005))
+        plightnode.setAttenuation (Vec3(1,0.0000005,0.0000001))
         plight = render.attachNewNode (plightnode)
         plight.setPos (100, -100, 1000)
 
@@ -75,7 +75,7 @@ class Sandbox (State):
         alightnode.setColor (Vec4(0.4,0.4,0.4,1))
         alight = render.attachNewNode (alightnode)
 
-        render.setLight (alight)
+        #render.setLight (alight)
         render.setLight (plight)
 
         ## light ramp
@@ -93,12 +93,13 @@ class Sandbox (State):
         # filterok = self.filters.setCartoonInk (separation=self.separation)
     
         
-    def setup_old (self):
+    def setup2 (self):
         self.events.event ('panda-escape').connect (self.kill)
 
-        m = loader.loadModel ('../data/mesh/ralph.egg.pz')
+        m = loader.loadModel ('../data/mesh/pigeon.x')
         m.reparentTo(render)
-        m.setPos (0, 70, -20)
+        m.setPos (0, 30, -10)
+        m.setScale (-1, -1, -1)
 
         m2 = loader.loadModel ('../data/mesh/cloud.x')
         m2.reparentTo(render)

@@ -46,15 +46,6 @@ class StaticPhysicalEntity (Entity):
         super (StaticPhysicalEntity, self).set_scale (scale)
         self._geom.setScale (*scale)
 
-    def set_offset_position (self, pos):
-        self._geom.setOffsetPosition (*pos)
-
-    def get_offset_position (self):
-        return self._geom.setOffsetPosition ()
-
-    offset_position = property (get_offset_position, set_offset_position)
-
-
 class DynamicPhysicalEntity (Entity):
 
     def __init__ (self,
@@ -74,6 +65,11 @@ class DynamicPhysicalEntity (Entity):
         self._geom.setBody (self._body)
         
         self._updating = False
+
+    @property
+    def speed (self):
+        vel = self._body.getLinearVel ()
+        return (vel.getX (), vel.getY (), vel.getZ ())
         
     def set_position (self, pos):
         super (DynamicPhysicalEntity, self).set_position (pos)
@@ -111,7 +107,6 @@ class DynamicPhysicalEntity (Entity):
         self.set_position ((pos.getX (), pos.getY (), pos.getZ ()))        
         self.set_hpr ((hpr.getX (), hpr.getY (), hpr.getZ ()))
         self._updating = False
-    
 
 class StandingPhysicalEntity (DynamicPhysicalEntity):
 
