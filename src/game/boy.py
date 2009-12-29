@@ -20,7 +20,7 @@
 from ent.observer import ObservableEntity
 from ent.model import ModelEntity
 from ent.physical import StandingPhysicalEntity
-from direct.actor.Actor import Actor
+from pandac.PandaModules import Vec3
 
 import phys.geom as geom
 import phys.mass as mass
@@ -29,20 +29,55 @@ class Boy (ObservableEntity,
            ModelEntity,
            StandingPhysicalEntity):
 
-    MODEL = '../data/mesh/boy.x'
+    #MODEL = '../data/mesh/boy.x'
+    #ANIMS = {}
+    
+    MODEL = '../data/mesh/ralph.egg.pz'
+    ANIMS = { 'run'  : '../data/mesh/ralph-run.egg.pz',
+              'walk' : '../data/mesh/ralph-walk.egg.pz' }
     
     def __init__ (self, model = MODEL, *a, **k):
         super (Boy, self).__init__ (geometry = geom.capsule (1.0, 7.0),
                                     mass     = mass.capsule (2, 3, 1.0, 7.0),
                                     model    = model,
-                                    anims    = [ 'run', 'walk', 'jump' ],
+                                    anims    = self.ANIMS,
                                     *a, **k)
-        self.model_position = (.0, .0, -4.5)
-        self.model_scale    = (-1, -1, -1)
-        self.model_hpr      = (180, 0, 180)
 
-        self._model.setPlayRate (0.1, 'run')
-        self._model.loop ('run')
+        self.model_position = Vec3 (.0, .0, -5.0)
+        self.model.loadAnims (self.ANIMS)
+        self.model.pprint ()
+        # self.model_position = Vec3 (.0, .0, -4.5)
+        # self.model_scale    = Vec3 (-1, -1, -1)
+        # self.model_hpr      = Vec3 (180, 0, 180)
+
+        #self._model.setPlayRate (0.1, 'boy.3')
+    
+# :egg2pg(warning): AnimBundle boy specifies contradictory number of frames.
+# :egg2pg(warning): AnimBundle boy specifies contradictory frame rates.
+# :egg2pg(warning): AnimBundle boy specifies contradictory number of frames.
+# :egg2pg(warning): AnimBundle boy specifies contradictory frame rates.
+# :egg2pg(warning): AnimBundle boy specifies contradictory number of frames.
+# LOD: lodRoot
+#   Part: modelRoot
+#   Bundle: CharacterJointBundle boy
+#     Anim: boy
+#       File: None
+#       NumFrames: 17 PlayRate: 1.00
+#     Anim: boy.1
+#       File: None
+#       NumFrames: 9 PlayRate: 1.00
+#     Anim: boy.3
+#       File: None
+#       NumFrames: 30 PlayRate: 1.00
+#     Anim: boy.2
+#       File: None
+#       NumFrames: 11 PlayRate: 1.00
+# LOD: lodRoot
+#   Part: modelRoot
+#   Bundle: CharacterJointBundle boy
+#     Anim: boy
+#       File: None
+#       NumFrames: 1 PlayRate: 1.00
 
     def walk (self):
         pass

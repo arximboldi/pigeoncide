@@ -22,17 +22,19 @@ from base.util import bound
 from observer import EntityListener
 import math
 
-class EntityFollower (EntityListener):
 
-    HANGLE   = math.pi / 12
-    DISTANCE = 20
+class EntityFollowerBase (EntityListener):
     
     def __init__ (self, camera = None, *a, **k):
-        super (EntityFollower, self).__init__ (*a, **k)
+        super (EntityFollowerBase, self).__init__ (*a, **k)
         self.camera = camera
-        self.distance = self.DISTANCE
-        self.hangle   = self.HANGLE
         
+
+class FastEntityFollower (EntityFollowerBase):
+
+    hangle   = math.pi / 12
+    distance = 40
+    
     def on_entity_set_position (self, ent, pos):
         angle = ent.angle
         direction = Vec3 (math.sin (angle),
@@ -41,6 +43,27 @@ class EntityFollower (EntityListener):
         position  = Vec3 (* ent.position)
 
         self.camera.setPos (position + direction * (- self.distance))
+
+
+class SlowEntityFollower (EntityFollowerBase):
+    
+    def on_entity_set_position (self, ent, pos):        
+        camvec = ent.position - self.camera.getPos()
+        camvec.setZ (0)
+        camdist = camvec.length ()
+        camvec.normalize ()
+
+        maxdist = 100.0
+        mindist = 5.0
+        if (camdist > maxdist):
+            self.camera.setPos (self.camera.getPos() +
+                                camvec * (camdist - maxdist))
+            camdist = maxdist
+        if (camdist < mindist):
+            self.camera.setPos (self.camera.getPos() -
+                                camvec * (mindist - camdist))
+            camdist = mindist
+
         self.camera.lookAt (*pos)
         
 

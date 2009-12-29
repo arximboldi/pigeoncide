@@ -22,6 +22,8 @@ from core.task import Task
 
 class Physics (Task):
 
+    time_step = .1 / 120.
+
     def __init__ (self, *a, **k):
         super (Physics, self).__init__ (*a, **k)
 
@@ -34,10 +36,13 @@ class Physics (Task):
             1.0,          # mu
             .35,          # bounce
             .01,          # bounce_vel (minimum vel for bounce)
-            .0,           # soft_erp contact normal softness
-            .0,           # soft_cfm ...
+            .2,           # soft_erp contact normal softness
+            .00001,       # soft_cfm ...
             .01,          # 
             .01)          # dampening
+
+        #self._world.setContactMaxCorrectingVel (1.0)
+        self._world.setAutoDisableFlag (1)
         
         self._space = OdeHashSpace ()
         self._space.setAutoCollideWorld (self._world)
@@ -45,7 +50,8 @@ class Physics (Task):
         self._group = OdeJointGroup ()
         self._space.setAutoCollideJointGroup (self._group)
     
-
+        self._time_acc = 0
+        
     @property
     def world (self):
         return self._world
@@ -57,4 +63,4 @@ class Physics (Task):
     def update (self, timer):
         self._space.autoCollide ()
         self._world.quickStep (timer.delta)
-
+        self._group.empty ()

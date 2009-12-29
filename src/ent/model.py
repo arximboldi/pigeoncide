@@ -22,38 +22,40 @@ from panda import PandaEntity
 from pandac.PandaModules import *
 from direct.actor.Actor import Actor
 
+
 class ModelEntity (PandaEntity):
 
     def __init__ (self,
                   model = None,
-                  anims = [],
+                  anims = {},
                   *a, **k):
         super (ModelEntity, self).__init__ (*a, **k)
 
-        self._model = Actor (loader.loadModel (model),
-                             dict ((anim, model) for anim in anims))
+        self._model = Actor (model, anims)
+        self._model.pprint ()
         self._model.reparentTo (self._node)
+
+    @property
+    def model (self):
+        return self._model
     
     def set_model_position (self, pos):
-        self._model.setPos (*pos)
+        self._model.setPos (pos)
 
     def get_model_position (self):
-        off = self._model.getPos ()
-        return (off.getX (), off.getY (), off.getZ ())
-
+        return self._model.getPos ()
+        
     def set_model_hpr (self, hpr):
-        self._model.setHpr (*hpr)
+        self._model.setHpr (hpr)
 
     def get_model_hpr (self):
-        off = self._model.getHpr ()
-        return (off.getX (), off.getY (), off.getZ ())
-
+        return self._model.getHpr ()
+        
     def set_model_scale (self, scale):
-        self._model.setScale (*scale)
+        self._model.setScale (scale)
 
     def get_model_scale (self):
-        off = self._model.getScale ()
-        return (off.getX (), off.getY (), off.getZ ())
+        return self._model.getScale ()
 
     model_position = property (get_model_position, set_model_position)
     model_hpr      = property (get_model_hpr,      set_model_hpr)

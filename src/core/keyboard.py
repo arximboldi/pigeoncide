@@ -54,16 +54,30 @@ class KeyboardMap (Receiver):
 
 class KeyboardTask (KeyboardMap, Task):
 
+    DOWN_TAG = '_down'
+    UP_TAG   = '_up'
+    
     def __init__ (self, *a, **k):
         super (KeyboardTask, self).__init__ (*a, **k)
         self._running = {}
         
     def receive (self, ev, *a, **k):
-        if len (ev) > 3 and ev [-3:] == '-up' and ev [:-3] in self._running:
-            del self._running [ev [:-3]]
-        elif ev in self._map:
-            self._running [ev] = getattr (self, self._map [ev])
+        if len (ev) > 3 and ev [-3:] == '-up':
+            ev = ev [:-3]
+            if ev in self._running:
+                del self._running [ev]
+            if ev in self._map:
+                attrname = self._map [ev] + self.UP_TAG
+                if hasattr (self, attrname):
+                    getattr (self, attrname) ()
 
+        elif ev in self._map:
+            attrname = self._map [ev]
+            self._running [ev] = getattr (self, attrname)
+            attrname += self.DOWN_TAG
+            if hasattr (self, attrname):
+                getattr (self, attrname) ()
+            
     def update (self, dt):
         for f in self._running.itervalues ():
             f (dt)

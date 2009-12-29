@@ -26,22 +26,29 @@ from pandac.PandaModules import *
 
 from direct.filter.CommonFilters import CommonFilters
 
+from base.sender import AutoSender
 from base.meta import mixin
 from core.keyboard import KeyboardTask
 from game.boy import Boy
 from game.level import Level
-from ent.controller import PlayerSubject, PlayerController
+from game.player import PlayerSubject, PlayerController
 from phys.physics import Physics
-from ent.camera import EntityFollower
+from ent.camera import SlowEntityFollower
+
+DEFAULT_KEYMAP = { 'on_move_forward'  : 'panda-w',
+                   'on_move_backward' : 'panda-s',
+                   'on_strafe_left'   : 'panda-q',
+                   'on_strafe_right'  : 'panda-e',
+                   'on_steer_left'    : 'panda-a',
+                   'on_steer_right'   : 'panda-d',
+                   'on_jump'          : 'panda-space',
+                   'on_walk'          : 'panda-c' }
 
 class Sandbox (State):
 
     def setup (self):
-        keyboard = mixin (KeyboardTask, PlayerSubject) (
-            { 'on_steer_left'    : 'panda-a',
-              'on_steer_right'   : 'panda-d',
-              'on_move_forward'  : 'panda-w',
-              'on_move_backward' : 'panda-s' })
+        keyboard = mixin (KeyboardTask, AutoSender) (
+            DEFAULT_KEYMAP)
 
         base.setBackgroundColor (Vec4 (.4, .6, .9, 1))
         
@@ -63,7 +70,7 @@ class Sandbox (State):
         self.tasks.add (level)
         self.tasks.add (physics)
 
-        boy.connect (EntityFollower (base.camera))
+        boy.connect (SlowEntityFollower (base.camera))
         keyboard.connect (PlayerController (boy))
         
         plightnode = PointLight("point light")

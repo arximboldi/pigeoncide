@@ -20,6 +20,7 @@
 from entity import Entity
 from pandac.PandaModules import *
 
+
 class PandaEntity (Entity):
 
     def __init__ (self,
@@ -37,11 +38,11 @@ class PandaEntity (Entity):
         
     def set_position (self, pos):
         super (PandaEntity, self).set_position (pos)
-        self._node.setPos (*pos)
+        self._node.setPos (pos)
         
     def set_hpr (self, hpr):
         super (PandaEntity, self).set_hpr (hpr)
-        self._node.setHpr (*hpr)
+        self._node.setHpr (hpr)
 
     def dispose (self):
         super (PandaEntity, self).dispose ()

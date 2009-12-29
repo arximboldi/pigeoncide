@@ -22,6 +22,7 @@ from pandac.PandaModules import *
 import math
 import phys.mass as mass
 
+
 class StaticPhysicalEntity (Entity):
 
     def __init__ (self,
@@ -34,7 +35,7 @@ class StaticPhysicalEntity (Entity):
 
     def set_position (self, pos):
         super (StaticPhysicalEntity, self).set_position (pos)
-        self._geom.setPosition (*pos)
+        self._geom.setPosition (pos)
             
     def set_hpr (self, hpr):
         super (StaticPhysicalEntity, self).set_hpr (hpr)
@@ -44,7 +45,8 @@ class StaticPhysicalEntity (Entity):
 
     def set_scale (self, scale):
         super (StaticPhysicalEntity, self).set_scale (scale)
-        self._geom.setScale (*scale)
+        self._geom.setScale (scale)
+
 
 class DynamicPhysicalEntity (Entity):
 
@@ -67,14 +69,17 @@ class DynamicPhysicalEntity (Entity):
         self._updating = False
 
     @property
+    def body (self):
+        return self._body
+
+    @property
     def speed (self):
-        vel = self._body.getLinearVel ()
-        return (vel.getX (), vel.getY (), vel.getZ ())
-        
+        return self._body.getLinearVel ()
+                
     def set_position (self, pos):
         super (DynamicPhysicalEntity, self).set_position (pos)
         if not self._updating:
-            self._body.setPosition (*pos)
+            self._body.setPosition (pos)
             
     def set_hpr (self, hpr):
         super (DynamicPhysicalEntity, self).set_hpr (hpr)
@@ -86,10 +91,10 @@ class DynamicPhysicalEntity (Entity):
     def set_scale (self, scale):
         super (DynamicPhysicalEntity, self).set_scale (scale)
         if not self._updating:
-            self._body.setScale (*scale)
+            self._body.setScale (scale)
 
     def apply_force (self, force):
-        self._body.addForce (*force)
+        self._body.addForce (force)
             
     def update (self, timer):
         super (DynamicPhysicalEntity, self).update (timer)
@@ -104,9 +109,10 @@ class DynamicPhysicalEntity (Entity):
         hpr = q.getHpr () # FIXME: Slow!
         
         self._updating = True
-        self.set_position ((pos.getX (), pos.getY (), pos.getZ ()))        
-        self.set_hpr ((hpr.getX (), hpr.getY (), hpr.getZ ()))
+        self.set_position (pos)        
+        self.set_hpr (hpr)
         self._updating = False
+
 
 class StandingPhysicalEntity (DynamicPhysicalEntity):
 
@@ -116,6 +122,7 @@ class StandingPhysicalEntity (DynamicPhysicalEntity):
 
     def update (self, timer):
         hpr = self._body.getQuaternion ()
+
         # http://www.euclideanspace.com/maths/geometry/rotations/
         # conversions/angleToQuaternion/index.htm      
         self._body.setQuaternion (Quat (math.sin (self.angle / 2), 0, 0,

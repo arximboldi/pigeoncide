@@ -45,6 +45,14 @@ class Receiver (Destiny):
             raise AttributeError ('Uncaugh message: ' + message)
         return getattr (self, message) (*args, **kws)
 
+
+class AutoReceiver (Receiver):
+
+    def receive (self, message, *args, **kws):
+        if hasattr (self, message):
+            return getattr (self, message) (*args, **kws)
+            
+
 class Sender (Container):
     """
     A Sender can be used to emit different named messages to different
@@ -60,3 +68,13 @@ class Sender (Container):
         
         for f in self._destinies:
             f.receive (message, *args, **kws)
+
+
+class AutoSender (Sender):
+    """
+    Every attribute is considered a message sender.
+    """
+
+    def __getattr__ (self, name):
+        return lambda *a, **k: self.send (name, *a, **k)
+

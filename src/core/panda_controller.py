@@ -23,7 +23,7 @@ from task import *
 
 import patch_messenger
 from direct.showbase.ShowBase import ShowBase
-from pandac.PandaModules import WindowProperties, ClockObject
+from pandac.PandaModules import *
 
 class PandaController (object):
 
@@ -54,6 +54,7 @@ class PandaController (object):
         self.set_defaults (cfg)
         self._base = ShowBase ()
         self._base.disableMouse ()
+        loadPrcFileData ("", "interpolate-frames 1")
         self.create_properties (title)
         self.update_properties (cfg)
         self.listen_conf (cfg)
