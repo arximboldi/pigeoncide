@@ -17,28 +17,26 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from base.observer import make_observer
-from entity import Entity
+from core.state import State
+
+from physical import PhysicalEntityManager
+from task import TaskEntityManager
+from panda import PandaEntityManager
 
 
-EntitySubject, EntityListener = make_observer (
-    [ 'on_entity_set_position',
-      'on_entity_set_hpr',
-      'on_entity_set_scale' ],
-    'Entity', __name__)
+class GameEntityManager (
+    PhysicalEntityManager,   
+    PandaEntityManager,
+    TaskEntityManager):
+    pass
 
 
-class ObservableEntity (Entity, EntitySubject):
+class GameState (State):
 
-    def set_position (self, pos):
-        super (ObservableEntity, self).set_position (pos)
-        self.on_entity_set_position (self, pos)
+    def __init__ (self, *a, **k):
+        super (GameState, self).__init__ (*a, **k)
+        self._entities = GameEntityManager (tasks = self.tasks)
 
-    def set_hpr (self, hpr):
-        super (ObservableEntity, self).set_hpr (hpr)
-        self.on_entity_set_hpr (self, hpr)
-
-    def set_scale (self, scale):
-        super (ObservableEntity, self).set_scale (scale)
-        self.on_entity_set_scale (self, hpr)
-
+    @property
+    def entities (self):
+        return self._entities

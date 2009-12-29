@@ -19,12 +19,15 @@
 
 from util import memoize
 
+
 @memoize
-def mixin (one, two):
+def mixin (one, two, *args):
     class Mixin (one, two):
         def __init__ (self, *args, **kws):
             super (Mixin, self).__init__ (*args, **kws)
 
+    if args:
+        return mixin (Mixin, *args)
     return Mixin
 
 

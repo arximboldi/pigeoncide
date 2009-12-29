@@ -17,14 +17,41 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+The Entity and all related classes provide means to handle the
+combinatorial explosion of design decissions related to game Entities
+using Python's mixins capability.
+
+This way we can provide small pieces of incomplete classes that, when
+combined together via inheritance, automatically build a new
+class. The 'base.meta.mixin' function comes very handy to dynamically
+build such mixins.
+
+Some entities require some 'management' functionality, for such
+reason, those must provide a EntityManager counterpart mixin.
+"""
+
 from core.task import Task
+import weakref
 
-class Entity (Task):
 
-    def __init__ (self, *a, **k):
+class EntityManager (object):
+
+    def _add_entity (self, ent):
+        pass
+
+    def _del_entity (self, ent):
+        pass
+
+
+class Entity (object):
+
+    def __init__ (self, entities = None, *a, **k):
         super (Entity, self).__init__ (*a, **k)
         self._hpr = None
         self._position = None
+        self.entities = weakref.proxy (entities)
+        entities._add_entity (self)
         
     def set_position (self, pos):
         self._position = pos
@@ -45,9 +72,39 @@ class Entity (Task):
         return self._scale
 
     def dispose (self):
-        pass
+        self.entities._del_entity (self)
 
     position = property (get_position, lambda self, x: self.set_position (x))
     hpr      = property (get_hpr,      lambda self, x: self.set_hpr (x))
     scale    = property (get_scale,    lambda self, x: self.set_scale (x))
+
+
+class DelegateEntity (Entity):
+
+    def __init__ (self, delegate = None, *a, **k):
+        super (DelegateEntity, self).__init__ (*a, **k)
+        self.delegate = delegate
+        
+    def set_position (self, pos):
+        super (DelegateEntity, self).set_position (pos)
+        self.delegate.set_position (pos)
+        
+    def set_hpr (self, hpr):
+        super (DelegateEntity, self).set_hpr (hpr)
+        self.delegate.set_hpr (hpr)
+                
+    def set_scale (self, scale):
+        super (DelegateEntity, self).set_scale (scale)
+        self.delegate.set_scale (scale)
+
+    def dispose (self):
+        super (DelegateEntity, self).dispose ()
+        self.delegate.dispose ()
+
+    position = property (lambda self:    self.delegate.get_position (),
+                         lambda self, x: self.set_position (x))
+    hpr      = property (lambda self:    self.delegate.get_hpr (),
+                         lambda self, x: self.set_hpr (x))
+    scale    = property (lambda self:    self.delegate.get_scale (),
+                         lambda self, x: self.set_scale (x))
 

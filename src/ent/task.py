@@ -17,28 +17,28 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from base.observer import make_observer
-from entity import Entity
+from core.task import Task, TaskGroup
+from entity import Entity, EntityManager
 
 
-EntitySubject, EntityListener = make_observer (
-    [ 'on_entity_set_position',
-      'on_entity_set_hpr',
-      'on_entity_set_scale' ],
-    'Entity', __name__)
+class TaskEntityManager (EntityManager):
+    
+    def __init__ (self, tasks = None, *a, **k):
+        super (TaskEntityManager, self).__init__ (*a, **k)
+        if tasks:
+            self.tasks = tasks
+        else:
+            self.tasks = TaskGroup ()
 
 
-class ObservableEntity (Entity, EntitySubject):
+class TaskEntity (Entity, Task):
 
-    def set_position (self, pos):
-        super (ObservableEntity, self).set_position (pos)
-        self.on_entity_set_position (self, pos)
-
-    def set_hpr (self, hpr):
-        super (ObservableEntity, self).set_hpr (hpr)
-        self.on_entity_set_hpr (self, hpr)
-
-    def set_scale (self, scale):
-        super (ObservableEntity, self).set_scale (scale)
-        self.on_entity_set_scale (self, hpr)
-
+    def __init__ (self, entities = None, *a, **k):
+        super (TaskEntity, self).__init__ (
+            entities = entities,
+            *a, **k)
+        entities.tasks.add (self)
+        
+    def dispose (self):
+        super (TaskEntity, self).dispose ()
+        self.kill ()

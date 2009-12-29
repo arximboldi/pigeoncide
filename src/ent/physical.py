@@ -17,21 +17,39 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from entity import Entity
+from entity import Entity, DelegateEntity, EntityManager
+from task import TaskEntity
+
 from pandac.PandaModules import *
 import math
+
+from phys.physics import Physics
 import phys.mass as mass
+import phys.geom as geom
+
+
+class PhysicalEntityManager (EntityManager):
+
+    def __init__ (self, physics = None, *a, **k):
+        super (PhysicalEntityManager, self).__init__ (*a, **k)
+        if physics:
+            self.physics = physics
+        else:
+            self.physics = Physics ()
+            
+        self.tasks.add (self.physics)
 
 
 class StaticPhysicalEntity (Entity):
 
     def __init__ (self,
-                  physics = None,
-                  geometry = None,
+                  entities = None,
+                  geometry = geom.box (1, 1, 1),
                   *a, **k):
-        
-        super (StaticPhysicalEntity, self).__init__ (*a, **k)
-        self._geom = geometry (physics.space)
+        super (StaticPhysicalEntity, self).__init__ (
+            entities = entities,
+            *a, **k)
+        self._geom = geometry (entities.physics.space)
 
     def set_position (self, pos):
         super (StaticPhysicalEntity, self).set_position (pos)
@@ -48,14 +66,18 @@ class StaticPhysicalEntity (Entity):
         self._geom.setScale (scale)
 
 
-class DynamicPhysicalEntity (Entity):
+class DynamicPhysicalEntity (TaskEntity):
 
     def __init__ (self,
-                  physics  = None,
-                  geometry = None,
+                  entities = None,
+                  geometry = geom.box (1, 1, 1),
                   mass     = mass.box (1000, 1, 1, 1),
                   *a, **k):
-        super (DynamicPhysicalEntity, self).__init__ (*a, **k)
+        super (DynamicPhysicalEntity, self).__init__ (
+            entities = entities,
+            *a, **k)
+
+        physics = entities.physics
         
         self._mass = OdeMass ()
         mass (self._mass)
@@ -72,10 +94,30 @@ class DynamicPhysicalEntity (Entity):
     def body (self):
         return self._body
 
-    @property
-    def speed (self):
+    def get_linear_velocity (self):
         return self._body.getLinearVel ()
-                
+
+    def set_linear_velocity (self, vel):
+        self._body.setLinearVel (vel)
+
+    def get_angular_velocity (self):
+        return self._body.getAngularVel ()
+
+    def set_angular_velocity (self, vel):
+        self._body.setAngularVel (vel)
+
+    def set_torque (self, torque):
+        self._body.setTorque (torque)
+
+    def set_force (self, force):
+        self._body.setForce (force)
+
+    def add_force (self, force):
+        self._body.addForce (force)
+
+    def add_torque (self, force):
+        self._body.addTorque (force)
+
     def set_position (self, pos):
         super (DynamicPhysicalEntity, self).set_position (pos)
         if not self._updating:
@@ -92,10 +134,7 @@ class DynamicPhysicalEntity (Entity):
         super (DynamicPhysicalEntity, self).set_scale (scale)
         if not self._updating:
             self._body.setScale (scale)
-
-    def apply_force (self, force):
-        self._body.addForce (force)
-            
+        
     def update (self, timer):
         super (DynamicPhysicalEntity, self).update (timer)
 
@@ -112,6 +151,47 @@ class DynamicPhysicalEntity (Entity):
         self.set_position (pos)        
         self.set_hpr (hpr)
         self._updating = False
+
+    linear_velocity = property (get_linear_velocity, set_linear_velocity)
+    angular_velocity = property (get_angular_velocity, set_angular_velocity)
+
+
+class DelegateDynamicPhysicalEntity (DelegateEntity):
+
+    @property
+    def body (self):
+        return self.delegate.body
+
+    @property
+    def speed (self):
+        return self.delegate.speed
+    
+    def add_force (self, force):
+        self.delegate.add_force (force)
+
+    def add_torque (self, force):
+        self.delegate.add_torque (torque)
+
+    def set_force (self, force):
+        self.delegate.set_force (force)
+
+    def set_torque (self, force):
+        self.delegate.set_torque (torque)
+
+    def get_linear_velocity (self):
+        return self.delegate.linear_velocity
+
+    def set_linear_velocity (self, vel):
+        self.delegate.linear_velocity = vel
+
+    def get_angular_velocity (self):
+        return self.delegate.angular_velocity
+
+    def set_angular_velocity (self, vel):
+        self.delegate.angular_velocity = vel
+    
+    linear_velocity = property (get_linear_velocity, set_linear_velocity)
+    angular_velocity = property (get_angular_velocity, set_angular_velocity)
 
 
 class StandingPhysicalEntity (DynamicPhysicalEntity):
@@ -131,3 +211,15 @@ class StandingPhysicalEntity (DynamicPhysicalEntity):
         self._body.setAngularVel (0, 0, 0)
 
         super (StandingPhysicalEntity, self).update (timer)
+
+
+class DelegateStandingPhysicalEntity (DelegateDynamicPhysicalEntity):
+
+    def _set_angle (self, angle):
+        self.delegate.angle = angle
+
+    def _get_angle (self):
+        return self.delegate.angle
+
+    angle = property (_get_angle, _set_angle)
+

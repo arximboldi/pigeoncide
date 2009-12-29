@@ -19,8 +19,11 @@
 
 from base.arg_parser import OptionWith
 from core.app import PandaApp
+
 from sandbox import Sandbox
 from menu.menu import Menu
+from game.game import Game
+
 
 class PigeoncideApp (PandaApp):
 
@@ -42,10 +45,11 @@ Extra options:
     def __init__ (self):
         PandaApp.__init__ (self)
 
-        self.root_state = 'sandbox'
-        #self.root_state = 'menu'
+        self.root_state = 'game'
+        
         self.states.add ('sandbox', Sandbox)
         self.states.add ('menu', Menu)
+        self.states.add ('game', Game)
         
     def do_prepare (self, args):
         self._arg_state = OptionWith (str)

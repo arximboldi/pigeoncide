@@ -26,12 +26,12 @@ from pandac.PandaModules import *
 
 from direct.filter.CommonFilters import CommonFilters
 
-from base.sender import AutoSender
+from base.sender import AutoSender, AutoReceiver
 from base.meta import mixin
 from core.keyboard import KeyboardTask
 from game.boy import Boy
 from game.level import Level
-from game.player import PlayerSubject, PlayerController
+from game.player import DelegatePlayerEntity
 from phys.physics import Physics
 from ent.camera import SlowEntityFollower
 
@@ -71,7 +71,8 @@ class Sandbox (State):
         self.tasks.add (physics)
 
         boy.connect (SlowEntityFollower (base.camera))
-        keyboard.connect (PlayerController (boy))
+        keyboard.connect (
+            mixin (DelegatePlayerEntity, AutoReceiver) (delegate = boy))
         
         plightnode = PointLight("point light")
         plightnode.setAttenuation (Vec3(1,0.0000005,0.0000001))

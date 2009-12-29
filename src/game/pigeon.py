@@ -17,28 +17,10 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from base.observer import make_observer
-from entity import Entity
+from flock import Bird
 
+class Pigeon (Bird):
 
-EntitySubject, EntityListener = make_observer (
-    [ 'on_entity_set_position',
-      'on_entity_set_hpr',
-      'on_entity_set_scale' ],
-    'Entity', __name__)
-
-
-class ObservableEntity (Entity, EntitySubject):
-
-    def set_position (self, pos):
-        super (ObservableEntity, self).set_position (pos)
-        self.on_entity_set_position (self, pos)
-
-    def set_hpr (self, hpr):
-        super (ObservableEntity, self).set_hpr (hpr)
-        self.on_entity_set_hpr (self, hpr)
-
-    def set_scale (self, scale):
-        super (ObservableEntity, self).set_scale (scale)
-        self.on_entity_set_scale (self, hpr)
-
+    def __init__ (self, *a, **k):
+        super (Pigeon, self).__init__ (*a, **k)
+        
