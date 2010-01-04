@@ -17,10 +17,32 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from flock import Bird
+from ent.observer import ObservableEntity
+from ent.panda import ModelEntity
+from flock import Boid
 
-class Pigeon (Bird):
+from pandac.PandaModules import Vec3
 
-    def __init__ (self, *a, **k):
-        super (Pigeon, self).__init__ (*a, **k)
-        
+import phys.geom as geom
+import phys.mass as mass
+
+class Pigeon (Boid, ModelEntity, ObservableEntity):
+
+    MODEL = '../data/mesh/pigeon-old.x'
+    #ANIMS = { 'run'  : '../data/mesh/ralph-run.egg.pz',
+    #          'walk' : '../data/mesh/ralph-walk.egg.pz' }
+    ANIMS = {}
+    
+    def __init__ (self,
+                  model = MODEL,
+                  *a, **k):
+        super (Pigeon, self).__init__ (
+            geometry = geom.sphere (2),
+            mass     = mass.sphere (1, 2),
+            model    = model,
+            anims    = self.ANIMS,
+            *a, **k)
+
+        self.model_position = Vec3 (0, 0, -2)
+        self.model_scale = Vec3 (0.05, 0.05, 0.05)
+        self.model_hpr = Vec3 (180, 0, 0)

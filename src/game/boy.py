@@ -22,8 +22,9 @@ from ent.model import ModelEntity
 from ent.physical import StandingPhysicalEntity
 from pandac.PandaModules import Vec3
 
-import phys.geom as geom
-import phys.mass as mass
+from phys import geom
+from phys import mass
+
 
 class Boy (ObservableEntity,
            ModelEntity,
@@ -46,55 +47,5 @@ class Boy (ObservableEntity,
         self.model_position = Vec3 (.0, .0, -5.0)
         self.model.loadAnims (self.ANIMS)
         self.model.pprint ()
-        # self.model_position = Vec3 (.0, .0, -4.5)
-        # self.model_scale    = Vec3 (-1, -1, -1)
-        # self.model_hpr      = Vec3 (180, 0, 180)
 
-        #self._model.setPlayRate (0.1, 'boy.3')
-    
-# :egg2pg(warning): AnimBundle boy specifies contradictory number of frames.
-# :egg2pg(warning): AnimBundle boy specifies contradictory frame rates.
-# :egg2pg(warning): AnimBundle boy specifies contradictory number of frames.
-# :egg2pg(warning): AnimBundle boy specifies contradictory frame rates.
-# :egg2pg(warning): AnimBundle boy specifies contradictory number of frames.
-# LOD: lodRoot
-#   Part: modelRoot
-#   Bundle: CharacterJointBundle boy
-#     Anim: boy
-#       File: None
-#       NumFrames: 17 PlayRate: 1.00
-#     Anim: boy.1
-#       File: None
-#       NumFrames: 9 PlayRate: 1.00
-#     Anim: boy.3
-#       File: None
-#       NumFrames: 30 PlayRate: 1.00
-#     Anim: boy.2
-#       File: None
-#       NumFrames: 11 PlayRate: 1.00
-# LOD: lodRoot
-#   Part: modelRoot
-#   Bundle: CharacterJointBundle boy
-#     Anim: boy
-#       File: None
-#       NumFrames: 1 PlayRate: 1.00
 
-    def walk (self):
-        pass
-
-    def run (self):
-        pass
-
-    def jump (self):
-        pass
-
-    def crouch (self):
-        pass
-
-    def feed (self):
-        pass
-
-    def hit (self):
-        pass
-
-    

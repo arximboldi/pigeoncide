@@ -21,11 +21,20 @@ from base.util import *
 from weakref import proxy
 from error import *
 from base.log import *
+from base import util
+import math
+
 
 _log = get_log (__name__)
 
+
 class TaskError (CoreError):
     pass
+
+
+killed  = 0
+running = 1
+paused  = 2
 
 class Task (object):
 
@@ -35,7 +44,7 @@ class Task (object):
     
     def __init__ (self, *a, **k):
         super (Task, self).__init__ (*a, **k)
-        self._state = Task.RUNNING
+        self._state = running
         self._next  = []
         self._manager = None
 
@@ -47,32 +56,32 @@ class Task (object):
         return task
     
     def update (self, timer):
-        if self._state == Task.RUNNING:
+        if self._state == running:
             self.do_update (timer)
-        if self._state == Task.KILLED and self._manager:
+        if self._state == killed and self._manager:
             for task in self._next:
                 self._manager.add (task)
         return self._state
     
     def pause (self):
-        if self._state != Task.KILLED:
-            self._state = Task.PAUSED
+        if self._state != killed:
+            self._state = paused
 
     def resume (self):
-        if self._state != Task.KILLED:
-            self._state = Task.RUNNING
+        if self._state != killed:
+            self._state = running
 
     def restart (self):
-        self._state = Task.RUNNING
+        self._state = running
 
     def kill  (self):
-        self._state = Task.KILLED
+        self._state = killed
         
     def is_paused (self):
-        return self._state == Task.PAUSED
+        return self._state == paused
 
     def is_killed (self):
-        return self._state == Task.KILLED
+        return self._state == killed
 
     @property
     def state (self):
@@ -107,12 +116,21 @@ class FuncTask (Task):
     
     def do_update (self, timer):
         action = self._func (timer)
-        if not action or action == Task.KILLED:
+        if not action or action == killed:
             self.kill ()
-        elif action == Task.PAUSED:
+        elif action == paused:
             self.pause ()
 
     func = property (_get_func, _set_func)
+
+
+def totask (task):
+    if not isinstance (task, Task):
+        if not callable (task):
+            raise TaskError ('You can add either tasks or callables.')
+        task = FuncTask (func = task)    
+    return task
+
 
 class TaskGroup (Task):
 
@@ -131,10 +149,7 @@ class TaskGroup (Task):
             self.kill ()
         
     def add (self, task):
-        if not isinstance (task, Task):
-            if not callable (task):
-                raise TaskError ('You can add either tasks or callables.')
-            task = FuncTask (func = task)
+        task = totask (task)
         self._tasks.append (task)
         return task
 
@@ -151,4 +166,61 @@ class TaskGroup (Task):
     @property
     def count (self):
         return len (self._tasks)
-    
+
+
+class WaitTask (Task):
+
+    def __init__ (self, time = 0, *a, **k):
+        super (WaitTask, self).__init__ (*a, **k)
+        self.remaining = time
+
+    def update (timer):
+        self.remaining -= timer.delta
+        if self.remaining <= 0:
+            self.kill ()
+            self.remaining = 0
+
+
+class FadeTask (Task):
+
+    def __init__ (self, func = nop, duration = 1.0, loop = False, *a, **k):
+        super (FadeTask, self).__init__ (*a, **k)
+        self.func      = func
+        self.curr      = 0
+        self.loop      = loop
+        self.duration = duration
+        func (0.0)
+
+    def update (self, timer):
+        self.func (self.curr)
+        self.curr += timer.delta / self.duration
+
+        if self.curr >= self.duration:
+            if self.loop:
+                self.curr -= self.duration
+            else:
+                self.curr = self.duration
+                self.kill ()
+                self.func (self.curr)
+
+
+def sequence (task, *tasks):
+    task  = totask (task)
+    tasks = map (totask, tasks)
+
+    for nxt in tasks:
+        task = task.add_next (nxt)
+
+    return task
+
+parallel = TaskGroup
+
+wait = WaitTask
+
+fade = FadeTask
+
+def linear (f, min, max, *a, **k):
+    return fade (lambda x: f (util.linear (min, max, x)), *a, **k)
+
+def sinusoid (f):
+    return fade (lambda x: f (math.sin (x * math.pi / 2.)), *a, **k)

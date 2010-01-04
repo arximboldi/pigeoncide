@@ -51,6 +51,12 @@ class Physics (Task):
         self._space.setAutoCollideJointGroup (self._group)
     
         self._time_acc = 0
+
+    def set_gravity (self, gravity):
+        self._world.setGravity (gravity)
+
+    def get_gravity (self,):
+        return self._world.getGravity ()
         
     @property
     def world (self):
@@ -62,5 +68,7 @@ class Physics (Task):
     
     def update (self, timer):
         self._space.autoCollide ()
-        self._world.quickStep (timer.delta)
+        self._world.step (timer.delta)
         self._group.empty ()
+
+    gravity = property (get_gravity, set_gravity) 

@@ -19,6 +19,7 @@
 
 from entity import EntityManager, Entity, DelegateEntity
 from pandac.PandaModules import *
+from direct.actor.Actor import Actor
 from direct.showbase.ShowBase import ShowBase
 
 

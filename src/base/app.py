@@ -79,6 +79,7 @@ Options:
     def run (self):
         self._std_logger  = None
         self._file_logger = None
+        self._log_file    = None
         
         if self.GLOBAL:
             self._std_logger = StdLogListener ()

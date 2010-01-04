@@ -63,7 +63,7 @@ class StaticPhysicalEntity (Entity):
 
     def set_scale (self, scale):
         super (StaticPhysicalEntity, self).set_scale (scale)
-        self._geom.setScale (scale)
+        # FIXME: self._geom.setScale (scale)
 
 
 class DynamicPhysicalEntity (TaskEntity):
@@ -89,6 +89,10 @@ class DynamicPhysicalEntity (TaskEntity):
         self._geom.setBody (self._body)
         
         self._updating = False
+
+    @property
+    def mass (self):
+        return self._mass.getMagnitude ()
 
     @property
     def body (self):
@@ -132,8 +136,8 @@ class DynamicPhysicalEntity (TaskEntity):
 
     def set_scale (self, scale):
         super (DynamicPhysicalEntity, self).set_scale (scale)
-        if not self._updating:
-            self._body.setScale (scale)
+        # FIXME if not self._updating:
+        # self._body.setScale (scale)
         
     def update (self, timer):
         super (DynamicPhysicalEntity, self).update (timer)

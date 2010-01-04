@@ -17,135 +17,215 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+Modified version of the popular flocking algorithm by Craig Reynolds,
+which is described in the Algorythms for Computer Games in Turku
+University.
+
+Interesting links about it:
+  * http://www.red3d.com/cwr/boids/
+  * http://www.kfish.org/boids/pseudocode.html
+"""
+
 from pandac.PandaModules import Vec3
 
-from core.task import Task
+from ent.entity import Entity
+from ent.task import TaskEntity
 from ent.physical import (DynamicPhysicalEntity,
                           DelegateDynamicPhysicalEntity)
 
 import random
 import weakref
+import math
 
 class Flock (TaskEntity):
 
-    bird_cohesion   = .1 / 5.
-    bird_avoidance  = .1 / 5.
-    bird_alignment  = .1 / 5.
-    bird_randomness = .1 / 5.
-    bird_flight     = .1 / 5.
+    boid_power      = 10
     
-    bird_angle      = 45.0
-    bird_distance   = 100.0
+    boid_cohesion   = 0.01
+    boid_avoidance  = 1
+    boid_alignment  = 0.125
+    boid_bounds     = 10
+    boid_randomness = 1
+    boid_flight     = 0
+    boid_target     = 0.01
 
-    def __init__ (self,
-                  *a, **k):
-        super (self, *a, **k).__init__ (*a, **k)
-        self.birds = []
+    boid_speed      = 10
+    boid_speed_sq   = boid_speed * boid_speed
+    boid_max_far    = 500
+    boid_max_far_sq = boid_max_far * boid_max_far
+
+    boid_mindist    = 5
+    boid_mindist_sq = boid_mindist * boid_mindist 
+    boid_maxdist    = 20
+    boid_maxdist_sq = boid_maxdist * boid_maxdist
+
+    boid_height     = 50.0
+    
+    target          = None
+    
+    def __init__ (self, *a, **k):
+        super (Flock, self).__init__(*a, **k)
+        self.boids = []
         self.leader = None
 
     def choose_leader (self):
-        self.leader = self.birds [random.randint (0, len (self.birds) - 1)]
+        self.leader = self.boids [random.randint (0, len (self.boids) - 1)]
 
-    def remove (self, bird):
-        bird.dispose ()
-        self.birds.remove (bird)
-
-    def _add_bird (self, bird):
-        self.birds += bird
-        if len (self.birds) == 1:
-            self.leader = bird
+    def remove (self, boid):
+        boid.dispose ()
+        self.boids.remove (boid)
 
     def dispose (self):
-        super (FlockEntity)
+        super (FlockEntity, self).dispose ()
+        for x in self.boids:
+            x.dispose ()
+
+    def _add_boid (self, boid):
+        self.boids.append (boid)
+        if len (self.boids) == 1:
+            self.leader = boid
 
 
-class BirdBase (TaskEntity):
-
-    flight_height = 100.0
+class BoidBase (TaskEntity):
     
     def __init__ (self, flock = None, *a, **k):
-        super (BirdEntityBase, self).__init__ (
-            entities = k.get ('entities', flock.entities),
-            *a, **k)
+        k ['entities'] = flock.entities.myself ()
+        super (BoidBase, self).__init__ (*a, **k)
         self.flock = weakref.proxy (flock)
-        self.flock._add_bird (flock)
+        self.flock._add_boid (self)
 
     def update (self, timer):
+        super (BoidBase, self).update (timer)
+        
         self.neighbours = self.find_neighbours ()
 
-        cohesion   = self.get_cohesion ()
-        avoidance  = self.get_avoidance ()
-        alignment  = self.get_alignment ()
-        flight     = self.get_flight ()
-        randomness = self.get_randomness ()
+        cohesion   = self.rule_cohesion ()
+        avoidance  = self.rule_avoidance ()
+        alignment  = self.rule_alignment ()
+        bounds     = self.rule_bounds ()
+        flight     = self.rule_flight ()
+        randomness = self.rule_randomness ()
+        target     = self.rule_target ()
+        
+        v = (cohesion   * self.flock.boid_cohesion   +
+             avoidance  * self.flock.boid_avoidance  +
+             alignment  * self.flock.boid_alignment  +
+             bounds     * self.flock.boid_bounds     +
+             flight     * self.flock.boid_flight     +
+             randomness * self.flock.boid_randomness +
+             target     * self.flock.boid_target) \
+             * self.flock.boid_power
 
-        force = self.flock.bird_cohesion   * cohesion   + \
-                self.flock.bird_avoidance  * avoidance  + \
-                self.flock.bird_alignment  * alignment  + \
-                self.flock.bird_randomness * randomness + \
-                self.flock.bird_flight     * flight
-
-        self.add_force (force)
+        
+        if v.lengthSquared () > self.flock.boid_speed_sq:
+            v.normalize ()
+            v *= self.flock.boid_speed
+        
+        self.linear_velocity  = v * self.flock.boid_power
+        self.angular_velocity = Vec3 (0, 0, 0)
+        
+        v.normalize ()
+        self.hpr              = Vec3 (math.atan2 (v.getX (), v.getY ())
+                                      * 180 / math.pi, 
+                                      math.asin (v.getZ ())
+                                      * 180 / math.pi, 0)
+        
+        self.set_torque (Vec3 (0, 0, 0))
+        self.set_force  (Vec3 (0, 0, 0))
+        
 
     def find_neighbours (self):
+        #return filter (lambda x: x != self, self.flock.boids)
         return filter (
             lambda x: ((self.position - x.position).lengthSquared ()
-                       < self.flock.bird_distance),
-            self.flock.birds)
+                       < self.flock.boid_maxdist_sq) and x != self,
+            self.flock.boids)
 
-    def get_cohesion (self):
+    def rule_avoidance (self):
+        avoid = Vec3 ()
+        for x in self.neighbours:
+            distsq = (x.position - self.position).lengthSquared ()
+            if distsq < self.flock.boid_mindist_sq:
+                avoid -= x.position - self.position
+        return avoid
+    
+        # nearest  = Vec3 (0, 0, 0)
+        # bestdist = 10000000
+        # for x in self.neighbours:
+        #     newdist = (x.position - self.position).lengthSquared ()
+        #     if newdist < bestdist:
+        #         bestdist = newdist
+        #         nearest  = x.position
+        # separation = Vec3 (0, 0, 0)
+        
+        # if bestdist < self.flock.boid_mindist_sq: 
+        #     separation = self.position - nearest
+        #     separation.normalize ()
+        # return separation
+
+    def rule_cohesion (self):
         center = Vec3 (0, 0, 0)
         if self.neighbours:
             for x in self.neighbours:
                 center += x.position
             center /= len (self.neighbours)
-        cohesion = self.center - self.position
-        cohesion.normalize ()
+        cohesion = (center - self.position) / 100.
+        #cohesion.normalize ()
         return cohesion
     
-    def get_avoidance (self):
-        return Vec3 (0, 0, 0)
+    def rule_bounds (self):
+        bounds = Vec3 (0, 0, 0)
+        if self.position.lengthSquared () > self.flock.boid_max_far_sq:
+            bounds = bounds - self.position
+            bounds.normalize ()
+        return bounds
 
-    def get_alignment (self):
+    def rule_alignment (self):
         velocity = Vec3 (0, 0, 0)
         if self.neighbours:
             for x in self.neighbours:
-                vel = x.linear_velocity
-                vel.normalize ()
-                velocity += vel
+                velocity += x.linear_velocity
             velocity /= len (self.neighbours)
-            velocity.normalize ()
         return velocity
 
-    def get_flight (self):
-        if self.position.getZ () < self.flight_hight:
-            return Vec3 (0, 0, 1.0f)
+    def rule_flight (self):
+        if self.position.getZ () < self.flock.boid_height:
+            return Vec3 (0, 0, 1.0)
         return Vec3 (0, 0, 0)
 
-    def get_randomness (self):
-        return Vec3 (random.random (),
-                     random.random (),
-                     random.random ())
+    def rule_randomness (self):
+        if self.linear_velocity.lengthSquared () < self.flock.boid_speed_sq:
+            return Vec3 (random.random (),
+                         random.random (),
+                         0)
+        return Vec3 (0, 0, 0)
+
+    def rule_target (self):
+        if self.flock.target:
+            return Vec3 (*self.flock.target.position) - self.position
+        return Vec3 ()
 
 
-class Bird (DynamicPhysicalEntity, BirdBase):
+class Boid (BoidBase, DynamicPhysicalEntity):
     pass
 
 
-class DelegateBird (DelegateDynamicPhysicalEntity, BirdBase):
+class DelegateBoid (DelegateDynamicPhysicalEntity, BoidBase):
     pass
 
 
 def make_random_flock (entities,
-                       num_birds,
+                       num_boids,
                        center,
                        size,
-                       bird_cls = Bird):
+                       boid_cls = Boid):
 
     flock = Flock (entities = entities)
-    for i in xrange (num_birds):
-        b = bird_cls (flock = flock)
+    for i in xrange (num_boids):
+        b = boid_cls (flock = flock)
         b.position = Vec3 (random.uniform (center.getX () - size/2, size),
                            random.uniform (center.getY () - size/2, size),
                            random.uniform (center.getZ () - size/2, size))
     flock.choose_leader ()
+    return flock

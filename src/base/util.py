@@ -17,6 +17,20 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+class Selfable (object):
+
+    def myself (self):
+        return self
+
+
+def linear (min, max, val):
+    return min + val * (max - min)
+
+
+def nop (*a, **k):
+    pass
+
+
 def bound (val, vmin, vmax):
     if val < vmin: return vmin
     if val > vmax: return vmax

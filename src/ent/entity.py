@@ -31,11 +31,14 @@ Some entities require some 'management' functionality, for such
 reason, those must provide a EntityManager counterpart mixin.
 """
 
+from pandac.PandaModules import Vec3
+
 from core.task import Task
 import weakref
+from base.util import Selfable
 
 
-class EntityManager (object):
+class EntityManager (Selfable):
 
     def _add_entity (self, ent):
         pass
@@ -48,10 +51,14 @@ class Entity (object):
 
     def __init__ (self, entities = None, *a, **k):
         super (Entity, self).__init__ (*a, **k)
-        self._hpr = None
-        self._position = None
-        self.entities = weakref.proxy (entities)
+        self._hpr = Vec3 ()
+        self._position = Vec3 ()
+        self._entities = weakref.ref (entities)
         entities._add_entity (self)
+
+    @property
+    def entities (self):
+        return self._entities ()
         
     def set_position (self, pos):
         self._position = pos

@@ -28,13 +28,14 @@ from ent.physical import (StandingPhysicalEntity,
 from ent.panda import ModelEntity, DelegateModelEntity
 from pandac.PandaModules import Vec3
 
+import laser
+import math
 
-_IS_WALKING        = 0x0001
-_IS_FORWARD        = 0x0002
-_IS_FEEDING        = 0x0004
-_IS_IDLE           = 0x0008
-_IS_BACKWARD       = 0x0020
-
+is_walking        = 0x0001
+is_forward        = 0x0002
+is_feeding        = 0x0004
+is_idle           = 0x0008
+is_backward       = 0x0020
 
 class PlayerEntityBase (Entity):
     """
@@ -49,46 +50,56 @@ class PlayerEntityBase (Entity):
     jump_force         = 1000000.0
     
     max_rotate_speed   = 2.0
-    max_run_speed_sq   = 500000
-    max_walk_speed_sq  = 100000
-
-    @property
-    def is_moving (self):
-        return (self.actions & _IS_FORWARD) or \
-               (self.actions & _IS_BACKWARD)
+    max_run_speed_sq   = 500000.0
+    max_walk_speed_sq  = 100000.0
 
     def __init__ (self, *a, **k):
         super (PlayerEntityBase, self).__init__ (*a, **k)
         self.angle    = 0
         self.actions  = 0x0
+        self.laser    = laser.Group (self.entities)
+
+    def on_place_stick_down (self):
+        stick = laser.Stick (entities = self.entities)
+        direction = Vec3 (math.sin (self.angle), math.cos (self.angle), 0)
+
+        stick.position = self.position + direction * 10
+        stick.hpr = self.hpr
+
+        self.laser.add_stick (stick)
+        
+    @property
+    def is_moving (self):
+        return (self.actions & is_forward) or \
+               (self.actions & is_backward)
 
     def on_walk_down (self):
-        self.actions |= _IS_WALKING
+        self.actions |= is_walking
         if self.is_moving:
             self.model.loop ('walk')
         
     def on_walk_up (self):
-        self.actions &= ~_IS_WALKING
+        self.actions &= ~ is_walking
         if self.is_moving:
             self.model.loop ('run')
             
     def on_move_forward_down (self):
-        self.actions |= _IS_FORWARD
+        self.actions |= is_forward
         self.model.loop (
-            'walk' if self.actions & _IS_WALKING else 'run')
+            'walk' if self.actions & is_walking else 'run')
         
     def on_move_forward_up (self):
-        self.actions &= ~_IS_FORWARD
+        self.actions &= ~ is_forward
         if not self.is_moving:
             self.model.stop ()
         
     def on_move_backward_down (self):
-        self.actions |= _IS_BACKWARD
+        self.actions |= is_backward
         self.model.loop (
-            'walk' if self.actions & _IS_WALKING else 'run')
+            'walk' if self.actions & is_walking else 'run')
 
     def on_move_backward_up (self):
-        self.actions &= ~_IS_BACKWARD
+        self.actions &= ~ is_backward
         if not self.is_moving:
             self.model.stop ()
         
@@ -117,9 +128,9 @@ class PlayerEntityBase (Entity):
         speeddir  = speed * speed.dot (direction)
         sqlen     = speeddir.lengthSquared ()
         
-        if (self.actions & _IS_WALKING and
+        if (self.actions & is_walking and
             sqlen < self.max_walk_speed_sq) or \
-           (~ self.actions & _IS_WALKING and
+           (~ self.actions & is_walking and
             sqlen < self.max_run_speed_sq):
             self.add_force (direction * force * timer.delta)
 
