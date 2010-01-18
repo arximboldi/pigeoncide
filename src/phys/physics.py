@@ -104,6 +104,9 @@ class Physics (Task):
     def collide_world (self, geom):
         scene = OdeUtil.spaceToGeom (self._space)
         return OdeUtil.collide (self, scene, geom)
+
+    def collide_geoms (self, geom):
+        pass
         
     @property
     def space (self):

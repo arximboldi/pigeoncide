@@ -18,8 +18,8 @@
 #
 
 from ent.physical import StaticPhysicalEntity
-from ent.model   import ModelEntity
-import phys.geom as geom
+from ent.panda import ModelEntity
+from phys import geom
 
 class Level (StaticPhysicalEntity, ModelEntity):
 
