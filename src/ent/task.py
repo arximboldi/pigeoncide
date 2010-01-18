@@ -40,5 +40,5 @@ class TaskEntity (Entity, Task):
         entities.tasks.add (self)
         
     def dispose (self):
-        super (TaskEntity, self).dispose ()
         self.kill ()
+        super (TaskEntity, self).dispose ()

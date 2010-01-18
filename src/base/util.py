@@ -17,6 +17,8 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+near0 = 0.0001
+
 class Selfable (object):
 
     def myself (self):

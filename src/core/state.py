@@ -20,18 +20,18 @@
 from weakref import proxy
 
 from base.event import *
-from task import *
 from error import *
+import task
 
 class StateError (CoreError):
     pass
 
-class State (Task):
+class State (task.Task):
 
     def __init__ (self, state_manager = None, *a, **k):
         assert state_manager != None
         super (State, self).__init__ (*a, **k)
-        self._tasks = TaskGroup ()
+        self._tasks = task.TaskGroup ()
         self._manager = proxy (state_manager)
         self._events = EventManager ()
         
@@ -67,12 +67,12 @@ class State (Task):
         pass
 
 
-class StateManager (Task):
+class StateManager (task.Task):
 
-    def __init__ (self):
-        Task.__init__ (self)
+    def __init__ (self, *a, **k):
+        super (StateManager, self).__init__ (*a, **k)
         
-        self._tasks = TaskGroup ()
+        self._tasks = task.TaskGroup ()
         self._events = EventManager ()
         self._current_state = None
         self._state_factory = {}
@@ -113,7 +113,7 @@ class StateManager (Task):
     
     def do_update (self, timer):
         self._tasks.update (timer)
-        if self.current.state == Task.KILLED:
+        if self.current.state == task.killed:
             self._leave_state ()
         if not self._state_stack:
             self.kill ()

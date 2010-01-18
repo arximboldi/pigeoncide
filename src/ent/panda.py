@@ -21,17 +21,22 @@ from entity import EntityManager, Entity, DelegateEntity
 from pandac.PandaModules import *
 from direct.actor.Actor import Actor
 from direct.showbase.ShowBase import ShowBase
-
+from direct.showbase.Audio3DManager import Audio3DManager
 
 class PandaEntityManager (EntityManager):
 
-    def __init__ (self, render = None, *a, **k):
+    def __init__ (self, render = None, audio3d = None, *a, **k):
         super (PandaEntityManager, self).__init__ (*a, **k)
         if render:
             self.render = render
         else:
             self.render = base.render
-    
+        if audio3d:
+            self.audio3d = audio3d
+        else:
+            self.audio3d = Audio3DManager (base.sfxManagerList [0], camera)
+            self.audio3d.setListenerVelocityAuto ()
+
 
 class PandaEntity (Entity):
 
@@ -45,7 +50,8 @@ class PandaEntity (Entity):
         
         self._node = NodePath (PandaNode (node_name))
         self._node.reparentTo (render)
-
+        self._panda_sounds = []
+        
     @property
     def node (self):
         return self._node
@@ -63,8 +69,18 @@ class PandaEntity (Entity):
         self._node.setScale (scale)
 
     def dispose (self):
-        super (PandaEntity, self).dispose ()
+        audio3d = self.entities.audio3d
+        map (audio3d.detachSound, self._panda_sounds)
         self._node.removeNode ()
+        super (PandaEntity, self).dispose ()
+        
+    def load_sound (self, name):
+        audio3d = self.entities.audio3d
+        snd = audio3d.loadSfx (name)
+        audio3d.attachSoundToObject (snd, self._node)
+        audio3d.setSoundVelocityAuto (snd)
+        self._panda_sounds.append (snd) 
+        return snd
 
 
 class DelegatePandaEntity (DelegateEntity):
@@ -73,18 +89,8 @@ class DelegatePandaEntity (DelegateEntity):
     def node (self):
         return self.delegate.node
 
-    
-class ModelEntity (PandaEntity):
 
-    def __init__ (self,
-                  model = None,
-                  anims = {},
-                  *a, **k):
-        super (ModelEntity, self).__init__ (*a, **k)
-
-        self._model = Actor (model, anims)
-        self._model.pprint ()
-        self._model.reparentTo (self._node)
+class ModelEntityBase (PandaEntity):
 
     @property
     def model (self):
@@ -111,6 +117,30 @@ class ModelEntity (PandaEntity):
     model_position = property (get_model_position, set_model_position)
     model_hpr      = property (get_model_hpr,      set_model_hpr)
     model_scale    = property (get_model_scale,    set_model_scale)
+
+
+class ModelEntity (ModelEntityBase):
+
+    def __init__ (self,
+                  model = None,
+                  *a, **k):
+        super (ModelEntity, self).__init__ (*a, **k)
+
+        self._model = loader.loadModel (model)
+        self._model.reparentTo (self._node)
+
+
+class ActorEntity (ModelEntityBase):
+
+    def __init__ (self,
+                  model = None,
+                  anims = {},
+                  *a, **k):
+        super (ActorEntity, self).__init__ (*a, **k)
+
+        self._model = Actor (loader.loadModel (model), anims)
+        self._model.loadAnims (anims)
+        self._model.reparentTo (self._node)
 
 
 class DelegateModelEntity (DelegatePandaEntity):

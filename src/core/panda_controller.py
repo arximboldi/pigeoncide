@@ -19,7 +19,7 @@
 
 from base.conf import *
 from timer import *
-from task import *
+import task
 
 import patch_messenger
 from direct.showbase.ShowBase import ShowBase
@@ -33,10 +33,13 @@ class PandaController (object):
     DEFAULT_FPS = 60
     DEFAULT_FRAME_METER = False
 
+    DEFAULT_MAX_DELTA = 1. / 20.
+
     def __init__ (self):
         super (PandaController, self).__init__ ()
         self._timer = Timer ()
-        self._tasks = TaskGroup ()
+        self._timer.max_delta = self.DEFAULT_MAX_DELTA
+        self._tasks = task.TaskGroup ()
         self._tasks.add (self._panda_task)
     
     @property
@@ -54,10 +57,17 @@ class PandaController (object):
         self.set_defaults (cfg)
         self._base = ShowBase ()
         self._base.disableMouse ()
-        loadPrcFileData ("", "interpolate-frames 1")
+
         self.create_properties (title)
         self.update_properties (cfg)
         self.listen_conf (cfg)
+
+        loadPrcFileData ("", "interpolate-frames 1")
+        path = getModelPath ()
+        path.appendPath ('./data')
+        
+        self._base.render.setShaderAuto ()
+        self._base.enableParticles ()
 
     def loop (self):        
         self._timer.reset ()
@@ -99,5 +109,5 @@ class PandaController (object):
     def _panda_task (self, timer):
         if self._tasks.count > 1:
             taskMgr.step ()
-            return Task.RUNNING
-        return Task.KILLED
+            return task.running
+        return task.killed

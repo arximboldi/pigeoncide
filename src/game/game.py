@@ -19,6 +19,7 @@
 
 from pandac.PandaModules import Vec4, Vec3, AmbientLight, PointLight
 
+from base.conf import GlobalConf
 from base.meta import mixin
 from base.sender import AutoSender, AutoReceiver
 from core.input import InputTask
@@ -58,20 +59,26 @@ CameraController = mixin (FastEntityFollower, AutoReceiver)
 class Game (GameState):
 
     def setup (self):
+        cfg = GlobalConf ().child ('game')
+        cfg.child ('music-volume').set_value (0.01)
+
+        
         # Input helper
-        ginput = GameInput (DEFAULT_INPUT_MAP)        
+        ginput = GameInput (DEFAULT_INPUT_MAP)
         self.events.connect (ginput)
         self.tasks.add (ginput)
 
-        # Preload all the shit
-        map (loader.loadModel, [
-            '../data/mesh/stick_arch_sub.x'
-            ])
+        # Music
+        music = loader.loadSfx ('snd/houmdrak.mp3')
+        music.setLoop (True)
+        music.play ()
+        music.setVolume (cfg.child ('music-volume').value)
+        print "volume: ", cfg.child ('music-volume').value
         
         # Game entities
+        boy = Boy (entities = self.entities)
         flock = make_random_flock (self.entities, 20,
                                    Vec3 (0, 0, 300), 100, Pigeon)
-        boy = Boy (entities = self.entities)
         level = Level (entities = self.entities)
         boy.set_position ((0, 70, 20))
         level.set_position ((0, 0, 0))
@@ -101,3 +108,8 @@ class Game (GameState):
         # Helper
         self.events.event ('panda-escape').connect (self.kill)
     
+        # Preload all the shit
+        map (loader.loadModel, [
+            '../data/mesh/stick_arch_sub.x'
+            ])
+     

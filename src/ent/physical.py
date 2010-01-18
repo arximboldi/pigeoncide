@@ -27,29 +27,58 @@ from phys.physics import Physics
 import phys.mass as mass
 import phys.geom as geom
 
+from base.signal import Signal
+
 
 class PhysicalEntityManager (EntityManager):
 
-    def __init__ (self, physics = None, *a, **k):
+    def __init__ (self,
+                  physics = None,
+                  phys_events = None,
+                  *a, **k):
         super (PhysicalEntityManager, self).__init__ (*a, **k)
+
         if physics:
             self.physics = physics
         else:
-            self.physics = Physics ()
+            self.physics = Physics (phys_events)
             
         self.tasks.add (self.physics)
 
 
-class StaticPhysicalEntity (Entity):
+class PhysicalEntityBase (Entity):
 
     def __init__ (self,
                   entities = None,
                   geometry = geom.box (1, 1, 1),
                   *a, **k):
-        super (StaticPhysicalEntity, self).__init__ (
+        super (PhysicalEntityBase, self).__init__ (
             entities = entities,
             *a, **k)
         self._geom = geometry (entities.physics.space)
+        entities.physics.register (self._geom)
+        
+    @property
+    def geom (self):
+        return self._geom
+
+    def enable_collision (self):
+        if not hasattr (self, 'on_collide'):
+            self.on_collide = Signal ()
+            self.entities.physics.register_geom_callback (
+                self._geom, self.on_collide, self)
+            
+    def disable_collision (self):
+        del self.on_collide
+        self.entities.physics.unregister_geom_callback (self._geom)
+
+    def dispose (self):
+        self.entities.physics.unregister (self._geom)
+        self._geom.destroy ()
+        super (PhysicalEntityBase, self).dispose ()
+
+
+class StaticPhysicalEntity (PhysicalEntityBase):
 
     def set_position (self, pos):
         super (StaticPhysicalEntity, self).set_position (pos)
@@ -63,14 +92,12 @@ class StaticPhysicalEntity (Entity):
 
     def set_scale (self, scale):
         super (StaticPhysicalEntity, self).set_scale (scale)
-        # FIXME: self._geom.setScale (scale)
 
 
-class DynamicPhysicalEntity (TaskEntity):
+class DynamicPhysicalEntity (PhysicalEntityBase, TaskEntity):
 
     def __init__ (self,
                   entities = None,
-                  geometry = geom.box (1, 1, 1),
                   mass     = mass.box (1000, 1, 1, 1),
                   *a, **k):
         super (DynamicPhysicalEntity, self).__init__ (
@@ -81,14 +108,15 @@ class DynamicPhysicalEntity (TaskEntity):
         
         self._mass = OdeMass ()
         mass (self._mass)
-        
         self._body = OdeBody (physics.world)
         self._body.setMass (self._mass)
-
-        self._geom = geometry (physics.space)
         self._geom.setBody (self._body)
         
         self._updating = False
+
+    def dispose (self):
+        self._body.destroy ()
+        super (DynamicPhysicalEntity, self).dispose ()
 
     @property
     def mass (self):
@@ -138,6 +166,9 @@ class DynamicPhysicalEntity (TaskEntity):
         super (DynamicPhysicalEntity, self).set_scale (scale)
         # FIXME if not self._updating:
         # self._body.setScale (scale)
+
+    def disable_physics (self):
+        self._body.disable ()
         
     def update (self, timer):
         super (DynamicPhysicalEntity, self).update (timer)
@@ -160,7 +191,20 @@ class DynamicPhysicalEntity (TaskEntity):
     angular_velocity = property (get_angular_velocity, set_angular_velocity)
 
 
-class DelegateDynamicPhysicalEntity (DelegateEntity):
+class DelegatePhysicalEntityBase (DelegateEntity):
+
+    @property
+    def on_collide (self):
+        return self.delegate.on_collide
+
+    def enable_collision (self):
+        return self.delegate.enable_collision ()
+
+    def disable_collision (self):
+        return self.delegate.disable_collision ()
+
+
+class DelegateDynamicPhysicalEntity (DelegatePhysicalEntityBase):
 
     @property
     def body (self):

@@ -37,6 +37,9 @@ is_feeding        = 0x0004
 is_idle           = 0x0008
 is_backward       = 0x0020
 
+anim_run  = 'run'
+anim_walk = 'walk'
+
 class PlayerEntityBase (Entity):
     """
     Incomplete mixing requiring:
@@ -63,7 +66,7 @@ class PlayerEntityBase (Entity):
         stick = laser.Stick (entities = self.entities)
         direction = Vec3 (math.sin (self.angle), math.cos (self.angle), 0)
 
-        stick.position = self.position + direction * 10
+        stick.position = self.position + direction * 5
         stick.hpr = self.hpr
 
         self.laser.add_stick (stick)
@@ -76,17 +79,17 @@ class PlayerEntityBase (Entity):
     def on_walk_down (self):
         self.actions |= is_walking
         if self.is_moving:
-            self.model.loop ('walk')
+            self.model.loop (anim_walk)
         
     def on_walk_up (self):
         self.actions &= ~ is_walking
         if self.is_moving:
-            self.model.loop ('run')
+            self.model.loop (anim_run)
             
     def on_move_forward_down (self):
         self.actions |= is_forward
         self.model.loop (
-            'walk' if self.actions & is_walking else 'run')
+            anim_walk if self.actions & is_walking else anim_run)
         
     def on_move_forward_up (self):
         self.actions &= ~ is_forward
@@ -96,7 +99,7 @@ class PlayerEntityBase (Entity):
     def on_move_backward_down (self):
         self.actions |= is_backward
         self.model.loop (
-            'walk' if self.actions & is_walking else 'run')
+            anim_walk if self.actions & is_walking else anim_run)
 
     def on_move_backward_up (self):
         self.actions &= ~ is_backward

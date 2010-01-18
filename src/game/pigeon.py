@@ -21,12 +21,17 @@ from ent.observer import ObservableEntity
 from ent.panda import ModelEntity
 from flock import Boid
 
+import random
 from pandac.PandaModules import Vec3
 
 import phys.geom as geom
 import phys.mass as mass
 
-class Pigeon (Boid, ModelEntity, ObservableEntity):
+from kill import KillableEntity
+
+killed_pigeons = 0
+
+class Pigeon (Boid, ModelEntity, KillableEntity):
 
     MODEL = '../data/mesh/pigeon-old.x'
     #ANIMS = { 'run'  : '../data/mesh/ralph-run.egg.pz',
@@ -46,3 +51,15 @@ class Pigeon (Boid, ModelEntity, ObservableEntity):
         self.model_position = Vec3 (0, 0, -2)
         self.model_scale = Vec3 (0.05, 0.05, 0.05)
         self.model_hpr = Vec3 (180, 0, 0)
+
+        self.die_sounds = map (self.load_sound,
+                               [ 'snd/electrocute_medium.wav',
+                                 'snd/electrocute_short.wav' ])
+    def on_die (self):
+        global killed_pigeons
+        self.kill ()
+        self.disable_physics ()
+        self.flock.boids.remove (self)
+        random.choice (self.die_sounds).play ()
+        killed_pigeons += 1
+        print "DEAD PIGEONS:", killed_pigeons

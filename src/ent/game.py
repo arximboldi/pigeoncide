@@ -35,7 +35,8 @@ class GameState (State):
 
     def __init__ (self, *a, **k):
         super (GameState, self).__init__ (*a, **k)
-        self._entities = GameEntityManager (tasks = self.tasks)
+        self._entities = GameEntityManager (tasks = self.tasks,
+                                            phys_events = self.events)
 
     @property
     def entities (self):

@@ -102,6 +102,7 @@ Options:
             ret_val = os.EX_OK
         except LoggableError, e:
             e.log ()
+            _log.debug (traceback.format_exc ())
             ret_val = e.get_code ()
         except Exception, e:
             _log.fatal ("Unexpected error:\n" + e.message)

@@ -50,7 +50,7 @@ class Flock (TaskEntity):
     boid_flight     = 0
     boid_target     = 0.01
 
-    boid_speed      = 10
+    boid_speed      = 100
     boid_speed_sq   = boid_speed * boid_speed
     boid_max_far    = 500
     boid_max_far_sq = boid_max_far * boid_max_far
@@ -90,7 +90,7 @@ class Flock (TaskEntity):
 class BoidBase (TaskEntity):
     
     def __init__ (self, flock = None, *a, **k):
-        k ['entities'] = flock.entities.myself ()
+        k ['entities'] = flock.entities
         super (BoidBase, self).__init__ (*a, **k)
         self.flock = weakref.proxy (flock)
         self.flock._add_boid (self)
@@ -122,21 +122,40 @@ class BoidBase (TaskEntity):
             v.normalize ()
             v *= self.flock.boid_speed
         
-        self.linear_velocity  = v * self.flock.boid_power
+        self.linear_velocity  = v
         self.angular_velocity = Vec3 (0, 0, 0)
-        
+
         v.normalize ()
-        self.hpr              = Vec3 (math.atan2 (v.getX (), v.getY ())
-                                      * 180 / math.pi, 
+        self.hpr              = Vec3 (- math.atan2 (v.getX (), v.getY ())
+                                      * 180. / math.pi, 
                                       math.asin (v.getZ ())
-                                      * 180 / math.pi, 0)
+                                      * 180. / math.pi, 0)
         
         self.set_torque (Vec3 (0, 0, 0))
         self.set_force  (Vec3 (0, 0, 0))
+
+
+        # HACK: Try to avoid the fucking tunneling
+        # http://www.ode.org/old_list_archives/2003-July/009477.html
+        # physics = self.entities.physics.world
+        # ray = OdeRayGeom (100000.0)
+        # ray.set (self.position, v)
+
+        # collision = physics.collide_world (ray)
+
+        # cgeom   = OdeContactGeom ()
+        # cgeom.setG1 (target)
+        # cgeom.setG2 (self._geom)
+        # cgeom.setDepth (HITDISTANCE)
+        # cgeom.setPos (POSITION)
         
+        # contact = OdeContact ()
+        # contact.setContactGeom (cgeom)
+        # contact.setSurface (OdeSurfaceParameters (FRICTIONLESS))
+        # joint   = OdeContactJoint (self.entities.physics.world,
+        #                            contact)
 
     def find_neighbours (self):
-        #return filter (lambda x: x != self, self.flock.boids)
         return filter (
             lambda x: ((self.position - x.position).lengthSquared ()
                        < self.flock.boid_maxdist_sq) and x != self,
@@ -150,20 +169,6 @@ class BoidBase (TaskEntity):
                 avoid -= x.position - self.position
         return avoid
     
-        # nearest  = Vec3 (0, 0, 0)
-        # bestdist = 10000000
-        # for x in self.neighbours:
-        #     newdist = (x.position - self.position).lengthSquared ()
-        #     if newdist < bestdist:
-        #         bestdist = newdist
-        #         nearest  = x.position
-        # separation = Vec3 (0, 0, 0)
-        
-        # if bestdist < self.flock.boid_mindist_sq: 
-        #     separation = self.position - nearest
-        #     separation.normalize ()
-        # return separation
-
     def rule_cohesion (self):
         center = Vec3 (0, 0, 0)
         if self.neighbours:
@@ -171,7 +176,7 @@ class BoidBase (TaskEntity):
                 center += x.position
             center /= len (self.neighbours)
         cohesion = (center - self.position) / 100.
-        #cohesion.normalize ()
+        
         return cohesion
     
     def rule_bounds (self):

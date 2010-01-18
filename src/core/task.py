@@ -38,15 +38,11 @@ paused  = 2
 
 class Task (object):
 
-    KILLED  = 0
-    RUNNING = 1
-    PAUSED  = 2
-    
     def __init__ (self, *a, **k):
         super (Task, self).__init__ (*a, **k)
         self._state = running
         self._next  = []
-        self._manager = None
+        self._task_manager = None
 
     def do_update (self, timer):
         pass
@@ -58,9 +54,6 @@ class Task (object):
     def update (self, timer):
         if self._state == running:
             self.do_update (timer)
-        if self._state == killed and self._manager:
-            for task in self._next:
-                self._manager.add (task)
         return self._state
     
     def pause (self):
@@ -76,6 +69,9 @@ class Task (object):
 
     def kill  (self):
         self._state = killed
+        if self._task_manager:
+            for task in self._next:
+                self._task_manager.add (task)
         
     def is_paused (self):
         return self._state == paused
@@ -89,12 +85,12 @@ class Task (object):
 
     @property
     def parent (self):
-        return self._manager
+        return self._task_manager
     
     def _set_parent (self, manager):
-        if self._manager and manager:
-            raise TaskError ("Already attached.")
-        self._manager = manager
+        if self._task_manager and manager:
+            raise TaskError ("Already attached to: " + self._task_manager)
+        self._task_manager = manager
 
 
 class FuncTask (Task):
@@ -134,8 +130,8 @@ def totask (task):
 
 class TaskGroup (Task):
 
-    def __init__ (self, *tasks):
-        Task.__init__ (self)
+    def __init__ (self, *tasks, **k):
+        super (TaskGroup, self).__init__ (**k)
         self._tasks = []
         for task in tasks:
             self.add (task)
@@ -150,12 +146,13 @@ class TaskGroup (Task):
         
     def add (self, task):
         task = totask (task)
+        task._set_parent (self)
         self._tasks.append (task)
         return task
 
     def remove (self, task):
         self._tasks.remove (task)
-        task._set_parent (self)
+        task._set_parent (None)
 
     def find (self, func):
         for task in self._tasks:
@@ -170,11 +167,11 @@ class TaskGroup (Task):
 
 class WaitTask (Task):
 
-    def __init__ (self, time = 0, *a, **k):
+    def __init__ (self, time = 0., *a, **k):
         super (WaitTask, self).__init__ (*a, **k)
         self.remaining = time
-
-    def update (timer):
+                
+    def update (self, timer):
         self.remaining -= timer.delta
         if self.remaining <= 0:
             self.kill ()
@@ -189,7 +186,7 @@ class FadeTask (Task):
         self.curr      = 0
         self.loop      = loop
         self.duration = duration
-        func (0.0)
+        # func (0.0)
 
     def update (self, timer):
         self.func (self.curr)
@@ -204,14 +201,14 @@ class FadeTask (Task):
                 self.func (self.curr)
 
 
-def sequence (task, *tasks):
-    task  = totask (task)
+def sequence (fst, *tasks):
+    task  = totask (fst)
     tasks = map (totask, tasks)
 
     for nxt in tasks:
         task = task.add_next (nxt)
 
-    return task
+    return fst
 
 parallel = TaskGroup
 
@@ -222,5 +219,8 @@ fade = FadeTask
 def linear (f, min, max, *a, **k):
     return fade (lambda x: f (util.linear (min, max, x)), *a, **k)
 
-def sinusoid (f):
-    return fade (lambda x: f (math.sin (x * math.pi / 2.)), *a, **k)
+def sinusoid (f, min = 0.0, max = 1.0, *a, **k):
+    return fade (lambda x: f (min + max * math.sin (x * math.pi / 2.)), *a, **k)
+
+def run (func):
+    return FuncTask (lambda t: None if func () else None)

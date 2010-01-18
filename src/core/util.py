@@ -1,5 +1,5 @@
 #
-#  Copyright (C) 2009 Juan Pedro Bolivar Puente, Alberto Villegas Erce
+#  Copyright (C) 2010 Juan Pedro Bolivar Puente, Alberto Villegas Erce
 #  
 #  This file is part of Pigeoncide.
 #
@@ -17,21 +17,11 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from pandac.PandaModules import *
-from base.util import delayed, selflast
+def normalize (vec):
+    vec.normalize ()
+    return vec
 
-ray     = delayed (selflast (OdeRayGeom))
-sphere  = delayed (selflast (OdeSphereGeom))
-box     = delayed (selflast (OdeBoxGeom))
-capsule = delayed (selflast (OdeCappedCylinderGeom))
-
-@delayed
-def node (model, space):
-    return OdeTriMeshGeom (space, OdeTriMeshData (model, False))
-
-@delayed
-def mesh (model, space):
-    cg_model = loader.loadModel (model)
-    return OdeTriMeshGeom (space,
-                           OdeTriMeshData (cg_model, False))
-
+def normalized (vec):
+    new_vec = vec.__class__ (vec)
+    new_vec.normalize ()
+    return new_vec

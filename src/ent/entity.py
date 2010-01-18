@@ -105,9 +105,9 @@ class DelegateEntity (Entity):
         self.delegate.set_scale (scale)
 
     def dispose (self):
-        super (DelegateEntity, self).dispose ()
         self.delegate.dispose ()
-
+        super (DelegateEntity, self).dispose ()
+        
     position = property (lambda self:    self.delegate.get_position (),
                          lambda self, x: self.set_position (x))
     hpr      = property (lambda self:    self.delegate.get_hpr (),

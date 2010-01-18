@@ -18,20 +18,22 @@
 #
 
 from ent.observer import ObservableEntity
-from ent.model import ModelEntity
+from ent.panda import ActorEntity
 from ent.physical import StandingPhysicalEntity
 from pandac.PandaModules import Vec3
 
 from phys import geom
 from phys import mass
 
+from kill import KillableEntity
 
 class Boy (ObservableEntity,
-           ModelEntity,
-           StandingPhysicalEntity):
+           ActorEntity,
+           StandingPhysicalEntity,
+           KillableEntity):
 
-    #MODEL = '../data/mesh/boy.x'
-    #ANIMS = {}
+    # MODEL = '../data/mesh/boy.x'
+    # ANIMS = {}
     
     MODEL = '../data/mesh/ralph.egg.pz'
     ANIMS = { 'run'  : '../data/mesh/ralph-run.egg.pz',
@@ -45,7 +47,6 @@ class Boy (ObservableEntity,
                                     *a, **k)
 
         self.model_position = Vec3 (.0, .0, -5.0)
-        self.model.loadAnims (self.ANIMS)
         self.model.pprint ()
-
+        self.enable_collision ()
 

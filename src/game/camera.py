@@ -35,7 +35,7 @@ class FastEntityFollower (EntityFollowerBase):
 
     angle        = 0.
     hangle       = math.pi / 12
-    distance     = 200.
+    distance     = 50.
     min_distance = 10.
     max_distance = 1000.
     delta_dist   = 5

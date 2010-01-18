@@ -56,6 +56,7 @@ class Timer (TimerBase):
         self._fps = 0  # frames per second
         self._rate = 0  # ticks per frame
         self.reset ()
+        self.max_delta = -1
         
     def reset (self):
         self._frame_count = 0        # frames since last delay
@@ -102,6 +103,9 @@ class Timer (TimerBase):
                 self._frame_count = 0
         else:
             self._update_ticks ()
+
+        if self.max_delta > 0 and self._delta > self.max_delta:
+            self._delta = self.max_delta
 
     def _update_ticks (self):
         newtime = precise_clock () - self._start_time
