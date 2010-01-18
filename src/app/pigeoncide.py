@@ -20,7 +20,6 @@
 from base.arg_parser import OptionWith
 from core.app import PandaApp
 
-from sandbox import Sandbox
 from menu.menu import Menu
 from game.game import Game
 
@@ -47,7 +46,6 @@ Extra options:
 
         self.root_state = 'game'
         
-        self.states.add ('sandbox', Sandbox)
         self.states.add ('menu', Menu)
         self.states.add ('game', Game)
         

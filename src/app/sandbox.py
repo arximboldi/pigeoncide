@@ -33,7 +33,7 @@ from game.boy import Boy
 from game.level import Level
 from game.player import DelegatePlayerEntity
 from phys.physics import Physics
-from ent.camera import SlowEntityFollower
+from game.camera import SlowEntityFollower
 
 DEFAULT_KEYMAP = { 'on_move_forward'  : 'panda-w',
                    'on_move_backward' : 'panda-s',

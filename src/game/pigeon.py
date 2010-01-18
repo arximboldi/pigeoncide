@@ -45,7 +45,7 @@ class Pigeon (Boid, ModelEntity, KillableEntity):
             geometry = geom.sphere (2),
             mass     = mass.sphere (1, 2),
             model    = model,
-            anims    = self.ANIMS,
+            #anims    = self.ANIMS,
             *a, **k)
 
         self.model_position = Vec3 (0, 0, -2)
