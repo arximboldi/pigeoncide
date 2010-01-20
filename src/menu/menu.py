@@ -17,68 +17,46 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from core.task import Task
 from core.state import State
-from base.conf import GlobalConf
-
-from direct.showbase.ShowBase import ShowBase
-
 from pandac.PandaModules import (
-    PointLight,
     Vec3,
-    Vec4,
-    NodePath,
-    PandaNode,
-    LightRampAttrib,
-    AmbientLight,
-    TextNode
+    WindowProperties
 )
 
-from direct.filter.CommonFilters import CommonFilters
-
-from direct.showbase.DirectObject import DirectObject
-from direct.gui.DirectButton import DirectButton
-from direct.gui.DirectButton import *
-
-from pandac.PandaModules import WindowProperties
+from main_menu import MainMenu
 
 class Menu (State):
 
-    def setup (self):
+    def do_setup (self):
         props = WindowProperties()
         props.setCursorHidden(False)
         base.win.requestProperties(props)
+        base.setBackgroundColor( 1.0, 1.0, 1.0)
 
         self.events.event ('panda-escape').connect (self.kill)
         
-        self.paint_main ()
+        #Menu setup
+        self.setup_camera ()
+        self.load_background ()
+        
+        self.main_menu = MainMenu (tasks = self.tasks, manager = self.manager)
+        self.main_menu.do_paint ()
+        self.main_menu.do_connect ()
 
     def do_update (self, timer):
-        super (Menu, self).do_update (timer)
-        #print "Time: ", timer.elapsed, " FPS: ", timer.fps
-        #print "Rate: ", timer.frames / timer.elapsed
         pass
 
-    def release (self):
-        self.start.destroy()
-        self.options.destroy()
-        self.credits.destroy()
-        self.exit.destroy()
+    def do_release (self):
+        self.main_menu.do_destroy ()
     
-    def create_button (self, btext, pos = (0, 0)):
-        return DirectButton(text = (btext, btext, btext, ""),
-            scale = .1,
-            #command = setText,
-            frameSize = (-2.7, 2.7, -1, 1),
-            frameColor = (254, 0, 0, 1),
-            pos = (pos[0], 0, pos[1])
+    def setup_camera( self ):
+        camera.setPosHpr( Vec3( 0.0, -22.0, 0.0), Vec3( 0.0, 0.0, 0 ) )
+        
+    def load_background( self ):
+        self.splashScreen = loader.loadModel( '../data/mesh/background.egg' )
+        self.splashScreen.reparentTo( render )
+        self.splashScreen.setPosHprScale( Vec3( -4.33, 0, -0.89 ), 
+            Vec3( 0, 0, 0 ), 
+            Vec3( 420./595 *10, 9, 10) 
             )
 
-    def paint_main (self):
-        self.start = self.create_button ("Start", pos = (0, 0.35))
-        self.options = self.create_button ("Options", pos = (0, 0.1))
-        self.credits = self.create_button ("Credits", pos = (0, -0.15))
-        self.exit = self.create_button ("Exit", pos = (0, -0.4))
-        
-        self.start["command"] = lambda: self.manager.change_state ('sandbox')
-        self.exit["command"] = self.kill
