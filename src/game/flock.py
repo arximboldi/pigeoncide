@@ -53,7 +53,7 @@ class Flock (TaskEntity):
         self.leader = self.boids [random.randint (0, len (self.boids) - 1)]
 
     def remove (self, boid):
-        boid.dispose ()
+        #boid.dispose ()
         self.boids.remove (boid)
 
     def dispose (self):
@@ -104,6 +104,10 @@ class BoidEntityBase (TaskEntity):
 
         self._debug_line = LineNodePath (self.entities.render,
                                          'caca', 2, Vec4 (1, 0, 0, 0))
+
+    def dispose (self):
+        super (BoidEntityBase, self).dispose ()
+        self.flock.remove (self)
         
     def do_update (self, timer):
         super (BoidEntityBase, self).do_update (timer)
@@ -142,22 +146,21 @@ class BoidEntityBase (TaskEntity):
         self.set_force  (Vec3 (0, 0, 0))
 
         vlen = v.length ()
-        if vlen > 0.0000001:
-            v /= vlen
-            self.hpr = Vec3 (- math.atan2 (v.getX (), v.getY ())
-                             * 180. / math.pi, 
-                             math.asin (v.getZ ())
-                             * 180. / math.pi, 0)
-            
-            physics = self.entities.physics
-            ray = OdeRayGeom (vlen * timer.delta)
-            ray.set (self.position, v)
-            physics.collide_geoms (ray, (self.on_collide, self))
-            # self._debug_line.reset ()
-            # self._debug_line.setColor (Vec4 (1, 0, 0, 0))
-            # self._debug_line.drawLines (
-            #     [[self.position, self.position + v * vlen * timer.delta]])
-            # self._debug_line.create ()
+        v /= vlen
+        self.hpr = Vec3 (- math.atan2 (v.getX (), v.getY ())
+                         * 180. / math.pi, 
+                         math.asin (v.getZ ())
+                         * 180. / math.pi, 0)
+        
+        physics = self.entities.physics
+        ray = OdeRayGeom (vlen * timer.delta)
+        ray.set (self.position, v)
+        physics.collide_geoms (ray, (self.on_collide, self))
+        # self._debug_line.reset ()
+        # self._debug_line.setColor (Vec4 (1, 0, 0, 0))
+        # self._debug_line.drawLines (
+        #     [[self.position, self.position + v * vlen * timer.delta]])
+        # self._debug_line.create ()
             
         # HACK: Try to avoid the fucking tunneling
         # http://www.ode.org/old_list_archives/2003-July/009477.html
