@@ -17,6 +17,28 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from pandac.PandaModules import Quat
+import math
+
+def to_deg (rad):
+    return rad * 180. / math.pi
+
+def to_rad (deg):
+    return deg / 180. * math.pi
+
+def hpr_to_quat (hpr):
+    q = Quat ()
+    q.setHpr (hpr)
+    return q
+
+def vec_to_hpr (v):
+    q = Quat ()
+    q.setX (v.getX ())
+    q.setY (v.getY ())
+    q.setZ (v.getZ ())
+    q.setW (v.getW ())
+    return q.getHpr ()
+
 def normalize (vec):
     vec.normalize ()
     return vec

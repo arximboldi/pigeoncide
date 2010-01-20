@@ -35,11 +35,9 @@ class TaskEntityManager (EntityManager):
 
 class TaskEntity (Entity, Task):
 
-    def __init__ (self, entities = None, *a, **k):
-        super (TaskEntity, self).__init__ (
-            entities = entities,
-            *a, **k)
-        entities.tasks.add (self)
+    def __init__ (self, *a, **k):
+        super (TaskEntity, self).__init__ (*a, **k)
+        self.entities.tasks.add (self)
         
     def dispose (self):
         self.kill ()

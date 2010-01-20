@@ -23,20 +23,16 @@ from core import task
 
 class MainMenu (BasicMenu):
 
-    def __init__ (self, tasks = None, manager = None, *a, **k):
-        if tasks:
-            self.tasks = tasks
-        if manager:
-            self.manager = manager
+    def __init__ (self, *a, **k):
+        super (MainMenu, self).__init__ (*a, **k)
         self.options_menu = OptionsMenu (tasks = self.tasks, 
-            manager = self.manager)
-        
-        
+                                         manager = self.manager)
+    
     def do_paint (self):
         # Main-Buttons inicialitation
         self.start = self.create_button ("Start", pos = (-0.3, 0.7))
-        self.tasks.add (task.sinusoid (
-            lambda x: self.start.setPos (x, 0, .45)))
+        # self.tasks.add (task.sinusoid (
+        #     lambda x: self.start.setPos (x, 0, .45)))
         
         self.options = self.create_button ("Options", pos = (-0.1, 0.45))
         #self.tasks.add (task.sinusoid (

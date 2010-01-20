@@ -43,9 +43,6 @@ class Menu (State):
         self.main_menu.do_paint ()
         self.main_menu.do_connect ()
 
-    def do_update (self, timer):
-        pass
-
     def do_release (self):
         self.main_menu.do_destroy ()
     

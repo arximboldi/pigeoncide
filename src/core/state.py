@@ -32,6 +32,7 @@ class State (task.Task):
         assert state_manager != None
         super (State, self).__init__ (*a, **k)
         self._tasks = task.TaskGroup ()
+        self._tasks.auto_kill = False
         self._manager = ref (state_manager)
         self._events = EventManager ()
         
@@ -70,7 +71,6 @@ class StateManager (task.Task):
         super (StateManager, self).__init__ (*a, **k)
         
         self._tasks = task.TaskGroup ()
-        self._tasks.auto_kill = False
         self._events = EventManager ()
         self._state_factory = {}
         self._state_stack = []

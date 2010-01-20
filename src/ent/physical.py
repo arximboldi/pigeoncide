@@ -19,6 +19,7 @@
 
 from entity import *
 from task import TaskEntity
+from core.util import *
 
 from pandac.PandaModules import *
 import math
@@ -48,6 +49,21 @@ class PhysicalEntityManager (EntityManager):
 
 class PhysicalEntityBase (SpatialEntity):
 
+    _physical_position = Vec3 (0, 0, 0)
+    _physical_hpr      = Vec3 (0, 0, 0)
+
+    def set_physical_position (self, pos):
+        self._physical_position = pos
+
+    def get_physical_position (self):
+        return self._physical_position
+
+    def set_physical_hpr (self, hpr):
+        self._physical_hpr = hpr
+
+    def get_physical_hpr (self):
+        return self._physical_hpr
+    
     def __init__ (self,
                   entities = None,
                   geometry = geom.box (1, 1, 1),
@@ -77,18 +93,29 @@ class PhysicalEntityBase (SpatialEntity):
         self._geom.destroy ()
         super (PhysicalEntityBase, self).dispose ()
 
+    physical_position = property (get_physical_position,
+                                  lambda self, x: self.set_physical_position)
+    physical_hpr      = property (get_physical_hpr,
+                                  lambda self, x: self.set_physical_hpr)
+        
 
 class StaticPhysicalEntity (PhysicalEntityBase):
 
+    def set_physical_position (self, pos):
+        super (StaticPhysicalEntity, self).set_physical_position (pos)
+        self._geom.setPosition (self._position + self._physical_position)
+
+    def set_physical_hpr (self, hpr):
+        super (StaticPhysicalEntity, self).set_physical_hpr (hpr)
+        self._geom.setQuaternion (hpr_to_quat (self._position + hpr))
+    
     def set_position (self, pos):
         super (StaticPhysicalEntity, self).set_position (pos)
-        self._geom.setPosition (pos)
-            
+        self._geom.setPosition (pos + self._physical_position)
+        
     def set_hpr (self, hpr):
         super (StaticPhysicalEntity, self).set_hpr (hpr)
-        q = Quat ()
-        q.setHpr (hpr) # FIXME: slow
-        self._geom.setQuaternion (q)
+        self._geom.setQuaternion (hpr_to_quat (hpr + self._physical_hpr))
 
     def set_scale (self, scale):
         super (StaticPhysicalEntity, self).set_scale (scale)
@@ -126,6 +153,14 @@ class DynamicPhysicalEntity (PhysicalEntityBase, TaskEntity):
     def body (self):
         return self._body
 
+    def set_physical_position (self, pos):
+        super (StaticPhysicalEntity, self).set_physical_position (pos)
+        self._body.setPosition (self._position + self._physical_position)
+
+    def set_physical_hpr (self, hpr):
+        super (StaticPhysicalEntity, self).set_physical_hpr (hpr)
+        self._body.setQuaternion (hpr_to_quat (self._position + hpr))
+
     def get_linear_velocity (self):
         return self._body.getLinearVel ()
 
@@ -153,14 +188,12 @@ class DynamicPhysicalEntity (PhysicalEntityBase, TaskEntity):
     def set_position (self, pos):
         super (DynamicPhysicalEntity, self).set_position (pos)
         if not self._updating:
-            self._body.setPosition (pos)
-            
+            self._body.setPosition (self._physical_position + pos)
+        
     def set_hpr (self, hpr):
         super (DynamicPhysicalEntity, self).set_hpr (hpr)
-        q = Quat ()
-        q.setHpr (hpr) # FIXME: slow
         if not self._updating:
-            self._body.setQuaternion (q)
+            self._body.setQuaternion (hpr_to_quat (self._physical_hpr + hpr))
 
     def set_scale (self, scale):
         super (DynamicPhysicalEntity, self).set_scale (scale)
@@ -175,16 +208,10 @@ class DynamicPhysicalEntity (PhysicalEntityBase, TaskEntity):
 
         pos = self._body.getPosition ()
         hpr = self._body.getQuaternion ()
-        q = Quat ()
-        q.setX (hpr.getX ())
-        q.setY (hpr.getY ())
-        q.setZ (hpr.getZ ())
-        q.setW (hpr.getW ())
-        hpr = q.getHpr () # FIXME: Slow!
         
         self._updating = True
         self.set_position (pos)        
-        self.set_hpr (hpr)
+        self.set_hpr (vec_to_hpr (hpr))
         self._updating = False
 
     linear_velocity = property (get_linear_velocity, set_linear_velocity)
@@ -192,6 +219,10 @@ class DynamicPhysicalEntity (PhysicalEntityBase, TaskEntity):
 
 
 class DelegatePhysicalEntityBase (DelegateSpatialEntity):
+
+    @property
+    def geom (self):
+        return self.delegate.geom
 
     @property
     def on_collide (self):

@@ -25,10 +25,9 @@ class OptionsMenu (BasicMenu):
     def do_paint (self):
         # Option-Buttons inicialitation
         self.sound = self.create_button ("Sound", pos = (-0.1, 0.45))
-        print "manoloooo"
+        
         self.tasks.add (task.sinusoid (
-            lambda x: nop(printfn ("tralariiii %f" % x),
-                self.sound.setPos (x * 0.3, 0, .45))))
+            lambda x: self.sound.setPos (x * 0.3, 0, .45)))
             
         self.keyboard = self.create_button ("Keyboard", pos = (-0.1, 0.45))
         self.tasks.add (task.sinusoid (
@@ -41,7 +40,7 @@ class OptionsMenu (BasicMenu):
         self.back = self.create_button ("Back", pos = (-0.1 , 0.45))
         self.tasks.add (task.sinusoid (
             lambda x: self.back.setPos ((x*0.35)-0.1, 0,(x*-0.75)+0.45)))
-    
+
     def do_connect (self):
         # Buttons task assigment
         #self.sound ["command"] = lambda: self.paint_sound ()
@@ -63,3 +62,4 @@ class OptionsMenu (BasicMenu):
         
     def paint_screen (self):
         pass
+
