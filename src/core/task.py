@@ -64,6 +64,10 @@ class Task (object):
         if self._state != killed:
             self._state = running
 
+    def toggle_pause (self):
+        if self._state != killed:
+            self._state = running if self._state == paused else paused
+    
     def restart (self):
         self._state = running
 
@@ -89,7 +93,7 @@ class Task (object):
     
     def _set_parent (self, manager):
         if self._task_manager and manager:
-            raise TaskError ("Already attached to: " + self._task_manager)
+            raise TaskError ("Already attached to: " + str (self._task_manager))
         self._task_manager = manager
 
 
@@ -111,6 +115,7 @@ class FuncTask (Task):
         return self._orig
     
     def do_update (self, timer):
+        super (FuncTask, self).do_update (timer)
         action = self._func (timer)
         if not action or action == killed:
             self.kill ()
@@ -130,6 +135,8 @@ def totask (task):
 
 class TaskGroup (Task):
 
+    auto_kill = True
+    
     def __init__ (self, *tasks, **k):
         super (TaskGroup, self).__init__ (**k)
         self._tasks = []
@@ -137,13 +144,14 @@ class TaskGroup (Task):
             self.add (task)
         
     def do_update (self, timer):
+        super (TaskGroup, self).do_update (timer)
         for task in self._tasks:
             task.update (timer)
         self._tasks = remove_if (Task.is_killed, self._tasks)
 
-        if len (self._tasks) == 0:
+        if self.auto_kill and not self._tasks:
             self.kill ()
-        
+    
     def add (self, task):
         task = totask (task)
         task._set_parent (self)
@@ -171,7 +179,8 @@ class WaitTask (Task):
         super (WaitTask, self).__init__ (*a, **k)
         self.remaining = time
                 
-    def update (self, timer):
+    def do_update (self, timer):
+        super (WaitTask, self).do_update (timer)
         self.remaining -= timer.delta
         if self.remaining <= 0:
             self.kill ()
@@ -188,7 +197,8 @@ class FadeTask (Task):
         self.duration = duration
         # func (0.0)
 
-    def update (self, timer):
+    def do_update (self, timer):
+        super (FadeTask, self).do_update (timer)
         self.func (self.curr)
         self.curr += timer.delta / self.duration
 

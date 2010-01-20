@@ -89,7 +89,8 @@ class KeyboardTask (EventMap, Task):
             if hasattr (self, attrname):
                 getattr (self, attrname) (*a, **k)
             
-    def update (self, timer):
+    def do_update (self, timer):
+        super (KeyboardTask, self).do_update (timer)
         for f in self._running.itervalues ():
             f (timer)
 
@@ -102,8 +103,8 @@ class InputTask (KeyboardTask):
         self._last_y  = -1
         self._is_init = False
         
-    def update  (self, timer):
-        super (InputTask, self).update (timer)
+    def do_update  (self, timer):
+        super (InputTask, self).do_update (timer)
 
         if base.mouseWatcherNode.hasMouse():
             x = base.mouseWatcherNode.getMouseX ()

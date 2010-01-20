@@ -22,15 +22,19 @@ from pandac.PandaModules import Vec4, Vec3, AmbientLight, PointLight
 from base.conf import GlobalConf
 from base.meta import mixin
 from base.sender import AutoSender, AutoReceiver
+from base.util import delayed
+
 from core.input import InputTask
 from ent.game import GameState
 
 from camera import FastEntityFollower, SlowEntityFollower
 from boy import Boy
 from level import Level
-from player import DelegatePlayerEntity
-from pigeon import Pigeon
+from player import PlayerEntityDecorator
+from pigeon import Pigeon, PigeonFlock
 from flock import make_random_flock
+
+DEBUG_INSTANCE = None
 
 DEFAULT_INPUT_MAP = {
 
@@ -53,12 +57,15 @@ DEFAULT_INPUT_MAP = {
     }
 
 GameInput        = mixin (InputTask, AutoSender)
-PlayerController = mixin (DelegatePlayerEntity, AutoReceiver)
+PlayerController = mixin (PlayerEntityDecorator, AutoReceiver)
 CameraController = mixin (FastEntityFollower, AutoReceiver)
 
 class Game (GameState):
 
-    def setup (self):
+    def do_setup (self):
+        global DEBUG_INSTANCE
+        DEBUG_INSTANCE = self
+        
         cfg = GlobalConf ().child ('game')
         cfg.child ('music-volume').set_value (0.01)
 
@@ -78,11 +85,11 @@ class Game (GameState):
         # Game entities
         boy = Boy (entities = self.entities)
         flock = make_random_flock (self.entities, 20,
-                                   Vec3 (0, 0, 300), 100, Pigeon)
+                                   flock_cls = PigeonFlock,
+                                   boid_cls  = delayed (Pigeon) (the_boy = boy))
         level = Level (entities = self.entities)
-        boy.set_position ((0, 70, 20))
-        level.set_position ((0, 0, 0))
-        flock.target = boy
+        boy.set_position (Vec3 (0, 70, 20))
+        level.set_position (Vec3 (0, 0, 0))
         
         # Camera and player controller
         cameractl = CameraController (camera = base.camera)
@@ -107,7 +114,7 @@ class Game (GameState):
 
         # Helper
         self.events.event ('panda-escape').connect (self.kill)
-    
+        self.events.event ('panda-p').connect (self.toggle_pause)
         # Preload all the shit
         map (loader.loadModel, [
             '../data/mesh/stick_arch_sub.x'

@@ -25,7 +25,7 @@ from core.task import Task
 from ent.entity import *
 from ent.physical import (StandingPhysicalEntity,
                           DelegateStandingPhysicalEntity)
-from ent.panda import ModelEntity, DelegateModelEntity
+from ent.panda import ActorEntity, DelegateActorEntity
 from pandac.PandaModules import Vec3
 
 import laser
@@ -39,6 +39,7 @@ is_backward       = 0x0020
 
 anim_run  = 'run'
 anim_walk = 'walk'
+
 
 class PlayerEntityBase (Entity):
     """
@@ -141,12 +142,12 @@ class PlayerEntityBase (Entity):
 class PlayerEntity (
     PlayerEntityBase,
     StandingPhysicalEntity,
-    ModelEntity):
+    ActorEntity):
     pass
 
 
-class DelegatePlayerEntity (
+class PlayerEntityDecorator (
     PlayerEntityBase,
     DelegateStandingPhysicalEntity,
-    DelegateModelEntity):
+    DelegateActorEntity):
     pass

@@ -30,6 +30,8 @@ class TaskEntityManager (EntityManager):
         else:
             self.tasks = TaskGroup ()
 
+    # def _add_entity (self, ent):
+    #     super (TaskEntityManager, self)._add_entity (ent)
 
 class TaskEntity (Entity, Task):
 
@@ -42,3 +44,5 @@ class TaskEntity (Entity, Task):
     def dispose (self):
         self.kill ()
         super (TaskEntity, self).dispose ()
+
+# TODO: Do delegate task semantics make sense?

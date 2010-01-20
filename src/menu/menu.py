@@ -20,7 +20,6 @@
 from core.task import Task
 from core.state import State
 from base.conf import GlobalConf
-from app.sandbox import Sandbox
 
 from direct.showbase.ShowBase import ShowBase
 
@@ -54,7 +53,8 @@ class Menu (State):
         
         self.paint_main ()
 
-    def state_update (self, timer):
+    def do_update (self, timer):
+        super (Menu, self).do_update (timer)
         #print "Time: ", timer.elapsed, " FPS: ", timer.fps
         #print "Rate: ", timer.frames / timer.elapsed
         pass

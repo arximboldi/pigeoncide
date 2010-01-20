@@ -27,7 +27,8 @@ Interesting links about it:
   * http://www.kfish.org/boids/pseudocode.html
 """
 
-from pandac.PandaModules import Vec3
+from direct.directtools.DirectGeometry import LineNodePath
+from pandac.PandaModules import *
 
 from ent.entity import Entity
 from ent.task import TaskEntity
@@ -40,35 +41,14 @@ import math
 
 class Flock (TaskEntity):
 
-    boid_power      = 10
-    
-    boid_cohesion   = 0.01
-    boid_avoidance  = 1
-    boid_alignment  = 0.125
-    boid_bounds     = 10
-    boid_randomness = 1
-    boid_flight     = 0
-    boid_target     = 0.01
+    flock_bounds = ((-300, -300, 0), (300, 300, 200))
 
-    boid_speed      = 100
-    boid_speed_sq   = boid_speed * boid_speed
-    boid_max_far    = 500
-    boid_max_far_sq = boid_max_far * boid_max_far
-
-    boid_mindist    = 5
-    boid_mindist_sq = boid_mindist * boid_mindist 
-    boid_maxdist    = 20
-    boid_maxdist_sq = boid_maxdist * boid_maxdist
-
-    boid_height     = 50.0
-    
-    target          = None
-    
     def __init__ (self, *a, **k):
         super (Flock, self).__init__(*a, **k)
         self.boids = []
         self.leader = None
-
+        self.boids_cache = []
+        
     def choose_leader (self):
         self.leader = self.boids [random.randint (0, len (self.boids) - 1)]
 
@@ -86,17 +66,52 @@ class Flock (TaskEntity):
         if len (self.boids) == 1:
             self.leader = boid
 
+    def do_update (self, timer):
+        self.boids_cache = \
+            [ (x, x.position, x.linear_velocity) for x in self.boids ]
 
-class BoidBase (TaskEntity):
+
+class BoidEntityBase (TaskEntity):
+
+    boid_power        = 10
+    
+    boid_f_cohesion   = 0.01
+    boid_f_avoidance  = 1
+    boid_f_alignment  = 0.125
+    boid_f_bounds     = 10
+    boid_f_randomness = 1
+    boid_f_flight     = 0
+    boid_f_target     = 0.01
+
+    boid_speed        = 100
+    boid_speed_sq     = boid_speed * boid_speed
+    boid_max_far      = 1000
+    boid_max_far_sq   = boid_max_far * boid_max_far
+
+    boid_mindist      = 5
+    boid_mindist_sq   = boid_mindist * boid_mindist 
+    boid_maxdist      = 20
+    boid_maxdist_sq   = boid_maxdist * boid_maxdist
+
+    boid_height       = 50.0
+    
+    boid_target       = None
     
     def __init__ (self, flock = None, *a, **k):
-        k ['entities'] = flock.entities
-        super (BoidBase, self).__init__ (*a, **k)
+        super (BoidEntityBase, self).__init__ (*a, **k)
         self.flock = weakref.proxy (flock)
         self.flock._add_boid (self)
 
-    def update (self, timer):
-        super (BoidBase, self).update (timer)
+        self._debug_line = LineNodePath (self.entities.render,
+                                         'caca', 2, Vec4 (1, 0, 0, 0))
+        
+    def do_update (self, timer):
+        super (BoidEntityBase, self).do_update (timer)
+        self.update_flocking (timer)
+
+    def update_flocking (self, timer):
+        self._curr_position = self.position
+        self._curr_velocity = self.linear_velocity
         
         self.neighbours = self.find_neighbours ()
 
@@ -108,33 +123,42 @@ class BoidBase (TaskEntity):
         randomness = self.rule_randomness ()
         target     = self.rule_target ()
         
-        v = (cohesion   * self.flock.boid_cohesion   +
-             avoidance  * self.flock.boid_avoidance  +
-             alignment  * self.flock.boid_alignment  +
-             bounds     * self.flock.boid_bounds     +
-             flight     * self.flock.boid_flight     +
-             randomness * self.flock.boid_randomness +
-             target     * self.flock.boid_target) \
-             * self.flock.boid_power
-
+        v = (cohesion   * self.boid_f_cohesion   +
+             avoidance  * self.boid_f_avoidance  +
+             alignment  * self.boid_f_alignment  +
+             bounds     * self.boid_f_bounds     +
+             flight     * self.boid_f_flight     +
+             randomness * self.boid_f_randomness +
+             target     * self.boid_f_target) \
+             * self.boid_power
         
-        if v.lengthSquared () > self.flock.boid_speed_sq:
+        if v.lengthSquared () > self.boid_speed_sq:
             v.normalize ()
-            v *= self.flock.boid_speed
+            v *= self.boid_speed
         
         self.linear_velocity  = v
-        self.angular_velocity = Vec3 (0, 0, 0)
-
-        v.normalize ()
-        self.hpr              = Vec3 (- math.atan2 (v.getX (), v.getY ())
-                                      * 180. / math.pi, 
-                                      math.asin (v.getZ ())
-                                      * 180. / math.pi, 0)
-        
+        self.angular_velocity = Vec3 (0, 0, 0)    
         self.set_torque (Vec3 (0, 0, 0))
         self.set_force  (Vec3 (0, 0, 0))
 
-
+        vlen = v.length ()
+        if vlen > 0.0000001:
+            v /= vlen
+            self.hpr = Vec3 (- math.atan2 (v.getX (), v.getY ())
+                             * 180. / math.pi, 
+                             math.asin (v.getZ ())
+                             * 180. / math.pi, 0)
+            
+            physics = self.entities.physics
+            ray = OdeRayGeom (vlen * timer.delta)
+            ray.set (self.position, v)
+            physics.collide_geoms (ray, (self.on_collide, self))
+            # self._debug_line.reset ()
+            # self._debug_line.setColor (Vec4 (1, 0, 0, 0))
+            # self._debug_line.drawLines (
+            #     [[self.position, self.position + v * vlen * timer.delta]])
+            # self._debug_line.create ()
+            
         # HACK: Try to avoid the fucking tunneling
         # http://www.ode.org/old_list_archives/2003-July/009477.html
         # physics = self.entities.physics.world
@@ -156,81 +180,98 @@ class BoidBase (TaskEntity):
         #                            contact)
 
     def find_neighbours (self):
-        return filter (
-            lambda x: ((self.position - x.position).lengthSquared ()
-                       < self.flock.boid_maxdist_sq) and x != self,
-            self.flock.boids)
+        mypos = self._curr_position
+        # return filter (
+        #     lambda (x, p, v): (
+        #         (mypos - p).lengthSquared ()
+        #         < self.boid_maxdist_sq and
+        #         x != self),
+        #     self.flock.boids_cache)
+        result = []
+        return [ (x, p, v)
+                 for (x, p, v)
+                 in self.flock.boids_cache
+                 if (mypos - p).lengthSquared () < self.boid_maxdist_sq
+                 and x != self ]
 
     def rule_avoidance (self):
         avoid = Vec3 ()
-        for x in self.neighbours:
-            distsq = (x.position - self.position).lengthSquared ()
-            if distsq < self.flock.boid_mindist_sq:
-                avoid -= x.position - self.position
+        mypos = self._curr_position
+        for (x, p, v) in self.neighbours:
+            distsq = (p - mypos).lengthSquared ()
+            if distsq < self.boid_mindist_sq:
+                avoid -= p - mypos
         return avoid
     
     def rule_cohesion (self):
         center = Vec3 (0, 0, 0)
         if self.neighbours:
-            for x in self.neighbours:
-                center += x.position
+            for (x, p, v) in self.neighbours:
+                center += p
             center /= len (self.neighbours)
-        cohesion = (center - self.position) / 100.
+        cohesion = (center - self._curr_position) / 100.
         
         return cohesion
     
     def rule_bounds (self):
         bounds = Vec3 (0, 0, 0)
-        if self.position.lengthSquared () > self.flock.boid_max_far_sq:
-            bounds = bounds - self.position
+        if self._curr_position.lengthSquared () > self.boid_max_far_sq:
+            bounds = bounds - self._curr_position
             bounds.normalize ()
         return bounds
 
     def rule_alignment (self):
         velocity = Vec3 (0, 0, 0)
         if self.neighbours:
-            for x in self.neighbours:
-                velocity += x.linear_velocity
+            for (x, p, v) in self.neighbours:
+                velocity += v
             velocity /= len (self.neighbours)
         return velocity
 
     def rule_flight (self):
-        if self.position.getZ () < self.flock.boid_height:
+        if self._curr_position.getZ () < self.boid_height:
             return Vec3 (0, 0, 1.0)
         return Vec3 (0, 0, 0)
 
     def rule_randomness (self):
-        if self.linear_velocity.lengthSquared () < self.flock.boid_speed_sq:
+        if self._curr_velocity.lengthSquared () < self.boid_speed_sq:
             return Vec3 (random.random (),
                          random.random (),
                          0)
         return Vec3 (0, 0, 0)
 
     def rule_target (self):
-        if self.flock.target:
-            return Vec3 (*self.flock.target.position) - self.position
+        if self.boid_target:
+            return self.boid_target - self._curr_position
         return Vec3 ()
 
 
-class Boid (BoidBase, DynamicPhysicalEntity):
+class BoidEntity (BoidEntityBase,
+                  DynamicPhysicalEntity):
     pass
 
 
-class DelegateBoid (DelegateDynamicPhysicalEntity, BoidBase):
+class BoidEntityDecorator (
+    DelegateDynamicPhysicalEntity,
+    BoidEntityBase):
     pass
 
 
 def make_random_flock (entities,
                        num_boids,
-                       center,
-                       size,
-                       boid_cls = Boid):
+                       bounds    = Flock.flock_bounds,
+                       flock_cls = Flock,
+                       boid_cls  = BoidEntity):
 
-    flock = Flock (entities = entities)
+    flock = flock_cls (entities = entities)
+    (minx, miny, minz), (maxx, maxy, maxz) = bounds
+
     for i in xrange (num_boids):
         b = boid_cls (flock = flock)
-        b.position = Vec3 (random.uniform (center.getX () - size/2, size),
-                           random.uniform (center.getY () - size/2, size),
-                           random.uniform (center.getZ () - size/2, size))
+        b.position = Vec3 (random.uniform (minx, maxx),
+                           random.uniform (miny, maxy),
+                           random.uniform (minz, maxz))
     flock.choose_leader ()
+    flock.flock_bounds = bounds
+    
     return flock

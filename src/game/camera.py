@@ -20,11 +20,11 @@
 
 from pandac.PandaModules import Vec3
 from base.util import bound
-from ent.observer import EntityListener
+from ent.observer import SpatialEntityListener
 import math
 import weakref
 
-class EntityFollowerBase (EntityListener):
+class EntityFollowerBase (SpatialEntityListener):
     
     def __init__ (self, camera = None, *a, **k):
         super (EntityFollowerBase, self).__init__ (*a, **k)

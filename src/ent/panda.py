@@ -17,11 +17,12 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from entity import EntityManager, Entity, DelegateEntity
+from entity import *
 from pandac.PandaModules import *
 from direct.actor.Actor import Actor
 from direct.showbase.ShowBase import ShowBase
 from direct.showbase.Audio3DManager import Audio3DManager
+
 
 class PandaEntityManager (EntityManager):
 
@@ -38,7 +39,7 @@ class PandaEntityManager (EntityManager):
             self.audio3d.setListenerVelocityAuto ()
 
 
-class PandaEntity (Entity):
+class PandaEntity (SpatialEntity):
 
     def __init__ (self,
                   entities  = None,
@@ -58,7 +59,8 @@ class PandaEntity (Entity):
         
     def set_position (self, pos):
         super (PandaEntity, self).set_position (pos)
-        self._node.setPos (pos)
+        if not pos.isNan ():
+            self._node.setPos (pos)
         
     def set_hpr (self, hpr):
         super (PandaEntity, self).set_hpr (hpr)
@@ -83,7 +85,7 @@ class PandaEntity (Entity):
         return snd
 
 
-class DelegatePandaEntity (DelegateEntity):
+class DelegatePandaEntity (DelegateSpatialEntity):
 
     @property
     def node (self):
@@ -170,3 +172,6 @@ class DelegateModelEntity (DelegatePandaEntity):
     model_position = property (get_model_position, set_model_position)
     model_hpr      = property (get_model_hpr,      set_model_hpr)
     model_scale    = property (get_model_scale,    set_model_scale)
+
+
+DelegateActorEntity = DelegateModelEntity

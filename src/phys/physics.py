@@ -20,6 +20,7 @@
 from pandac.PandaModules import *
 from core.task import Task
 from base.util import nop, remove_if
+from functools import partial
 
 def get_ode_id (ode_object):
     return int (get_ode_id_str (ode_object), 16)
@@ -73,8 +74,8 @@ class Physics (Task):
         cb1, data1 = self._geom_cbs.get (geom1, (nop, None))
         cb2, data2 = self._geom_cbs.get (geom2, (nop, None))
 
-        cb1 (data1, data2)
-        cb2 (data2, data1)
+        cb1 (ev, data1, data2)
+        cb2 (ev, data2, data1)
 
     def register_geom_callback (self, geom, cb, data):
         geom_id = 'OdeGeom(id = ' + get_ode_id_str (geom) + ')'
@@ -103,16 +104,28 @@ class Physics (Task):
 
     def collide_world (self, geom):
         scene = OdeUtil.spaceToGeom (self._space)
-        return OdeUtil.collide (self, scene, geom)
+        return OdeUtil.collide (scene, geom)
 
-    def collide_geoms (self, geom):
-        pass
+    def collide_geoms (self, geom, cb = None):
+        if cb is None:
+            geom_id = 'OdeGeom(id = ' + get_ode_id_str (geom) + ')'
+            cb = self._geom_cbs [geom_id]
+        cb1, data1 = cb
         
+        collisions = map (partial (OdeUtil.collide, geom), self._geoms)
+        for ev in collisions:
+            if ev and not ev.isEmpty ():
+                geomid = str (ev.getGeom2 ())
+                cb2, data2 = self._geom_cbs.get (geomid, (nop, None))
+                cb1 (ev, data1, data2)
+                cb2 (ev, data2, data1)
+    
     @property
     def space (self):
         return self._space
     
-    def update (self, timer):
+    def do_update (self, timer):
+        super (Physics, self).do_update (timer)
         self._space.autoCollide ()
         self._world.quickStep (timer.delta)
         self._group.empty ()

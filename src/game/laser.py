@@ -185,7 +185,7 @@ def make_laser_model (fst, snd):
     laser.setTwoSided (False)
     laser.setPos (0, 0, -13)
 
-    tex = loader.loadTexture ('./data/tex/laser.png')
+    tex = loader.loadTexture ('./data/tex/laser2.png')
     ts = TextureStage ('ts')
     ts.setMode (TextureStage.MReplace)
     laser.setTexture (ts, tex)

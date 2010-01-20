@@ -17,7 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from entity import Entity, DelegateEntity, EntityManager
+from entity import *
 from task import TaskEntity
 
 from pandac.PandaModules import *
@@ -46,7 +46,7 @@ class PhysicalEntityManager (EntityManager):
         self.tasks.add (self.physics)
 
 
-class PhysicalEntityBase (Entity):
+class PhysicalEntityBase (SpatialEntity):
 
     def __init__ (self,
                   entities = None,
@@ -170,8 +170,8 @@ class DynamicPhysicalEntity (PhysicalEntityBase, TaskEntity):
     def disable_physics (self):
         self._body.disable ()
         
-    def update (self, timer):
-        super (DynamicPhysicalEntity, self).update (timer)
+    def do_update (self, timer):
+        super (DynamicPhysicalEntity, self).do_update (timer)
 
         pos = self._body.getPosition ()
         hpr = self._body.getQuaternion ()
@@ -191,7 +191,7 @@ class DynamicPhysicalEntity (PhysicalEntityBase, TaskEntity):
     angular_velocity = property (get_angular_velocity, set_angular_velocity)
 
 
-class DelegatePhysicalEntityBase (DelegateEntity):
+class DelegatePhysicalEntityBase (DelegateSpatialEntity):
 
     @property
     def on_collide (self):
@@ -217,13 +217,13 @@ class DelegateDynamicPhysicalEntity (DelegatePhysicalEntityBase):
     def add_force (self, force):
         self.delegate.add_force (force)
 
-    def add_torque (self, force):
+    def add_torque (self, torque):
         self.delegate.add_torque (torque)
 
     def set_force (self, force):
         self.delegate.set_force (force)
 
-    def set_torque (self, force):
+    def set_torque (self, torque):
         self.delegate.set_torque (torque)
 
     def get_linear_velocity (self):
@@ -242,24 +242,43 @@ class DelegateDynamicPhysicalEntity (DelegatePhysicalEntityBase):
     angular_velocity = property (get_angular_velocity, set_angular_velocity)
 
 
-class StandingPhysicalEntity (DynamicPhysicalEntity):
-
+class StandingPhysicalEntityBase (TaskEntity):
+    """
+    DynamicPhysicalEntity should be updated first. Take this into
+    account when composing the mixin.
+    """
+    
     def __init__ (self, *a, **k):
-        super (StandingPhysicalEntity, self).__init__ (*a, **k)
+        super (StandingPhysicalEntityBase, self).__init__ (*a, **k)
         self.angle = 0
+        
+    def do_update (self, timer):
+        self.update_standing ()
+        super (StandingPhysicalEntityBase, self).do_update (timer)
 
-    def update (self, timer):
-        hpr = self._body.getQuaternion ()
+    def update_standing (self):
+        body = self.body
+        
+        hpr = body.getQuaternion ()
 
         # http://www.euclideanspace.com/maths/geometry/rotations/
         # conversions/angleToQuaternion/index.htm      
-        self._body.setQuaternion (Quat (math.sin (self.angle / 2), 0, 0,
-                                        math.cos (self.angle / 2)))
-        self._body.setTorque (0, 0, 0)
-        self._body.setAngularVel (0, 0, 0)
+        body.setQuaternion (Quat (math.sin (self.angle / 2), 0, 0,
+                                  math.cos (self.angle / 2)))
+        body.setTorque (0, 0, 0)
+        body.setAngularVel (0, 0, 0)
 
-        super (StandingPhysicalEntity, self).update (timer)
 
+class StandingPhysicalEntity (
+    DynamicPhysicalEntity,
+    StandingPhysicalEntityBase):
+    pass
+
+
+class StandingPhysicalEntityDecorator (
+    DelegateDynamicPhysicalEntity,
+    StandingPhysicalEntityBase):
+    pass
 
 class DelegateStandingPhysicalEntity (DelegateDynamicPhysicalEntity):
 

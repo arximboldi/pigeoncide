@@ -46,8 +46,8 @@ Extra options:
 
         self.root_state = 'game'
         
-        self.states.add ('menu', Menu)
-        self.states.add ('game', Game)
+        self.states.add_state ('menu', Menu)
+        self.states.add_state ('game', Game)
         
     def do_prepare (self, args):
         self._arg_state = OptionWith (str)

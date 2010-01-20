@@ -17,7 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from ent.observer import ObservableEntity
+from ent.observer import ObservableSpatialEntity
 from ent.panda import ActorEntity
 from ent.physical import StandingPhysicalEntity
 from pandac.PandaModules import Vec3
@@ -27,7 +27,7 @@ from phys import mass
 
 from kill import KillableEntity
 
-class Boy (ObservableEntity,
+class Boy (ObservableSpatialEntity,
            ActorEntity,
            StandingPhysicalEntity,
            KillableEntity):

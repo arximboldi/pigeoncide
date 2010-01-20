@@ -18,27 +18,27 @@
 #
 
 from base.observer import make_observer
-from entity import Entity
+from entity import SpatialEntity
 
 
-EntitySubject, EntityListener = make_observer (
+SpatialEntitySubject, SpatialEntityListener = make_observer (
     [ 'on_entity_set_position',
       'on_entity_set_hpr',
       'on_entity_set_scale' ],
     'Entity', __name__)
 
 
-class ObservableEntity (Entity, EntitySubject):
+class ObservableSpatialEntity (SpatialEntity, SpatialEntitySubject):
 
     def set_position (self, pos):
-        super (ObservableEntity, self).set_position (pos)
+        super (ObservableSpatialEntity, self).set_position (pos)
         self.on_entity_set_position (self, pos)
 
     def set_hpr (self, hpr):
-        super (ObservableEntity, self).set_hpr (hpr)
+        super (ObservableSpatialEntity, self).set_hpr (hpr)
         self.on_entity_set_hpr (self, hpr)
 
     def set_scale (self, scale):
-        super (ObservableEntity, self).set_scale (scale)
+        super (ObservableSpatialEntity, self).set_scale (scale)
         self.on_entity_set_scale (self, hpr)
 

@@ -17,7 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from weakref import proxy
+from weakref import ref
 
 from base.event import *
 from error import *
@@ -32,7 +32,7 @@ class State (task.Task):
         assert state_manager != None
         super (State, self).__init__ (*a, **k)
         self._tasks = task.TaskGroup ()
-        self._manager = proxy (state_manager)
+        self._manager = ref (state_manager)
         self._events = EventManager ()
         
     @property
@@ -45,25 +45,22 @@ class State (task.Task):
 
     @property
     def manager (self):
-        return self._manager
+        return self._manager ()
 
-    def setup (self):
+    def do_setup (self):
         pass
 
     def do_update (self, timer):
-        self.state_update (timer)
+        super (State, self).do_update (timer)
         self._tasks.update (timer)        
 
-    def state_update (self, timer):
+    def do_sink (self):
         pass
 
-    def sink (self):
-        pass
-
-    def unsink (self):
+    def do_unsink (self):
         pass
     
-    def release (self):
+    def do_release (self):
         pass
 
 
@@ -73,8 +70,8 @@ class StateManager (task.Task):
         super (StateManager, self).__init__ (*a, **k)
         
         self._tasks = task.TaskGroup ()
+        self._tasks.auto_kill = False
         self._events = EventManager ()
-        self._current_state = None
         self._state_factory = {}
         self._state_stack = []
 
@@ -92,15 +89,20 @@ class StateManager (task.Task):
     def events (self):
         return self._events
     
-    def add (self, name, factory):
+    def add_state (self, name, factory):
         self._state_factory [name] = factory
         return self
 
-    def start (self, name):
+    def start (self, name, *a, **k):
         if self._state_stack:
             raise StateError ('State manager already started.')
-        self._push_state (self._fetch_state (name))
+        self._push_state (self._fetch_state (name), name, *a, **k)
         self.restart ()
+
+    def force_finish (self):
+        while self._state_stack:
+            self._leave_state ()
+        self.kill ()
         
     def enter_state (self, name, *a, **k):
         self._tasks.add (lambda: self._enter_state (name, *a, **k))
@@ -112,6 +114,7 @@ class StateManager (task.Task):
         self._tasks.add (lambda: self._change_state (name, *a, **k))
     
     def do_update (self, timer):
+        super (StateManager, self).do_update (timer)
         self._tasks.update (timer)
         if self.current.state == task.killed:
             self._leave_state ()
@@ -121,33 +124,34 @@ class StateManager (task.Task):
     def _enter_state (self, name, *a, **k):
         state = self._fetch_state (name)
         if self._state_stack:
-            self._state_stack [-1].sink ()
-        self._push_state (state, *a, **k)
+            self._state_stack [-1].do_sink ()
+        self._push_state (state, name, *a, **k)
 
     def _leave_state (self):
         if not self._state_stack:
             raise StateError ('State manager empty, nothing to leave.')
         self._pop_state ()
         if self._state_stack:
-            self._state_stack [-1].unsink ()
+            self._state_stack [-1].do_unsink ()
     
     def _change_state (self, name, *a, **k):
         state = self._fetch_state (name)
         self._pop_state ()
-        self._push_state (state, *a, **k)
+        self._push_state (state, name, *a, **k)
     
-    def _push_state (self, state_cls, *a, **k):        
+    def _push_state (self, state_cls, state_name, *a, **k):
         state = state_cls (state_manager = self, *a, **k)
+        state.state_name = state_name
         self._tasks.add (state)
         self._events.connect (state.events)
-        state.setup ()
+        state.do_setup ()
         self._state_stack.append (state)
 
     def _pop_state (self):
         state = self._state_stack.pop ()
         self._events.disconnect (state.events)
         state.kill ()
-        state.release ()
+        state.do_release ()
         
     def _fetch_state (self, name):
         try:

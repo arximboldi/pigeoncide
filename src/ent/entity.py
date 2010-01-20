@@ -51,15 +51,45 @@ class Entity (object):
 
     def __init__ (self, entities = None, *a, **k):
         super (Entity, self).__init__ (*a, **k)
-        self._hpr = Vec3 ()
-        self._position = Vec3 ()
         self._entities = weakref.ref (entities)
         entities._add_entity (self)
 
     @property
     def entities (self):
         return self._entities ()
-        
+    
+    def dispose (self):
+        self.entities._del_entity (self)
+
+    def dispose (self):
+        pass
+
+
+class DelegateEntity (Entity):
+
+    def __init__ (self,
+                  delegate = None,
+                  entities = None,
+                  *a, **k):
+        if entities == None:
+            entities = delegate.entities
+        super (DelegateEntity, self).__init__ (entities = entities,
+                                               *a, **k)
+        self.delegate = delegate
+    
+    def dispose (self):
+        # FIXME: If I do this I break decorators, what should I do?
+        # self.delegate.dispose ()
+        super (DelegateEntity, self).dispose ()
+
+
+class SpatialEntity (Entity):
+
+    def __init__ (self, *a, **k):
+        super (SpatialEntity, self).__init__ (*a, **k)
+        self._hpr = Vec3 ()
+        self._position = Vec3 ()
+            
     def set_position (self, pos):
         self._position = pos
 
@@ -78,40 +108,32 @@ class Entity (object):
     def get_scale (self):
         return self._scale
 
-    def dispose (self):
-        self.entities._del_entity (self)
-
     position = property (get_position, lambda self, x: self.set_position (x))
     hpr      = property (get_hpr,      lambda self, x: self.set_hpr (x))
     scale    = property (get_scale,    lambda self, x: self.set_scale (x))
 
 
-class DelegateEntity (Entity):
-
-    def __init__ (self, delegate = None, *a, **k):
-        super (DelegateEntity, self).__init__ (*a, **k)
-        self.delegate = delegate
+class DelegateSpatialEntity (DelegateEntity):
         
     def set_position (self, pos):
-        super (DelegateEntity, self).set_position (pos)
         self.delegate.set_position (pos)
         
     def set_hpr (self, hpr):
-        super (DelegateEntity, self).set_hpr (hpr)
         self.delegate.set_hpr (hpr)
                 
     def set_scale (self, scale):
-        super (DelegateEntity, self).set_scale (scale)
         self.delegate.set_scale (scale)
 
-    def dispose (self):
-        self.delegate.dispose ()
-        super (DelegateEntity, self).dispose ()
+    def get_position (self):
+        return self.delegate.get_position ()
         
-    position = property (lambda self:    self.delegate.get_position (),
-                         lambda self, x: self.set_position (x))
-    hpr      = property (lambda self:    self.delegate.get_hpr (),
-                         lambda self, x: self.set_hpr (x))
-    scale    = property (lambda self:    self.delegate.get_scale (),
-                         lambda self, x: self.set_scale (x))
+    def get_hpr (self):
+        return self.delegate.get_hpr ()
+                
+    def get_scale (self):
+        return self.delegate.get_scale ()
+        
+    position = property (get_position, set_position)
+    hpr      = property (get_hpr,      set_hpr)
+    scale    = property (get_scale,    set_scale)
 

@@ -44,13 +44,17 @@ class KillableEntity (ModelEntityBase, PhysicalEntityBase):
         
         self.dead = False
 
-    def on_kill_collision (self, me, other):
+    def on_kill_collision (self, ev, me, other):
         if not self.dead and isinstance (other, Field):
+            pos = ev.getContactPoint (0)
+            
             self._model.detachNode ()
-
-            self._smoke_particles.start (self._node)
-            self._smoke_particles.setPos (0, 0, 2)
-            self._fire_particles.start (self._node)
+            
+            node = self.entities.render
+            self._smoke_particles.start (node)
+            self._smoke_particles.setPos (pos + Vec3 (0, 0, 2))
+            self._fire_particles.start (node)
+            self._fire_particles.setPos (pos)
             
             self.entities.tasks.add (task.sequence (
                 task.wait (1.),
@@ -62,6 +66,9 @@ class KillableEntity (ModelEntityBase, PhysicalEntityBase):
             
             self.on_die ()
             self.dead = True
+
+            #import game
+            #game.DEBUG_INSTANCE.pause ()
 
     def load_particles (self, name):
         p = ParticleEffect ()
