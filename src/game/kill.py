@@ -67,8 +67,8 @@ class KillableEntity (ModelEntityBase, PhysicalEntityBase):
             self.on_die ()
             self.dead = True
 
-            #import game
-            #game.DEBUG_INSTANCE.pause ()
+            # import game
+            # game.DEBUG_INSTANCE.pause ()
 
     def load_particles (self, name):
         p = ParticleEffect ()

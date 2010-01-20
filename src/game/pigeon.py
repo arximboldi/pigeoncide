@@ -23,7 +23,9 @@ from ent.physical import (StandingPhysicalEntityDecorator,
                           DynamicPhysicalEntity)
 
 from core.state import StateManager, State
+from core.util import *
 from core import task
+
 import phys.geom as geom
 import phys.mass as mass
 
@@ -74,11 +76,13 @@ class Pigeon (ModelEntity,
                   *a, **k):
         k ['entities'] = flock.entities
         super (Pigeon, self).__init__ (
-            geometry = geom.sphere (2),
+            geometry = geom.capsule (2, 1),
             mass     = mass.sphere (1, 2),
             model    = model,
             *a, **k)
 
+        self.physical_hpr = Vec3 (90, 0, 0)
+        
         self._flock  = weakref.ref (flock)
         self.the_boy = the_boy
 
@@ -97,7 +101,17 @@ class Pigeon (ModelEntity,
         self.add_state ('follow', FollowState)
         self.add_state ('fear',   FearState)
         self.add_state ('food',   FoodState)
-        self.start ('follow', delegate = self)
+
+        self.start ('follow')
+
+    def do_update (self, timer):
+        """
+        Hack to avoid the tunneling effect. We manually sweep the
+        collision sphere using a cylinder.
+        """
+        super (Pigeon, self).do_update (timer)
+        vlen = self.linear_velocity.length ()
+        self.geom.setParams (2., vlen * timer.delta)
 
     @property
     def flock (self):
@@ -111,19 +125,21 @@ class Pigeon (ModelEntity,
 
 class FlockingState (State):
 
-    def __init__ (self, delegate = None, *a, **k):
+    def __init__ (self, *a, **k):
         super (FlockingState, self).__init__ (*a, **k)
-        self.boid = PigeonBoid (flock = delegate.flock,
-                                delegate = delegate)
+        self.boid = PigeonBoid (flock    = self.manager.flock,
+                                delegate = self.manager)
         
     def do_release (self):
         self.boid.dispose ()
 
 class CrawlingState (State):
 
-    def __init__ (self, delegate = None, *a, **k):
+    def __init__ (self, *a, **k):
         super (CrawlingState, self).__init__ (*a, **k)
-        self.crawler = CrawlerEntityDecorator (delegate = delegate)
+        self.crawler = CrawlerEntityDecorator (self.manager)
+        print self.manager.hpr
+        self.crawler.angle = to_rad (self.manager.hpr.getX ())
         
     def do_release (self):
         self.crawler.dispose ()
@@ -134,11 +150,11 @@ class PatrolState (FlockingState):
     max_wait = 10
 
     def do_setup (self):
+        return None
         self.tasks.add (task.sequence (
             task.wait (random.uniform (self.min_wait,
                                        self.max_wait)),
-            lambda: self.manager.change_state (
-                'walk', delegate = self.manager)))
+            lambda: self.manager.change_state ('walk')))
 
 class FollowState (FlockingState):
     

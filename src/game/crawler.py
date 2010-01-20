@@ -17,31 +17,39 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""
+No longer needed. Implementation not finished.
+"""
+
 from ent.physical import StandingPhysicalEntity, StandingPhysicalEntityDecorator
 from ent.task import TaskEntity
 from ent.panda import ActorEntity, DelegateActorEntity
 
+from pandac.PandaModules import Vec3
+import math
 
 crawl_anim = 'run'
 
 class CrawlerEntityBase (TaskEntity):
 
+    crawl_force = 1000000.0
     max_crawl_speed = 120
     max_crawl_speed_sq = max_crawl_speed ** 2
 
     def do_update (self, timer):
         super (CrawlerEntityBase, self).do_update (timer)
-        pass #self.update_crawler (timer)
+        self.update_crawler (timer)
 
     def update_crawler (self, timer):
-        direction = Vec3 (fact * math.sin (self.angle),
-                          fact * math.cos (self.angle), 0)
+        angle     = self.angle
+        direction = Vec3 (-1. * math.sin (angle),
+                          -1. * math.cos (angle), 0)
         speed     = self.linear_velocity
         speeddir  = speed * speed.dot (direction)
         sqlen     = speeddir.lengthSquared ()
         
         if sqlen < self.max_crawl_speed_sq:
-            self.add_force (direction * force * timer.delta)
+            self.add_force (direction * self.crawl_force * timer.delta)
 
 
 class CrawlerEntity (

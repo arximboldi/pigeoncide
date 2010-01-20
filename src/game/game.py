@@ -84,9 +84,13 @@ class Game (GameState):
         
         # Game entities
         boy = Boy (entities = self.entities)
-        flock = make_random_flock (self.entities, 20,
+        flock1 = make_random_flock (self.entities, 20,
                                    flock_cls = PigeonFlock,
                                    boid_cls  = delayed (Pigeon) (the_boy = boy))
+        # flock2 = make_random_flock (self.entities, 10,
+        #                             flock_cls = PigeonFlock,
+        #                             boid_cls  = delayed (Pigeon) (the_boy = boy))
+
         level = Level (entities = self.entities)
         boy.set_position (Vec3 (0, 70, 20))
         level.set_position (Vec3 (0, 0, 0))

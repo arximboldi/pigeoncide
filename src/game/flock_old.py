@@ -26,13 +26,13 @@ Interesting links about it:
   * http://www.red3d.com/cwr/boids/
   * http://www.kfish.org/boids/pseudocode.html
 
-This version uses forces to model the behaviour. This allows softer
-movements, more realistic animation for birds and can model the full
-behaviour of the pigeons --both walking and flying-- with a single
-behavioural model. This is a lot of help, and makes useless the
-relatively complex but neat Decorator system that we made for the
-entities in order to model easily the whole Pigeon AI using state
-machines..
+This older version uses a velocity-based implementation of the
+flocking algorithm. It is outdated because it caused the animation to
+be to jerky and the movements, specially the rotations, to be too fast
+--maybe apropiate for fish, but not for birds. Also it was hard to
+implement the walking behaviour using this, which lead to the
+implementation of entity decorators to be able to dynamically switch
+between a CrawlerEntity and a BoidEntity to control a Pigeon..
 """
 
 from direct.directtools.DirectGeometry import LineNodePath
@@ -44,8 +44,6 @@ from ent.physical import (DynamicPhysicalEntity,
                           DelegateDynamicPhysicalEntity)
 
 from base.util import nop
-from core.util import *
-
 import random
 import weakref
 import math
@@ -83,15 +81,15 @@ class Flock (TaskEntity):
 
 class BoidEntityBase (TaskEntity):
 
-    boid_power        = 500000
+    boid_power        = 10
     
-    boid_f_cohesion   = 0.001
-    boid_f_avoidance  = 0.1
-    boid_f_alignment  = 0.025
+    boid_f_cohesion   = 0.01
+    boid_f_avoidance  = 1
+    boid_f_alignment  = 0.125
     boid_f_bounds     = 10
     boid_f_randomness = 0
     boid_f_flight     = 0
-    boid_f_target     = 0.001
+    boid_f_target     = 0.01
 
     boid_speed        = 100
     boid_speed_sq     = boid_speed * boid_speed
@@ -114,8 +112,7 @@ class BoidEntityBase (TaskEntity):
 
         self._debug_line = LineNodePath (self.entities.render,
                                          'caca', 2, Vec4 (1, 0, 0, 0))
-        self.body.setGravityMode (False)
-        
+
     def dispose (self):
         self.flock.remove (self)
         super (BoidEntityBase, self).dispose ()
@@ -146,17 +143,17 @@ class BoidEntityBase (TaskEntity):
              randomness * self.boid_f_randomness +
              target     * self.boid_f_target) \
              * self.boid_power
-
-        linvel = self.linear_velocity
-        if linvel.lengthSquared () > self.boid_speed_sq:
-            linvel.normalize ()
-            linvel *= self.boid_speed
-            self.linear_velocity = linvel
         
-        self.add_force (v * timer.delta)
-        #self.add_force (normalize (speed) * -100) # virtual friction
+        if v.lengthSquared () > self.boid_speed_sq:
+            v.normalize ()
+            v *= self.boid_speed
+        
+        self.linear_velocity  = v
+        self.angular_velocity = Vec3 (0, 0, 0)    
+        self.set_torque (Vec3 (0, 0, 0))
+        self.set_force  (Vec3 (0, 0, 0))
 
-        v = normalize (linvel)
+        v.normalize ()
         self.hpr = Vec3 (- math.atan2 (v.getX (), v.getY ())
                          * 180. / math.pi, 
                          math.asin (v.getZ ())
@@ -257,8 +254,8 @@ class BoidEntity (BoidEntityBase,
 
 
 class BoidEntityDecorator (
-    BoidEntityBase,
-    DelegateDynamicPhysicalEntity):
+    DelegateDynamicPhysicalEntity,
+    BoidEntityBase):
     pass
 
 
