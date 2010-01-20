@@ -44,7 +44,7 @@ class BasicMenu:
             #frameSize = ( 1, 1, 1 ),
             frameColor = (1, 1, 0, 0),
             pos = (pos[0], 0, pos[1]),
-            image = '../data/mesh/playButton.png',
+            #image = '../data/mesh/playButton.png',
             relief = None
             ) 
              
