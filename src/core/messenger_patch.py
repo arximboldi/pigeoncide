@@ -66,7 +66,7 @@ def send (self, orig_event, sent_args=[], task_chain=None):
 
 @monkeypatch (Messenger)
 def _patch_forward (self, event, sent_args=[]):
-    _log.debug ('Forwarding panda event: ' + event)
+    # _log.debug ('Forwarding panda event: ' + event)
     for f in self._patch_forwarders:
         f.receive (event, *sent_args)
 

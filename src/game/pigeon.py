@@ -29,7 +29,7 @@ from core import task
 import phys.geom as geom
 import phys.mass as mass
 
-from flock import BoidEntityDecorator, Flock
+from flock import BoidParams, BoidEntity, Flock
 from kill import KillableEntity
 from crawler import CrawlerEntityDecorator
 
@@ -37,44 +37,18 @@ import random
 import weakref
 from pandac.PandaModules import Vec3
 
-class PigeonBoid (BoidEntityDecorator):
-    patrol_dist = 100
-    patrol_dist_sq = patrol_dist ** 2
-    
-class PigeonFlock (Flock):        
-
-    def do_update (self, timer):
-        super (PigeonFlock, self).do_update (timer)
-
-        if all (map (self.reached_target, self.boids)):
-            (minx, miny, minz), (maxx, maxy, maxz) = self.flock_bounds 
-            new_target = Vec3 (random.uniform (minx, maxx),
-                               random.uniform (miny, maxy),
-                               random.uniform (minz, maxz))
-            for x in self.boids:
-                x.boid_target = new_target
-
-    def reached_target (self, pigeon):
-        return (
-            not pigeon.boid_target or
-            (pigeon.boid_target - pigeon.position).lengthSquared () <
-            pigeon.patrol_dist_sq)
-
-
-class Pigeon (ModelEntity,
+class Pigeon (BoidEntity,
+              ModelEntity,
               KillableEntity,
-              DynamicPhysicalEntity,
               StateManager):
 
     MODEL = '../data/mesh/pigeon-old.x'
     ANIMS = {}
     
     def __init__ (self,
-                  flock = None,
                   model = MODEL,
                   the_boy = None,
                   *a, **k):
-        k ['entities'] = flock.entities
         super (Pigeon, self).__init__ (
             geometry = geom.capsule (2, 1),
             mass     = mass.sphere (1, 2),
@@ -82,15 +56,15 @@ class Pigeon (ModelEntity,
             *a, **k)
 
         self.physical_hpr = Vec3 (90, 0, 0)
-        
-        self._flock  = weakref.ref (flock)
         self.the_boy = the_boy
-
+        self.params = BoidParams ()
+        
         # Fix model coordinates
         self.model_position = Vec3 (0, 0, -2)
         self.model_scale    = Vec3 (0.05, 0.05, 0.05)
         self.model_hpr      = Vec3 (180, 0, 0)
 
+        # Sounds
         self.die_sounds = map (self.load_sound,
                                [ 'snd/electrocute_medium.wav',
                                  'snd/electrocute_short.wav' ])
@@ -113,16 +87,34 @@ class Pigeon (ModelEntity,
         vlen = self.linear_velocity.length ()
         self.geom.setParams (2., vlen * timer.delta)
 
-    @property
-    def flock (self):
-        return self._flock ()
-        
     def on_die (self):
         self.force_finish ()
         self.disable_physics ()
         random.choice (self.die_sounds).play ()
 
+class PatrolState (State):
 
+    min_wait = 5
+    max_wait = 10
+
+    def do_setup (self):
+        return None
+        self.tasks.add (task.sequence (
+            task.wait (random.uniform (self.min_wait,
+                                       self.max_wait)),
+            lambda: self.manager.change_state ('walk')))
+
+class FollowState (State):
+    
+    def do_update (self, timer):
+        super (FollowState, self).do_update (timer)
+        self.manager.params.boid_target = self.manager.the_boy.position        
+
+class FearState (State): pass
+class WalkState (State): pass
+class FoodState (State): pass
+
+"""
 class FlockingState (State):
 
     def __init__ (self, *a, **k):
@@ -143,29 +135,29 @@ class CrawlingState (State):
         
     def do_release (self):
         self.crawler.dispose ()
+"""
 
-class PatrolState (FlockingState):
-
-    min_wait = 5
-    max_wait = 10
-
-    def do_setup (self):
-        return None
-        self.tasks.add (task.sequence (
-            task.wait (random.uniform (self.min_wait,
-                                       self.max_wait)),
-            lambda: self.manager.change_state ('walk')))
-
-class FollowState (FlockingState):
+"""
+class PigeonBoid (BoidEntityDecorator):
+    patrol_dist = 100
+    patrol_dist_sq = patrol_dist ** 2
     
+class PigeonFlock (Flock):        
+
     def do_update (self, timer):
-        super (FollowState, self).do_update (timer)
-        self.boid.boid_target = self.manager.the_boy.position        
+        super (PigeonFlock, self).do_update (timer)
 
+        if all (map (self.reached_target, self.boids)):
+            (minx, miny, minz), (maxx, maxy, maxz) = self.flock_bounds 
+            new_target = Vec3 (random.uniform (minx, maxx),
+                               random.uniform (miny, maxy),
+                               random.uniform (minz, maxz))
+            for x in self.boids:
+                x.boid_target = new_target
 
-class FearState (FlockingState): pass
-
-class WalkState (CrawlingState): pass
-
-class FoodState (CrawlingState): pass
-
+    def reached_target (self, pigeon):
+        return (
+            not pigeon.boid_target or
+            (pigeon.boid_target - pigeon.position).lengthSquared () <
+            pigeon.patrol_dist_sq)
+"""

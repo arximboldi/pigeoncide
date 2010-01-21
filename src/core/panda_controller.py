@@ -64,7 +64,7 @@ class PandaController (object):
 
         loadPrcFileData ("", "interpolate-frames 1")
         path = getModelPath ()
-        path.appendPath ('./data')
+        path.prependPath ('./data')
         
         self._base.render.setShaderAuto ()
         self._base.enableParticles ()
@@ -90,7 +90,8 @@ class PandaController (object):
         self._prop = WindowProperties ()
         self._prop.setTitle (title)
         self._prop.setCursorHidden (True)
-
+        self._prop.setMouseMode (WindowProperties.MRelative)
+        
     def update_properties (self, cfg):
         self._prop.setSize (cfg.child ('width').value,
                             cfg.child ('height').value)

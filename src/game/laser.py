@@ -69,13 +69,14 @@ class Field (PandaEntity, StaticPhysicalEntity):
     
     def __init__ (self, fst = None, snd = None, *a, **k):
 
-        model = make_laser_model (fst, snd)
+        model = make_laser_model (fst, snd, 50)
         super (Field, self).__init__ (
             geometry = geom.node (model),
             *a, **k)
         
         model.reparentTo (self.node)
-        self.position = fst.position
+        self.position = fst.position - Vec3 (0, 0, 6)
+        self.physical_position = Vec3 (0, 0, -5)
 
         model.setScale (near0, near0, near0)
         fst.init_task ().add_next (
@@ -100,16 +101,16 @@ class Stick (ModelEntity, StaticPhysicalEntity):
             geometry = geom.box (1, 1, 1),
             *a, **k)
 
-        self.model_position = Vec3 (0, 0, -0.18)
+        self.model_position = Vec3 (0, 0, -0.13)
 
         self.scale = Vec3 (near0, near0, near0)
-        tsk = task.sinusoid (lambda x: self.set_scale (Vec3 (x, x, x)), 0., 30.)
+        tsk = task.sinusoid (lambda x: self.set_scale (Vec3 (x, x, x)), 0., 50.)
                               
         self.entities.tasks.add (tsk)
         self.init_task = weakref.ref (tsk)
 
 
-def make_laser_model (fst, snd):
+def make_laser_model (fst, snd, height):
     # Panda3d sucks when it comes to procedural model generation
     
     format   = GeomVertexFormat.getV3n3cpt2 ()
@@ -121,8 +122,8 @@ def make_laser_model (fst, snd):
     
     v0 = Vec3 (0, 0, 0)
     v1 = snd.position - fst.position
-    v2 = v1 + Vec3 (0, 0, 30)
-    v3 = v0 + Vec3 (0, 0, 30)
+    v2 = v1 + Vec3 (0, 0, height)
+    v3 = v0 + Vec3 (0, 0, height)
     
     vertex.addData3f (v0)
     vertex.addData3f (v1)

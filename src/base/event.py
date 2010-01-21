@@ -48,7 +48,6 @@ class EventManager (Sender, Receiver):
         if name in self._events:
             return self._events [name]
 
-        _log.debug ('Creating event: ' + name)
         signal = Signal ()
         signal += lambda *a, **k: self.send (name, *a, **k)
         self._events [name] = signal

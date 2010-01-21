@@ -31,8 +31,8 @@ from camera import FastEntityFollower, SlowEntityFollower
 from boy import Boy
 from level import Level
 from player import PlayerEntityDecorator
-from pigeon import Pigeon, PigeonFlock
-from flock import make_random_flock
+from pigeon import Pigeon
+from flock import Flock, make_random_flock
 
 DEBUG_INSTANCE = None
 
@@ -85,10 +85,8 @@ class Game (GameState):
         # Game entities
         boy = Boy (entities = self.entities)
         flock1 = make_random_flock (self.entities, 20,
-                                   flock_cls = PigeonFlock,
-                                   boid_cls  = delayed (Pigeon) (the_boy = boy))
+                                    boid_cls = delayed (Pigeon) (the_boy = boy))
         # flock2 = make_random_flock (self.entities, 10,
-        #                             flock_cls = PigeonFlock,
         #                             boid_cls  = delayed (Pigeon) (the_boy = boy))
 
         level = Level (entities = self.entities)

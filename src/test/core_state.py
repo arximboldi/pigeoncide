@@ -26,16 +26,16 @@ class DummyStateBase (State):
         super (DummyStateBase, self).__init__ (*a, **k)
         self.st = "init"
 
-    def setup (self):
+    def do_setup (self):
         self.st = "setup"
 
-    def sink (self):
+    def do_sink (self):
         self.st = "sink"
 
-    def unsink (self):
+    def do_unsink (self):
         self.st = "unsink"
 
-    def release (self):
+    def do_release (self):
         self.st = "release"
 
 class DummyStateOne (DummyStateBase):
@@ -48,8 +48,8 @@ class TestState (unittest.TestCase):
 
     def setUp (self):
         self.mgr = StateManager ()
-        self.mgr.add ('one', DummyStateOne)
-        self.mgr.add ('two', DummyStateTwo)
+        self.mgr.add_state ('one', DummyStateOne)
+        self.mgr.add_state ('two', DummyStateTwo)
     
     def test_errors (self):
         self.assertEqual (self.mgr.current, None)

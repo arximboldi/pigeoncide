@@ -17,6 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from base.signal import weak_slot
 from base.util import printfn
 from ent.physical import PhysicalEntityBase
 from ent.panda import ModelEntityBase
@@ -44,6 +45,7 @@ class KillableEntity (ModelEntityBase, PhysicalEntityBase):
         
         self.dead = False
 
+    @weak_slot
     def on_kill_collision (self, ev, me, other):
         if not self.dead and isinstance (other, Field):
             pos = ev.getContactPoint (0)

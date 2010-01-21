@@ -81,33 +81,36 @@ class Flock (TaskEntity):
             [ (x, x.position, x.linear_velocity) for x in self.boids ]
 
 
-class BoidEntityBase (TaskEntity):
+class BoidParams (object):
 
-    boid_power        = 500000
-    
-    boid_f_cohesion   = 0.001
+    # All rules effect
+    boid_power        = 1000
+
+    # Individual rule effect
+    boid_f_cohesion   = 0.01
+    boid_f_collision  = 0.01
     boid_f_avoidance  = 0.1
-    boid_f_alignment  = 0.025
-    boid_f_bounds     = 10
-    boid_f_randomness = 0
+    boid_f_alignment  = 1
+    boid_f_bounds     = 0.001
+    boid_f_randomness = .2
     boid_f_flight     = 0
     boid_f_target     = 0.001
 
-    boid_speed        = 100
-    boid_speed_sq     = boid_speed * boid_speed
-    boid_max_far      = 1000
-    boid_max_far_sq   = boid_max_far * boid_max_far
-
+    # Constraints
+    boid_speed        = 150
+    boid_max_far      = 600
     boid_mindist      = 5
-    boid_mindist_sq   = boid_mindist * boid_mindist 
     boid_maxdist      = 20
-    boid_maxdist_sq   = boid_maxdist * boid_maxdist
-
-    boid_height       = 50.0
-    
+    boid_height       = 50.0    
     boid_target       = None
+
+
+class BoidEntityBase (TaskEntity):
+
+    params = BoidParams
     
     def __init__ (self, flock = None, *a, **k):
+        k ['entities'] = flock.entities
         super (BoidEntityBase, self).__init__ (*a, **k)
         self.flock = weakref.proxy (flock)
         self.flock.add_boid (self)
@@ -115,7 +118,7 @@ class BoidEntityBase (TaskEntity):
         self._debug_line = LineNodePath (self.entities.render,
                                          'caca', 2, Vec4 (1, 0, 0, 0))
         self.body.setGravityMode (False)
-        
+            
     def dispose (self):
         self.flock.remove (self)
         super (BoidEntityBase, self).dispose ()
@@ -127,6 +130,7 @@ class BoidEntityBase (TaskEntity):
     def update_flocking (self, timer):
         self._curr_position = self.position
         self._curr_velocity = self.linear_velocity
+        linvel              = self.linear_velocity
         
         self.neighbours = self.find_neighbours ()
 
@@ -138,62 +142,33 @@ class BoidEntityBase (TaskEntity):
         randomness = self.rule_randomness ()
         target     = self.rule_target ()
         
-        v = (cohesion   * self.boid_f_cohesion   +
-             avoidance  * self.boid_f_avoidance  +
-             alignment  * self.boid_f_alignment  +
-             bounds     * self.boid_f_bounds     +
-             flight     * self.boid_f_flight     +
-             randomness * self.boid_f_randomness +
-             target     * self.boid_f_target) \
-             * self.boid_power
+        f = (cohesion   * self.params.boid_f_cohesion   +
+             avoidance  * self.params.boid_f_avoidance  +
+             alignment  * self.params.boid_f_alignment  +
+             bounds     * self.params.boid_f_bounds     +
+             flight     * self.params.boid_f_flight     +
+             randomness * self.params.boid_f_randomness +
+             target     * self.params.boid_f_target) \
+             * self.params.boid_power
 
-        linvel = self.linear_velocity
-        if linvel.lengthSquared () > self.boid_speed_sq:
-            linvel.normalize ()
-            linvel *= self.boid_speed
-            self.linear_velocity = linvel
-        
-        self.add_force (v * timer.delta)
-        #self.add_force (normalize (speed) * -100) # virtual friction
+        linvel += f * timer.delta
+        if linvel.lengthSquared () > self.params.boid_speed ** 2:
+            linvel = normalized (linvel) * self.params.boid_speed
 
-        v = normalize (linvel)
-        self.hpr = Vec3 (- math.atan2 (v.getX (), v.getY ())
+        self.linear_velocity = linvel
+
+        linvel.normalize ()
+        self.hpr = Vec3 (- math.atan2 (linvel.getX (), linvel.getY ())
                          * 180. / math.pi, 
-                         math.asin (v.getZ ())
+                         math.asin (linvel.getZ ())
                          * 180. / math.pi, 0)
-        
-        # self._debug_line.reset ()
-        # self._debug_line.setColor (Vec4 (1, 0, 0, 0))
-        # self._debug_line.drawLines (
-        #     [[self.position, self.position + v * vlen * timer.delta]])
-        # self._debug_line.create ()
-            
-        # HACK: Try to avoid the fucking tunneling
-        # http://www.ode.org/old_list_archives/2003-July/009477.html
-        # physics = self.entities.physics.world
-        # ray = OdeRayGeom (100000.0)
-        # ray.set (self.position, v)
-
-        # collision = physics.collide_world (ray)
-
-        # cgeom   = OdeContactGeom ()
-        # cgeom.setG1 (target)
-        # cgeom.setG2 (self._geom)
-        # cgeom.setDepth (HITDISTANCE)
-        # cgeom.setPos (POSITION)
-        
-        # contact = OdeContact ()
-        # contact.setContactGeom (cgeom)
-        # contact.setSurface (OdeSurfaceParameters (FRICTIONLESS))
-        # joint   = OdeContactJoint (self.entities.physics.world,
-        #                            contact)
 
     def find_neighbours (self):
         mypos = self._curr_position
         return [ (x, p, v)
                  for (x, p, v)
                  in self.flock.boids_cache
-                 if (mypos - p).lengthSquared () < self.boid_maxdist_sq
+                 if (mypos - p).lengthSquared () < self.params.boid_maxdist ** 2
                  and x != self ]
 
     def rule_avoidance (self):
@@ -201,9 +176,20 @@ class BoidEntityBase (TaskEntity):
         mypos = self._curr_position
         for (x, p, v) in self.neighbours:
             distsq = (p - mypos).lengthSquared ()
-            if distsq < self.boid_mindist_sq:
+            if distsq < self.params.boid_mindist ** 2:
                 avoid -= p - mypos
         return avoid
+
+    def rule_collision (self, timer):
+        res = Vec3 (0, 0, 0)
+        physics = self.entities.physics
+        ray = OdeRayGeom (1000000.0)
+        ray.set (self._curr_position + self._curr_velocity * timer.delta + 1,
+                 self._curr_velocity)
+        col = physics.collide_world (ray)
+        if col and not col.isEmpty ():
+            res = self._curr_position - col.getContactPoint (0)
+        return res
     
     def rule_cohesion (self):
         center = Vec3 (0, 0, 0)
@@ -211,15 +197,16 @@ class BoidEntityBase (TaskEntity):
             for (x, p, v) in self.neighbours:
                 center += p
             center /= len (self.neighbours)
-        cohesion = (center - self._curr_position) / 100.
+        cohesion = center - self._curr_position
         
         return cohesion
     
     def rule_bounds (self):
         bounds = Vec3 (0, 0, 0)
-        if self._curr_position.lengthSquared () > self.boid_max_far_sq:
+        if self._curr_position.lengthSquared () > self.params.boid_max_far ** 2:
             bounds = bounds - self._curr_position
-            bounds.normalize ()
+        if self._curr_position.getZ () < 20:
+            bounds += Vec3 (0, 0, 20 - self._curr_position.getZ ())
         return bounds
 
     def rule_alignment (self):
@@ -228,15 +215,15 @@ class BoidEntityBase (TaskEntity):
             for (x, p, v) in self.neighbours:
                 velocity += v
             velocity /= len (self.neighbours)
-        return velocity
+        return normalized (velocity)
 
     def rule_flight (self):
-        if self._curr_position.getZ () < self.boid_height:
+        if self._curr_position.getZ () < self.params.boid_height:
             return Vec3 (0, 0, 1.0)
         return Vec3 (0, 0, 0)
 
     def rule_randomness (self):
-        if self._curr_velocity.lengthSquared () < self.boid_speed_sq:
+        if self._curr_velocity.lengthSquared () < self.params.boid_speed ** 2:
             return Vec3 (random.random (),
                          random.random (),
                          0)
@@ -246,8 +233,8 @@ class BoidEntityBase (TaskEntity):
         factor = 10.
         if self.neighbours:
             factor = 1.
-        if self.boid_target:
-            return (self.boid_target - self._curr_position) * factor
+        if self.params.boid_target:
+            return (self.params.boid_target - self._curr_position) * factor
         return Vec3 ()
 
 
@@ -265,8 +252,8 @@ class BoidEntityDecorator (
 def make_random_flock (entities,
                        num_boids,
                        bounds    = Flock.flock_bounds,
-                       flock_cls = Flock,
-                       boid_cls  = BoidEntity):
+                       boid_cls  = BoidEntity,
+                       flock_cls = Flock):
 
     flock = flock_cls (entities = entities)
     (minx, miny, minz), (maxx, maxy, maxz) = bounds

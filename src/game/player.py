@@ -20,8 +20,7 @@
 import math
 
 from base.sender import AutoReceiver
-from core.task import Task
-
+from core.util import *
 from ent.entity import *
 from ent.physical import (StandingPhysicalEntity,
                           DelegateStandingPhysicalEntity)
@@ -37,9 +36,6 @@ is_feeding        = 0x0004
 is_idle           = 0x0008
 is_backward       = 0x0020
 
-anim_run  = 'run'
-anim_walk = 'walk'
-
 
 class PlayerEntityBase (Entity):
     """
@@ -47,22 +43,29 @@ class PlayerEntityBase (Entity):
     - StandingPhisicalEntity
     - ModelPhysicalEntity
     """
-    
-    force              = 1000000.0
-    bw_force           = 1000000.0
-    strafe_force       = 1000000.0
-    jump_force         = 1000000.0
+
+    anim_run   = 'boy'
+    anim_walk  = 'boy.1'
+    anim_stand = 'boy.3'
+
+    force              = 10000.0
+    bw_force           = 10000.0
+    strafe_force       = 10000.0
+    jump_force         = 10000.0
     
     max_rotate_speed   = 2.0
-    max_run_speed_sq   = 500000.0
-    max_walk_speed_sq  = 100000.0
+    max_run_speed      = 60
+    max_walk_speed     = 30
 
     def __init__ (self, *a, **k):
         super (PlayerEntityBase, self).__init__ (*a, **k)
         self.angle    = 0
         self.actions  = 0x0
         self.laser    = laser.Group (self.entities)
+        self.model.loop (self.anim_stand)
+        self.model.listJoints ()
 
+        
     def on_place_stick_down (self):
         stick = laser.Stick (entities = self.entities)
         direction = Vec3 (math.sin (self.angle), math.cos (self.angle), 0)
@@ -80,32 +83,32 @@ class PlayerEntityBase (Entity):
     def on_walk_down (self):
         self.actions |= is_walking
         if self.is_moving:
-            self.model.loop (anim_walk)
+            self.model.loop (self.anim_walk)
         
     def on_walk_up (self):
         self.actions &= ~ is_walking
         if self.is_moving:
-            self.model.loop (anim_run)
+            self.model.loop (self.anim_run)
             
     def on_move_forward_down (self):
         self.actions |= is_forward
         self.model.loop (
-            anim_walk if self.actions & is_walking else anim_run)
+            self.anim_walk if self.actions & is_walking else self.anim_run)
         
     def on_move_forward_up (self):
         self.actions &= ~ is_forward
         if not self.is_moving:
-            self.model.stop ()
+            self.model.loop (self.anim_stand)
         
     def on_move_backward_down (self):
         self.actions |= is_backward
         self.model.loop (
-            anim_walk if self.actions & is_walking else anim_run)
+            self.anim_walk if self.actions & is_walking else self.anim_run)
 
     def on_move_backward_up (self):
         self.actions &= ~ is_backward
         if not self.is_moving:
-            self.model.stop ()
+            self.model.loop (self.anim_stand)
         
     def on_steer_left (self, timer):
         self.angle -= timer.delta * self.max_rotate_speed
@@ -126,17 +129,17 @@ class PlayerEntityBase (Entity):
         pass
 
     def _do_force (self, timer, force, fact):
-        direction = Vec3 (fact * math.sin (self.angle),
-                          fact * math.cos (self.angle), 0)
-        speed     = self.linear_velocity
-        speeddir  = speed * speed.dot (direction)
-        sqlen     = speeddir.lengthSquared ()
-        
-        if (self.actions & is_walking and
-            sqlen < self.max_walk_speed_sq) or \
-           (~ self.actions & is_walking and
-            sqlen < self.max_run_speed_sq):
-            self.add_force (direction * force * timer.delta)
+        direction    = Vec3 (fact * math.sin (self.angle),
+                             fact * math.cos (self.angle), 0)
+        velocity     = self.linear_velocity
+        vel_on_dir   = direction * velocity.dot (direction)
+
+        speed_limit  = self.max_walk_speed \
+                       if self.actions & is_walking \
+                       else self.max_run_speed 
+
+        if vel_on_dir.lengthSquared () < speed_limit ** 2:
+            self.add_force (direction * force)
 
 
 class PlayerEntity (

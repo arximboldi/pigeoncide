@@ -39,11 +39,11 @@ def vec_to_hpr (v):
     q.setW (v.getW ())
     return q.getHpr ()
 
-def normalize (vec):
+def normalized (vec):
     vec.normalize ()
     return vec
 
-def normalized (vec):
+def normalize (vec):
     new_vec = vec.__class__ (vec)
     new_vec.normalize ()
     return new_vec

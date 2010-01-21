@@ -46,10 +46,10 @@ class Physics (Task):
             1.0,          # mu
             .35,          # bounce
             .01,          # bounce_vel (minimum vel for bounce)
-            .2,           # soft_erp contact normal softness
-            .0000001,     # soft_cfm ...
-            .01,          # 
-            .01)          # dampening
+            .9,           # soft_erp contact normal softness
+            .000001,      # soft_cfm ...
+            .0,           # 
+            .002)         # dampening
 
         self._world.setContactMaxCorrectingVel (100.0)
         self._world.setAutoDisableFlag (False)
@@ -126,6 +126,7 @@ class Physics (Task):
     
     def do_update (self, timer):
         super (Physics, self).do_update (timer)
+
         self._space.autoCollide ()
         self._world.quickStep (timer.delta)
         self._group.empty ()

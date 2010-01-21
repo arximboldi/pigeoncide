@@ -31,17 +31,17 @@ class TestTask (unittest.TestCase):
 
     def test_states (self):
         t = Task ()
-        self.assertEqual (t.state, Task.RUNNING)
+        self.assertEqual (t.state, running)
         t.pause ()
-        self.assertEqual (t.state, Task.PAUSED)
+        self.assertEqual (t.state, paused)
         t.resume ()
-        self.assertEqual (t.state, Task.RUNNING)
+        self.assertEqual (t.state, running)
         t.kill ()
-        self.assertEqual (t.state, Task.KILLED)
+        self.assertEqual (t.state, killed)
         t.pause ()
-        self.assertEqual (t.state, Task.KILLED)
+        self.assertEqual (t.state, killed)
         t.restart ()
-        self.assertEqual (t.state, Task.RUNNING)
+        self.assertEqual (t.state, running)
 
     def test_next (self):
         class DummyParent:
@@ -77,15 +77,15 @@ class TestTask (unittest.TestCase):
     
     def test_func (self):
         t = FuncTask (func = lambda: None)
-        self.assertEqual (t.state, Task.RUNNING)
+        self.assertEqual (t.state, running)
 
         t.update (None)
-        self.assertEqual (t.state, Task.KILLED)
+        self.assertEqual (t.state, killed)
 
-        t.func = lambda: Task.PAUSED
+        t.func = lambda: paused
         t.restart ()
         t.update (None)
-        self.assertEqual (t.state, Task.PAUSED)
+        self.assertEqual (t.state, paused)
 
     def test_group_update (self):
 
@@ -112,7 +112,7 @@ class TestTask (unittest.TestCase):
     def test_group_find (self):
 
         t1 = Task ()
-        t2 = lambda: Task.RUNNING
+        t2 = lambda: running
         g = TaskGroup (t1, t2)
         self.assertEqual (g.count, 2)
         self.assertTrue (isinstance (g.find (t2), FuncTask))
