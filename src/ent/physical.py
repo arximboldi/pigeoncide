@@ -52,6 +52,21 @@ class PhysicalEntityBase (SpatialEntity):
     _physical_position = Vec3 (0, 0, 0)
     _physical_hpr      = Vec3 (0, 0, 0)
 
+    def __init__ (self,
+                  entities = None,
+                  geometry = geom.box (1, 1, 1),
+                  category = 0x0001,
+                  collide  = 0xffff,
+                  *a, **k):
+        super (PhysicalEntityBase, self).__init__ (
+            entities = entities,
+            *a, **k)
+        self._geom = geometry (entities.physics.space)
+        self._geom.setCategoryBits (category)
+        self._geom.setCollideBits (collide)
+        
+        entities.physics.register (self._geom)
+        
     def set_physical_position (self, pos):
         self._physical_position = pos
 
@@ -64,16 +79,6 @@ class PhysicalEntityBase (SpatialEntity):
     def get_physical_hpr (self):
         return self._physical_hpr
     
-    def __init__ (self,
-                  entities = None,
-                  geometry = geom.box (1, 1, 1),
-                  *a, **k):
-        super (PhysicalEntityBase, self).__init__ (
-            entities = entities,
-            *a, **k)
-        self._geom = geometry (entities.physics.space)
-        entities.physics.register (self._geom)
-        
     @property
     def geom (self):
         return self._geom

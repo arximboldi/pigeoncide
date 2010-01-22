@@ -35,6 +35,8 @@ is_forward        = 0x0002
 is_feeding        = 0x0004
 is_idle           = 0x0008
 is_backward       = 0x0020
+is_strafe_l       = 0x0040
+is_strafe_r       = 0x0080
 
 
 class PlayerEntityBase (Entity):
@@ -44,9 +46,9 @@ class PlayerEntityBase (Entity):
     - ModelPhysicalEntity
     """
 
-    anim_run   = 'boy'
-    anim_walk  = 'boy.1'
-    anim_stand = 'boy.3'
+    anim_run   = 'run'
+    anim_walk  = 'walk'
+    anim_stand = 'idle'
 
     force              = 10000.0
     bw_force           = 10000.0
@@ -56,7 +58,8 @@ class PlayerEntityBase (Entity):
     max_rotate_speed   = 2.0
     max_run_speed      = 60
     max_walk_speed     = 30
-
+    steer_speed        = 2.
+    
     def __init__ (self, *a, **k):
         super (PlayerEntityBase, self).__init__ (*a, **k)
         self.angle    = 0
@@ -77,8 +80,15 @@ class PlayerEntityBase (Entity):
         
     @property
     def is_moving (self):
-        return (self.actions & is_forward) or \
-               (self.actions & is_backward)
+        return (self.actions & is_forward)  or \
+               (self.actions & is_backward) or \
+               (self.actions & is_strafe_r) or \
+               (self.actions & is_strafe_l)
+
+    def animate_movement (self):
+        self.model.loop (self.anim_walk
+                         if self.actions & is_walking
+                         else self.anim_run)
 
     def on_walk_down (self):
         self.actions |= is_walking
@@ -92,8 +102,7 @@ class PlayerEntityBase (Entity):
             
     def on_move_forward_down (self):
         self.actions |= is_forward
-        self.model.loop (
-            self.anim_walk if self.actions & is_walking else self.anim_run)
+        self.animate_movement ()
         
     def on_move_forward_up (self):
         self.actions &= ~ is_forward
@@ -102,14 +111,13 @@ class PlayerEntityBase (Entity):
         
     def on_move_backward_down (self):
         self.actions |= is_backward
-        self.model.loop (
-            self.anim_walk if self.actions & is_walking else self.anim_run)
+        self.animate_movement ()
 
     def on_move_backward_up (self):
         self.actions &= ~ is_backward
         if not self.is_moving:
             self.model.loop (self.anim_stand)
-        
+    
     def on_steer_left (self, timer):
         self.angle -= timer.delta * self.max_rotate_speed
         
@@ -117,20 +125,41 @@ class PlayerEntityBase (Entity):
         self.angle += timer.delta * self.max_rotate_speed
 
     def on_move_forward (self, timer): 
-        self._do_force (timer, self.force, 1.0)
+        self._do_force (timer, self.force, 0)
 
     def on_move_backward (self, timer):
-        self._do_force (timer, self.bw_force, -1.0)
+        self._do_force (timer, self.bw_force, math.pi)
+
+    def on_strafe_right_down (self):
+        self.actions |= is_strafe_r
+        self.animate_movement ()
+
+    def on_strafe_right_up (self):
+        self.actions &= ~ is_strafe_r
+        if not self.is_moving:
+            self.model.loop (self.anim_stand)
+
+    def on_strafe_left_down (self):
+        self.actions |= is_strafe_l
+        self.animate_movement ()
+
+    def on_strafe_left_up (self):
+        self.actions &= ~ is_strafe_l
+        if not self.is_moving:
+            self.model.loop (self.anim_stand)
         
     def on_strafe_left (self, timer):
-        pass
+        self._do_force (timer, self.strafe_force, -math.pi/2)
         
     def on_strafe_right (self, timer):
-        pass
+        self._do_force (timer, self.strafe_force, math.pi/2)
 
-    def _do_force (self, timer, force, fact):
-        direction    = Vec3 (fact * math.sin (self.angle),
-                             fact * math.cos (self.angle), 0)
+    def on_steer (self, (px, py)):
+        self.angle  += px * self.steer_speed
+    
+    def _do_force (self, timer, force, angle):
+        direction    = Vec3 (math.sin (self.angle + angle),
+                             math.cos (self.angle + angle), 0)
         velocity     = self.linear_velocity
         vel_on_dir   = direction * velocity.dot (direction)
 

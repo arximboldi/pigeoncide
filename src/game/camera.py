@@ -18,13 +18,17 @@
 #
 
 
-from pandac.PandaModules import Vec3
+from pandac.PandaModules import Vec3, OdeRayGeom
 from base.util import bound
 from ent.observer import SpatialEntityListener
+from ent.entity import SpatialEntity, Entity
+
+from level import level_physics_category
+
 import math
 import weakref
 
-class EntityFollowerBase (SpatialEntityListener):
+class EntityFollowerBase (SpatialEntityListener, Entity):
     
     def __init__ (self, camera = None, *a, **k):
         super (EntityFollowerBase, self).__init__ (*a, **k)
@@ -42,6 +46,9 @@ class FastEntityFollower (EntityFollowerBase):
     speed        = 2.
     ent_position = Vec3 (0, 0, 0)
     ent_angle    = 0
+    offset       = Vec3 (0, 0, 10)
+    contact_dist = 4
+    contact_off  = Vec3 (0, 0, -5)
     
     def on_zoom_in (self):
         self.distance += self.delta_dist
@@ -56,7 +63,7 @@ class FastEntityFollower (EntityFollowerBase):
         self.update_camera ()
         
     def on_angle_change (self, (px, py)):
-        self.angle  += px * self.speed
+        #self.angle  += px * self.speed
         self.hangle += py * self.speed
         self.update_camera ()
 
@@ -67,27 +74,65 @@ class FastEntityFollower (EntityFollowerBase):
         self.ent_position = ent.position
         self.update_camera ()
             
-    def update_camera (self):
+    def update_camera (self):        
         angle = self.ent_angle + self.angle
-        direction = Vec3 (math.sin (angle),
-                          math.cos (angle),
+        direction = Vec3 (math.sin (angle), math.cos (angle),
                           - math.sin  (self.hangle))
-        position  = Vec3 (self.ent_position)
+        position  = self.ent_position + self.offset
+        distance = self.distance
+        camera_pos = position + direction * (- distance)
 
-        self.camera.setPos (position + direction * (- self.distance))
+        # Test for collision
+        physics = self.entities.physics
+        ray = OdeRayGeom (self.distance)
+        ray.set (position + self.contact_off,
+                 camera_pos + self.contact_off - position)
+        ray.setCollideBits (level_physics_category) # hackish
+        ray.setCategoryBits (0)
+        result = physics.collide_world (ray)
+
+        if result and result.getNumContacts () > 0:
+            contact  = result.getContactGeom (0)
+            new_distance = max (0, (position - contact.getPos ()).length () -
+                                self.contact_dist)
+            if new_distance < distance:
+                camera_pos = position + direction * (- new_distance) + \
+                             self.contact_off #contact.getNormal () * self.contact_dist - \
+                             
+        
+        self.camera.setPos (camera_pos)
         self.camera.lookAt (*position)
 
 
 class SlowEntityFollower (EntityFollowerBase):
+
+    distance = 50
+    height   = 50
+    offset   = Vec3 (0, 0, 20)
+    
+    def handle_connect (self, entity):
+        super (SlowEntityFollower, self).handle_connect (entity)
+
+        if isinstance (entity, SpatialEntity):
+            print entity
+            targetpos = entity.position
+            targethpr = entity.hpr
+            
+            angle = (- targethpr.getX () / 180. + 1) * math.pi
+            
+            direction = Vec3 (math.sin (angle), math.cos (angle), 0)
+            position  = targetpos + Vec3 (0, 0, self.height)
+            
+            self.camera.setPos (position + direction * (- self.distance))
+            self.camera.lookAt (*targetpos)
     
     def on_entity_set_position (self, ent, pos):        
-        camvec = ent.position - self.camera.getPos()
-        camvec.setZ (0)
+        camvec = ent.position + Vec3 (0, 0, self.height) - self.camera.getPos()
         camdist = camvec.length ()
         camvec.normalize ()
 
-        maxdist = 100.0
-        mindist = 5.0
+        maxdist = 200.0
+        mindist = 50
         if (camdist > maxdist):
             self.camera.setPos (self.camera.getPos() +
                                 camvec * (camdist - maxdist))
@@ -97,6 +142,6 @@ class SlowEntityFollower (EntityFollowerBase):
                                 camvec * (mindist - camdist))
             camdist = mindist
 
-        self.camera.lookAt (*pos)
+        self.camera.lookAt (* (pos + self.offset))
         
 

@@ -32,8 +32,12 @@ class Boy (ObservableSpatialEntity,
            StandingPhysicalEntity,
            KillableEntity):
 
-    MODEL = '../data/mesh/boy.egg'
-    ANIMS = {}
+    MODEL = 'mesh/boy.egg'
+    ANIMS = { 'run'  : 'mesh/boy-run.egg',
+              'walk' : 'mesh/boy-walk.egg',
+              'idle' : 'mesh/boy-idle.egg',
+              'feed' : 'mesh/boy-feed.egg',
+              'hit'  : 'mesh/boy-feed.egg' }
     
     # MODEL = '../data/mesh/ralph.egg.pz'
     # ANIMS = { 'run'  : '../data/mesh/ralph-run.egg.pz',
@@ -48,7 +52,7 @@ class Boy (ObservableSpatialEntity,
 
         #self.model_position = Vec3 (.0, .0, -5.0)
         self.model_position = Vec3 (.0, .0, -4.0)
-        self.model_scale = Vec3 (0.1, 0.1, 0.1)
+        self.model_scale = Vec3 (.1, .1, .1)
         self.model.pprint ()
         self.enable_collision ()
 

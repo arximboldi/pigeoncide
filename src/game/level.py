@@ -21,10 +21,13 @@ from ent.physical import StaticPhysicalEntity
 from ent.panda import ModelEntity
 from phys import geom
 
+level_physics_category = 0x0002
+
 class Level (StaticPhysicalEntity, ModelEntity):
 
     def __init__ (self, model = '../data/mesh/cloud.x', *a, **k):
         super (Level, self).__init__ (model = model,
                                       geometry = geom.mesh (model),
+                                      category = level_physics_category,
                                       *a, **k)
-
+        

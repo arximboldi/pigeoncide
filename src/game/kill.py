@@ -59,9 +59,9 @@ class KillableEntity (ModelEntityBase, PhysicalEntityBase):
             self._fire_particles.setPos (pos)
             
             self.entities.tasks.add (task.sequence (
-                task.wait (1.),
+                task.wait (2.),
                 task.run (self._fire_particles.softStop),
-                task.wait (1.),
+                task.wait (2.),
                 task.run (self._smoke_particles.softStop),
                 task.wait (2.),
                 task.run (self.dispose)))

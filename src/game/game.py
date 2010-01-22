@@ -36,25 +36,24 @@ from flock import Flock, make_random_flock
 
 DEBUG_INSTANCE = None
 
-DEFAULT_INPUT_MAP = {
-
-    # player control
+PLAYER_INPUT_MAP = {
     'on_move_forward'  : 'panda-w',
     'on_move_backward' : 'panda-s',
-    'on_strafe_left'   : 'panda-o',
-    'on_strafe_right'  : 'panda-p',
-    'on_steer_left'    : 'panda-a',
-    'on_steer_right'   : 'panda-d',
+    'on_strafe_left'   : 'panda-a',
+    'on_strafe_right'  : 'panda-d',
+    'on_steer_left'    : 'panda-k',
+    'on_steer_right'   : 'panda-l',
     'on_jump'          : 'panda-space',
     'on_walk'          : 'panda-c',
     'on_place_stick'   : 'panda-q',
-    
-    # camera control
+    'on_steer'         : 'panda-mouse-move',
+}
+
+CAMERA_INPUT_MAP = {
     'on_zoom_in'       : 'panda-wheel_up',
     'on_zoom_out'      : 'panda-wheel_down',
     'on_angle_change'  : 'panda-mouse-move'
-
-    }
+}
 
 GameInput        = mixin (InputTask, AutoSender)
 PlayerController = mixin (PlayerEntityDecorator, AutoReceiver)
@@ -68,12 +67,16 @@ class Game (GameState):
         
         cfg = GlobalConf ().child ('game')
         cfg.child ('music-volume').set_value (0.01)
-
         
         # Input helper
-        ginput = GameInput (DEFAULT_INPUT_MAP)
-        self.events.connect (ginput)
-        self.tasks.add (ginput)
+        player_input = GameInput (PLAYER_INPUT_MAP)
+        camera_input = GameInput (CAMERA_INPUT_MAP)
+
+        # TODO: Event entity to make this automatically ;)
+        self.events.connect (player_input)
+        self.events.connect (camera_input)
+        self.tasks.add (player_input)
+        self.tasks.add (camera_input)
 
         # Music
         music = loader.loadSfx ('snd/houmdrak.mp3')
@@ -94,13 +97,14 @@ class Game (GameState):
         level.set_position (Vec3 (0, 0, 0))
         
         # Camera and player controller
-        cameractl = CameraController (camera = base.camera)
-        playerctl = PlayerController (entities = self.entities,
-                                      delegate = boy)
-        boy.connect (cameractl)
+        camera_ctl = CameraController (entities = self.entities,
+                                       camera = base.camera)
+        player_ctl = PlayerController (entities = self.entities,
+                                       delegate = boy)
+        boy.connect (camera_ctl)
         #flock.leader.connect (cameractl)
-        ginput.connect (cameractl)
-        ginput.connect (playerctl)
+        camera_input.connect (camera_ctl)
+        player_input.connect (player_ctl)
         
         # Aesthetics
         plightnode = PointLight ("point light")
