@@ -39,7 +39,7 @@ class Menu (State):
         self.setup_camera ()
         self.load_background ()
         
-        self.main_menu = MainMenu (tasks = self.tasks, manager = self.manager)
+        self.main_menu = MainMenu (state = self)
         self.main_menu.do_paint ()
         self.main_menu.do_connect ()
 

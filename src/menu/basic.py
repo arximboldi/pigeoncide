@@ -18,15 +18,14 @@
 #
 
 from direct.gui.DirectButton import DirectButton
+import weakref
 
 class BasicMenu (object):
 
-    def __init__ (self, tasks = None, manager = None, *a, **k):
+    def __init__ (self, state = None, *a, **k):
         super (BasicMenu, self).__init__ (*a, **k)
-        if tasks:
-            self.tasks = tasks
-        if manager:
-            self.manager = manager
+        if state:
+            self.state = state
 
     def do_paint (self):
         pass

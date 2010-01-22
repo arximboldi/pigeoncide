@@ -25,8 +25,7 @@ class MainMenu (BasicMenu):
 
     def __init__ (self, *a, **k):
         super (MainMenu, self).__init__ (*a, **k)
-        self.options_menu = OptionsMenu (tasks = self.tasks, 
-                                         manager = self.manager)
+        self.options_menu = OptionsMenu (state = self.state)
     
     def do_paint (self):
         # Main-Buttons inicialitation
@@ -43,13 +42,19 @@ class MainMenu (BasicMenu):
     
     def do_connect (self):
         # Buttons task assigment
-        self.start["command"] = lambda: self.manager.change_state ('game')
-        self.options["command"] = lambda: (self.options_menu.do_paint (),
-            self.options_menu.do_connect ())
-        #self.exit["command"] = self.kill
+        self.start["command"] = lambda: self.state.manager.change_state ('game')
+        self.options["command"] = self.show_options
+        self.exit["command"] = self.state.kill
     
     def do_destroy (self):
         self.start.destroy()
         self.options.destroy()
         self.credits.destroy()
         self.exit.destroy()
+
+    def show_options (self):
+        if not self.options_menu.active:
+            self.options_menu.do_paint ()
+            self.options_menu.do_connect ()
+        else:
+            self.options_menu.do_destroy ()
