@@ -24,6 +24,7 @@ from base.meta import mixin
 from base.sender import AutoSender, AutoReceiver
 from base.util import delayed
 
+from core import shader
 from core.input import InputTask
 from ent.game import GameState
 
@@ -64,6 +65,19 @@ class Game (GameState):
     def do_setup (self):
         global DEBUG_INSTANCE
         DEBUG_INSTANCE = self
+
+        shader.enable_glow (self.manager.panda)
+
+        #self.manager.panda.base.render.setShaderAuto ()
+        #filterok = self.manager.panda.filters.setBloom (blend = (0, 0, 0, 1))
+        # filterok = self.manager.panda.filters.setBloom (
+        #     blend = (0, 0, 0, 1),
+        #     desat = -0.5,
+        #     intensity = 3.0,
+        #     size = 1)
+
+        
+        self.manager.panda.hide_mouse ()
         
         cfg = GlobalConf ().child ('game')
         cfg.child ('music-volume').set_value (0.01)
@@ -105,6 +119,11 @@ class Game (GameState):
         #flock.leader.connect (cameractl)
         camera_input.connect (camera_ctl)
         player_input.connect (player_ctl)
+
+        # Skybox
+        sky = loader.loadModel ('sky/boxsky.egg')
+        sky.setScale (1000., 1000., 1000.)
+        sky.reparentTo (base.cam)
         
         # Aesthetics
         plightnode = PointLight ("point light")
@@ -126,3 +145,7 @@ class Game (GameState):
             '../data/mesh/stick_arch_sub.x'
             ])
      
+    def do_release (self):
+        self.manager.panda.show_mouse ()
+        shader.disable_glow (self.manager.panda)
+        # TODO

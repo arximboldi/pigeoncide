@@ -21,12 +21,13 @@ from base.log import get_log
 from base.app import *
 
 from state import *
+import weakref
 
 from panda_controller import PandaController
 
 _log = get_log (__name__)
 
-class PandaApp (AppBase):
+class PandaApp (AppBase, StateManager):
 
     OPTIONS = AppBase.OPTIONS + \
 """
@@ -40,19 +41,14 @@ Display options:
   -M, --hide-meter     Hide the frames per second meter.
 """
     
-    def __init__ (self):
+    def __init__ (self, *a, **k):
+        super (PandaApp, self).__init__ (*a, **k)
         self.root_state = 'root'
-
-        self._states = StateManager ()
-        self._panda = PandaController ()
-        self._panda.tasks.add (self._states)
-
-        self._quit = False
-
-    @property
-    def states (self):
-        return self._states
-
+        
+        self.panda = PandaController ()
+        self.panda.tasks.add (weakref.proxy (self))
+        self.quit = False
+    
     def do_prepare (self, args):
         cfg = GlobalConf ().child ('panda')
         
@@ -67,12 +63,12 @@ Display options:
     def do_execute (self, args):
         
         _log.info ("Setting up engine...")
-        self._panda.start (self.NAME + ' ' + self.VERSION)
-        messenger._patch_add_forwarder (self._states.events)
-                
+        self.panda.start (self.NAME + ' ' + self.VERSION)
+        messenger._patch_add_forwarder (self.events)
+        
         _log.info ("Running main loop...")
-        self._states.start (self.root_state)
-        self._panda.loop ()
+        self.start (self.root_state)
+        self.panda.loop ()
         
         _log.info ("Quiting... Have a nice day ;)")
-        
+

@@ -41,22 +41,22 @@ Extra options:
   -s, --state <name>   Set the initial state.
 """
     
-    def __init__ (self):
-        PandaApp.__init__ (self)
+    def __init__ (self, *a, **k):
+        super (PigeoncideApp, self).__init__ (*a, **k)
 
         self.root_state = 'game'
         
-        self.states.add_state ('menu', Menu)
-        self.states.add_state ('game', Game)
+        self.add_state ('menu', Menu)
+        self.add_state ('game', Game)
         
     def do_prepare (self, args):
         self._arg_state = OptionWith (str)
         args.add ('s', 'state', self._arg_state)
         
-        PandaApp.do_prepare (self, args)
+        super (PigeoncideApp, self).do_prepare (args)
         
     def do_execute (self, freeargs):
         if self._arg_state.value:
             self.root_state = self._arg_state.value
                 
-        PandaApp.do_execute (self, freeargs)
+        super (PigeoncideApp, self).do_execute (freeargs)

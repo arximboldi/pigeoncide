@@ -31,7 +31,10 @@ class PandaEntityManager (EntityManager):
         if render:
             self.render = render
         else:
-            self.render = base.render
+            node = NodePath (PandaNode ('entities'))
+            node.reparentTo (base.render)
+            self.render = node
+
         if audio3d:
             self.audio3d = audio3d
         else:

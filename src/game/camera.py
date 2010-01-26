@@ -18,7 +18,7 @@
 #
 
 
-from pandac.PandaModules import Vec3, OdeRayGeom
+from pandac.PandaModules import Vec3, OdeRayGeom, OdeSphereGeom, OdeCappedCylinderGeom
 from base.util import bound
 from ent.observer import SpatialEntityListener
 from ent.entity import SpatialEntity, Entity
@@ -82,24 +82,35 @@ class FastEntityFollower (EntityFollowerBase):
         distance = self.distance
         camera_pos = position + direction * (- distance)
 
-        # Test for collision
         physics = self.entities.physics
-        ray = OdeRayGeom (self.distance)
-        ray.set (position + self.contact_off,
-                 camera_pos + self.contact_off - position)
-        ray.setCollideBits (level_physics_category) # hackish
-        ray.setCategoryBits (0)
-        result = physics.collide_world (ray)
 
-        if result and result.getNumContacts () > 0:
-            contact  = result.getContactGeom (0)
-            new_distance = max (0, (position - contact.getPos ()).length () -
-                                self.contact_dist)
-            if new_distance < distance:
-                camera_pos = position + direction * (- new_distance) + \
-                             self.contact_off #contact.getNormal () * self.contact_dist - \
-                             
-        
+        # Is the camera inside a volume?
+        sphere = OdeSphereGeom (self.contact_dist)
+        sphere.setPosition (camera_pos)
+        sphere.setCategoryBits (0)
+        sphere.setCollideBits (level_physics_category)
+        result = physics.collide_world (sphere)
+
+        # if result:
+        #     cyl = OdeCappedCylinderGeom (self.contact_dist, self.distance)
+        #     cyl.setHpr ()
+            # Find where to replace the camera
+            # ray = OdeRayGeom (self.distance)
+            # ray.set (camera_pos, direction)
+            # ray.setCollideBits (level_physics_category) # hackish
+            # ray.setCategoryBits (0)
+            # result = physics.collide_world (ray)
+            # print "CABRON!"
+            # if result and result.getNumContacts () > 0:
+            #     contact  = result.getContactGeom (0)
+            #     new_distance = max (
+            #         0, (position - contact.getPos ()).length () -
+            #         self.contact_dist)
+            #     if new_distance < distance:
+            #         camera_pos = position + direction * (- new_distance) #+ \
+            #                      #self.contact_off
+
+            
         self.camera.setPos (camera_pos)
         self.camera.lookAt (*position)
 

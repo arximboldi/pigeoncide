@@ -25,9 +25,9 @@ level_physics_category = 0x0002
 
 class Level (StaticPhysicalEntity, ModelEntity):
 
-    def __init__ (self, model = '../data/mesh/cloud.x', *a, **k):
+    def __init__ (self, model = 'mesh/cloud.x', *a, **k):
         super (Level, self).__init__ (model = model,
                                       geometry = geom.mesh (model),
                                       category = level_physics_category,
                                       *a, **k)
-        
+        self.model.setTexture (loader.loadTexture ('data/sky/south-epo.png'))

@@ -23,6 +23,7 @@ import task
 
 import patch_messenger
 from direct.showbase.ShowBase import ShowBase
+from direct.filter.CommonFilters import CommonFilters
 from pandac.PandaModules import *
 
 class PandaController (object):
@@ -55,8 +56,8 @@ class PandaController (object):
         cfg = GlobalConf ().child ('panda') 
 
         self.set_defaults (cfg)
-        self._base = ShowBase ()
-        self._base.disableMouse ()
+        self.base = ShowBase ()
+        self.base.disableMouse ()
 
         self.create_properties (title)
         self.update_properties (cfg)
@@ -66,9 +67,11 @@ class PandaController (object):
         path = getModelPath ()
         path.prependPath ('./data')
         
-        self._base.render.setShaderAuto ()
-        self._base.enableParticles ()
+        
+        self.base.enableParticles ()
 
+        self.filters = CommonFilters (self.base.win, self.base.cam)
+                
     def loop (self):        
         self._timer.reset ()
         self._timer.loop (self._tasks.update)
@@ -91,18 +94,29 @@ class PandaController (object):
         self._prop.setTitle (title)
         self._prop.setCursorHidden (True)
         self._prop.setMouseMode (WindowProperties.MRelative)
+
+    def hide_mouse (self):
+        self._prop.setCursorHidden (True)
+        self.base.win.requestProperties (self._prop)
+
+    def show_mouse (self):
+        self._prop.setCursorHidden (True)
+        self.base.win.requestProperties (self._prop)
+
+    def has_shaders (self):
+        return self.base.win.getGsg().getSupportsBasicShaders() == 0
         
     def update_properties (self, cfg):
         self._prop.setSize (cfg.child ('width').value,
                             cfg.child ('height').value)
         self._prop.setFullscreen (cfg.child ('fullscreen').value)
-        self._base.win.requestProperties (self._prop)
+        self.base.win.requestProperties (self._prop)
         
         self._timer.fps = cfg.child ('fps').value
-        self._base.setFrameRateMeter (cfg.child ('frame-meter').value)
+        self.base.setFrameRateMeter (cfg.child ('frame-meter').value)
 
     def update_frame_meter (self, cfg):
-        self._base.setFrameRateMeter (cfg.value)
+        self.base.setFrameRateMeter (cfg.value)
 
     def update_fps (self, cfg):
         self._timer.fps = cfg.value
