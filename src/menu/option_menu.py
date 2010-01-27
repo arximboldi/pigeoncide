@@ -58,23 +58,27 @@ class OptionsMenu (BasicMenu):
         
     def do_destroy (self):        
         self.state.tasks.add (task.sequence (
-            task.sinusoid (lambda x: self.sound.setPos ((x*-0.4)+0.3, 0, .45)),
+            task.sinusoid (lambda x: 
+            self.sound.setPos ((x*-0.4)+0.3, 0, .45)),
             task.run (self.sound.destroy)
             ))
             
         self.state.tasks.add (task.sequence (
-            task.sinusoid (lambda x: self.keyboard.setPos ((x*-0.45)+0.35, 0,(x*0.25)+0.2)),
+            task.sinusoid (lambda x: 
+            self.keyboard.setPos ((x*-0.45)+0.35,0,(x*0.25)+0.2)), 
             task.run (self.keyboard.destroy)
             ))
             
         
         self.state.tasks.add (task.sequence (
-            task.sinusoid (lambda x: self.screen.setPos ((x*-0.4)+0.3, 0,(x*0.50)-0.05)),
+            task.sinusoid (lambda x: 
+            self.screen.setPos ((x*-0.4)+0.3, 0,(x*0.50)-0.05)),
             task.run (self.screen.destroy)
             ))
 
         self.state.tasks.add (task.sequence (
-            task.sinusoid (lambda x: self.back.setPos ((x*-0.35)+0.25, 0,(x*0.75)-0.30)),
+            task.sinusoid (lambda x: 
+            self.back.setPos ((x*-0.35)+0.25, 0,(x*0.75)-0.30)),
             task.run (self.back.destroy)
             ))
                     

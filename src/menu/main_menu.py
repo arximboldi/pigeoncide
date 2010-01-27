@@ -42,8 +42,15 @@ class MainMenu (BasicMenu):
     
     def do_connect (self):
         # Buttons task assigment
-        self.start["command"] = lambda: self.state.manager.change_state ('game')
-        self.options["command"] = self.show_options
+        self.start["command"] = lambda: self.state.tasks.add( task.sequence(
+            task.run (lambda: self.state.do_smile (1)),
+            task.wait (1),
+            task.run (lambda: self.state.manager.change_state ('game'))
+        ))
+        self.options["command"] = lambda: self.state.tasks.add( task.parallel(
+            task.run (self.state.do_smile),
+            task.run (self.show_options)
+        ))
         self.exit["command"] = self.state.kill
     
     def do_destroy (self):

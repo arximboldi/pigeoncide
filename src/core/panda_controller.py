@@ -93,7 +93,7 @@ class PandaController (object):
         self._prop = WindowProperties ()
         self._prop.setTitle (title)
         self._prop.setCursorHidden (True)
-        self._prop.setMouseMode (WindowProperties.MRelative)
+        #self._prop.setMouseMode (WindowProperties.MRelative)
 
     def hide_mouse (self):
         self._prop.setCursorHidden (True)
