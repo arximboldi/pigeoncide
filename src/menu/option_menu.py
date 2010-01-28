@@ -80,25 +80,26 @@ class OptionsMenu (object):
             )
 
         self.state.tasks.add (task.parallel(
-            task.sinusoid (lambda x: self.sound.setPos (x * 0.3, 2-x, .45)),
+            task.sinusoid (lambda x: 
+                self.sound.setPos ((x*0.55)-0.1, 0,(x*0.2)+.55)),
             task.sinusoid (lambda x: self.sound.setAlphaScale (x))
             ))
             
         self.state.tasks.add (task.parallel(
             task.sinusoid (lambda x: 
-                self.keyboard.setPos ((x*0.45)-0.1, 1-x,(x*-0.25)+0.45)),
+                self.keyboard.setPos ((x*0.7)-0.1, 0,(x*-0.05)+0.55)),
             task.sinusoid (lambda x: self.keyboard.setAlphaScale (x))
         ))
         
         self.state.tasks.add (task.parallel (
-            task.sinusoid (
-                lambda x: self.screen.setPos ((x*0.4)-0.1, 1-x,(x*-0.50)+0.45)),
+            task.sinusoid (lambda x: 
+                self.screen.setPos ((x*0.65)-0.1, 0,(x*-0.30)+0.55)),
             task.sinusoid (lambda x: self.screen.setAlphaScale (x))
         ))
         
         self.state.tasks.add (task.parallel(
-            task.sinusoid (
-                lambda x: self.back.setPos ((x*0.35)-0.1, 1-x,(x*-0.75)+0.45)),
+            task.sinusoid (lambda x:
+                self.back.setPos ((x*0.55)-0.1, 0,(x*-0.55)+0.55)),
             task.sinusoid (lambda x: self.back.setAlphaScale (x))
         ))
             
@@ -116,16 +117,18 @@ class OptionsMenu (object):
             #Each task moves the button back to the "option" button changing
             #its alpha too.
             self.state.tasks.add (task.parallel(
-                task.sequence (task.sinusoid (lambda x: 
-                    self.sound.setPos ((x*-0.4)+0.3, 0, .45)),
+                task.sequence (
+                    task.sinusoid (lambda x: 
+                        self.sound.setPos (0.45-(x*0.55), 0, .75-(x*0.2))),
                     task.run (self.sound.destroy)
                 ),
                 task.sinusoid (lambda x: self.sound.setAlphaScale (1-x))
             ))
             
             self.state.tasks.add (task.parallel (
-                task.sequence (task.sinusoid (lambda x: 
-                    self.keyboard.setPos ((x*-0.45)+0.35,0,(x*0.25)+0.2)), 
+                task.sequence (
+                    task.sinusoid (lambda x: 
+                        self.keyboard.setPos (0.6-(x*0.7), 0, 0.5+(x*0.05))), 
                     task.run (self.keyboard.destroy)
                 ),
                 task.sinusoid (lambda x: self.keyboard.setAlphaScale (1-x))
@@ -133,16 +136,18 @@ class OptionsMenu (object):
             
         
             self.state.tasks.add (task.parallel (
-                task.sequence (task.sinusoid (lambda x: 
-                    self.screen.setPos ((x*-0.4)+0.3, 0,(x*0.50)-0.05)),
+                task.sequence (
+                    task.sinusoid (lambda x: 
+                        self.screen.setPos (0.55-(x*0.65), 0, 0.25+(x*0.3))),
                     task.run (self.screen.destroy)
                 ),
                 task.sinusoid (lambda x: self.screen.setAlphaScale (1-x))
             ))
 
             self.state.tasks.add (task.parallel (
-                task.sequence (task.sinusoid (lambda x: 
-                    self.back.setPos ((x*-0.35)+0.25, 0,(x*0.75)-0.30)),
+                task.sequence (
+                    task.sinusoid (lambda x: 
+                        self.back.setPos (0.45-(x*0.55), 0, (x*0.55))),
                     task.run (self.back.destroy)
                 ),
                 task.sinusoid (lambda x: self.back.setAlphaScale (1-x))

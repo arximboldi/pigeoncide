@@ -34,6 +34,7 @@ class MainMenu (object):
     def do_paint (self):
         self.bt_red = loader.loadModel ('../data/menu/bt_red.egg')
         self.font = loader.loadFont ('../data/font/three-hours.ttf')
+        
         # Main-Buttons inicialitation
         self.start = DirectButton(geom = self.bt_red,
             geom_scale = (4.5, 2, 2),
@@ -57,7 +58,6 @@ class MainMenu (object):
             relief = None
             ) 
 
-
         self.credits = DirectButton(geom = self.bt_red,
             geom_scale = (5, 2, 2.1),
             geom_pos = (0.2, 0, 0.3),
@@ -70,7 +70,7 @@ class MainMenu (object):
             ) 
         
         self.exit = DirectButton(geom = self.bt_red,
-            geom_scale = (4,2,2),
+            geom_scale = (4, 2, 2),
             geom_pos = (0.2, 0, 0.3),
             text = "Exit",
             text_font = self.font,
@@ -93,7 +93,12 @@ class MainMenu (object):
             task.run (self.state.do_smile),
             task.run (self.show_options)
         ))
-        self.exit["command"] = self.state.kill
+        self.exit["command"] = lambda: self.state.tasks.add (task.sequence(
+            task.run (self.options_menu.do_destroy),
+            task.run (lambda: self.state.do_smile (1)),
+            task.wait (1),
+            task.run (self.state.kill)
+        ))
     
     def do_destroy (self):
         self.start.destroy()
