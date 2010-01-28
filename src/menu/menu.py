@@ -36,7 +36,7 @@ class Menu (State):
         base.setBackgroundColor( 1.0, 1.0, 1.0)
 
         self.events.event ('panda-escape').connect (self.kill)
-        self.manager.panda.show_mouse ()
+        self.manager.panda.absolute_mouse ()
         
         #Menu setup
         self.setup_camera ()
@@ -59,6 +59,7 @@ class Menu (State):
             Vec3( 0, 0, 0 ), 
             Vec3( 1748./2480 *10, 9, 10) 
             )
+            
         self.bg_smile = loader.loadModel( '../data/menu/bg_smile.egg' )
         self.bg_smile.reparentTo( render )
         self.bg_smile.setPosHprScale( Vec3( -4.33, 1, -0.89 ), 

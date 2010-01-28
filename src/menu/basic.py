@@ -37,14 +37,15 @@ class BasicMenu (object):
         pass
         
     def create_button (self, btext, pos = (0, 0)):
-        return DirectButton(text = (btext, btext, btext, ""),
+        self.bt_red = loader.loadModel ('../data/menu/bt_red.egg')
+        return DirectButton(geom = self.bt_red,
+            geom_scale = (4,2,2),
+            text = (btext, btext, btext, ""),
             scale = .1,
             #command = setText,
-            frameSize = (-2., 2., -1, 1),
-            #frameSize = ( 1, 1, 1 ),
+            #frameSize = (-2., 2., -1.5, 1.5),
             frameColor = (1, 1, 0, 0),
             pos = (pos[0], 0, pos[1]),
-            #image = '../data/mesh/playButton.png',
             relief = None
             ) 
              
