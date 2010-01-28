@@ -36,7 +36,9 @@ from pandac.PandaModules import Vec3
 from core.task import Task
 import weakref
 from base.util import Selfable
+from base.log import get_log
 
+_log = get_log (__name__)
 
 class EntityManager (Selfable):
 
@@ -45,7 +47,7 @@ class EntityManager (Selfable):
         self.entities = []
     
     def dispose (self):
-        for x in self.entities:
+        for x in list (self.entities):
             x.dispose ()
         self.entities = []
     
@@ -59,6 +61,7 @@ class EntityManager (Selfable):
 class Entity (object):
 
     def __init__ (self, entities = None, *a, **k):
+        _log.debug ("Creating entity: %s" % self)
         super (Entity, self).__init__ (*a, **k)
         self._entities = weakref.ref (entities)
         entities._add_entity (self)
@@ -68,6 +71,7 @@ class Entity (object):
         return self._entities ()
     
     def dispose (self):
+        _log.debug ("Disposing entity: %s" % self)
         self.entities._del_entity (self)
 
 

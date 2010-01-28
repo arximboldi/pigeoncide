@@ -111,8 +111,11 @@ class Physics (Task):
 
     def unregister (self, geom):
         #self._geoms = remove_if (lambda (g, _): g == geom, self._geoms)
-        self._geoms.remove (geom)
-
+        try:
+            self._geoms.remove (geom)
+        except ValueError, e:
+            pass
+        
     def collide_world (self, geom):
         scene = OdeUtil.spaceToGeom (self._space)
         return OdeUtil.collide (scene, geom)

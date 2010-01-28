@@ -164,6 +164,9 @@ class PandaController (object):
     def _panda_task (self, timer):
         taskMgr.step ()
         return task.running
+
+    def set_background_color (self, *color):
+        base.setBackgroundColor (*color)
     
     def loop_music (self, file):
         if self._music:

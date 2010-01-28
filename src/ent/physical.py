@@ -108,7 +108,8 @@ class PhysicalEntityBase (SpatialEntity):
 
     def dispose (self):
         self.entities.physics.unregister (self._geom)
-        self._geom.destroy ()
+        if self._geom:
+            self._geom.destroy ()
         super (PhysicalEntityBase, self).dispose ()
 
     physical_position = property (
@@ -162,8 +163,9 @@ class DynamicPhysicalEntity (PhysicalEntityBase, TaskEntity):
         self._updating = False
 
     def dispose (self):
-        self._body.destroy ()
         super (DynamicPhysicalEntity, self).dispose ()
+        if self._body:
+            self._body.destroy ()
 
     @property
     def mass (self):

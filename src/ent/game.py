@@ -29,6 +29,12 @@ class GameEntityManager (
     TaskEntityManager):
     pass
 
+class LightGameEntityManager (
+    PandaEntityManager,
+    TaskEntityManager):
+    pass
+
+
 class GameState (State):
 
     def __init__ (self, *a, **k):
@@ -45,4 +51,21 @@ class GameState (State):
     def do_release (self):
         self._entities.dispose ()
         super (GameState, self).do_release ()
+
+
+class LightGameState (State):
+
+    def __init__ (self, *a, **k):
+        super (LightGameState, self).__init__ (*a, **k)
+        self._entities = LightGameEntityManager (
+            tasks       = self.tasks,
+            audio3d     = self.manager.panda.audio3d)
+    
+    @property
+    def entities (self):
+        return self._entities
+
+    def do_release (self):
+        self._entities.dispose ()
+        super (LightGameState, self).do_release ()
 

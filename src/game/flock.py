@@ -64,12 +64,15 @@ class FlockEntity (TaskEntity):
         self.leader = self.boids [random.randint (0, len (self.boids) - 1)]
 
     def remove (self, boid):
-        self.boids.remove (boid)
-
+        try:
+            self.boids.remove (boid)
+        except ValueError, e:
+            pass
+        
     def dispose (self):
         super (FlockEntity, self).dispose ()
-        for x in self.boids:
-            x.dispose ()
+        # for x in self.boids:
+        #     x.dispose ()
 
     def add_boid (self, boid):
         self.boids.append (boid)

@@ -28,8 +28,9 @@ from base.signal import weak_slot
 from core import task
 from core import shader
 from core.input import KeyboardTask
-from ent.game import GameState
+from ent.game import GameState, LightGameState
 
+from loader import LoaderInterState
 from camera import FastEntityFollower, SlowEntityFollower
 from boy import Boy
 from level import Level
@@ -63,31 +64,41 @@ PlayerController = mixin (PlayerEntityDecorator, AutoReceiver)
 CameraController = mixin (FastEntityFollower, AutoReceiver)
 
 
-class GameIntro (GameState):
+class GameIntro (LightGameState):
 
     def do_setup (self):
+        self.black = ui.ImageEntity (entities = self.entities,
+                                     image = 'tex/black.png')
+        self.black.alpha = 1.0
+        self.black.fade_out ()
+        
         self.text = ui.TextEntity (
-            entities = self.entities,
-            font = 'font/gilles.ttf',
-            bg   = (0, 0, 0, 0),
-            text =
-            (('You have to kill pigeons %i in this level...\n' +
+            entities     = self.entities,
+            font         = 'font/gilles.ttf',
+            fg           = (1, 1, 1, 1),
+            shadow       = (.5, 0, 0, 1),
+            shadowOffset = (.08, .08),
+            wordwrap     = 30,
+            scale        = 0.1,
+            text         =
+            (('You have to kill %i pigeons in this level...\n' +
              'Can you make it?')
              % self.parent_state.total_pigeons))
 
         self.help_text = ui.TextEntity (
             entities = self.entities,
-            font = 'font/alte-regular.ttf',
-            shadow = (0, 0, 0, 0),
-            bg = (0, 0, 0, 0),
-            fg = (1, 1, 0, .3),
-            pos = (0, -.9),
-            scale = 0.05,
-            text = 'Press enter to continue...')
-
+            font     = 'font/alte-regular.ttf',
+            fg       = (1, 1, 0, .3),
+            pos      = (0, -.9),
+            scale    = 0.05,
+            text     = 'Press enter to continue...')
+        
         self.help_text.fade_in (duration = 2)
         self.text.fade_in (duration = 2)
+
         self.events.event ('panda-enter').connect (self.finish_intro)
+        self.events.event ('panda-escape').connect (self.kill)
+        self.events.event ('panda-escape').connect (self.parent_state.kill)
         
     def finish_intro (self):
         self.help_text.fade_out ()
@@ -96,7 +107,7 @@ class GameIntro (GameState):
 
 class Game (GameState):
 
-    def do_setup (self, level_cls = Level):
+    def do_setup (self, level_cls):
         super (Game, self).do_setup ()
         
         self.level = level_cls ()
@@ -202,3 +213,8 @@ class Game (GameState):
         self.level.dispose () # TODO: To entity!
         shader.disable_glow (self.manager.panda)
         super (Game, self).do_release ()
+
+
+class LoadGame (LoaderInterState):
+    data         = Level
+    next_state   = Game

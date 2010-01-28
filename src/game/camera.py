@@ -47,8 +47,9 @@ class FastEntityFollower (EntityFollowerBase):
     ent_position = Vec3 (0, 0, 0)
     ent_angle    = 0
     offset       = Vec3 (0, 0, 10)
-    contact_dist = 4
+    contact_dist = 5
     contact_off  = Vec3 (0, 0, -5)
+    control_angle = False
     
     def on_zoom_in (self):
         self.distance += self.delta_dist
@@ -63,7 +64,8 @@ class FastEntityFollower (EntityFollowerBase):
         self.update_camera ()
         
     def on_angle_change (self, (px, py)):
-        #self.angle  += px * self.speed
+        if self.control_angle:
+            self.angle  += px * self.speed
         self.hangle += py * self.speed
         self.update_camera ()
 
@@ -84,31 +86,44 @@ class FastEntityFollower (EntityFollowerBase):
 
         physics = self.entities.physics
 
-        # Is the camera inside a volume?
-        sphere = OdeSphereGeom (self.contact_dist)
-        sphere.setPosition (camera_pos)
-        sphere.setCategoryBits (0)
-        sphere.setCollideBits (level_physics_category)
-        result = physics.collide_world (sphere)
+        ray = OdeRayGeom (self.distance)
+        ray.set (position + self.contact_off, - direction)
+        ray.setCollideBits (level_physics_category)
+        ray.setCategoryBits (0)
+        result = physics.collide_world (ray)
+        
+        if result and result.getNumContacts () > 0:
+            contact  = result.getContactGeom (0)
+            new_distance = max (
+                0, (position - contact.getPos ()).length () -
+                self.contact_dist)
+            if new_distance < distance:
+                camera_pos = position + direction * (- new_distance)
+
+        # sphere = OdeSphereGeom (self.contact_dist)
+        # sphere.setPosition (camera_pos)
+        # sphere.setCategoryBits (0)
+        # sphere.setCollideBits (level_physics_category)
+        # result = physics.collide_world (sphere)
 
         # if result:
-        #     cyl = OdeCappedCylinderGeom (self.contact_dist, self.distance)
-        #     cyl.setHpr ()
-            # Find where to replace the camera
-            # ray = OdeRayGeom (self.distance)
-            # ray.set (camera_pos, direction)
-            # ray.setCollideBits (level_physics_category) # hackish
-            # ray.setCategoryBits (0)
-            # result = physics.collide_world (ray)
-            # print "CABRON!"
-            # if result and result.getNumContacts () > 0:
-            #     contact  = result.getContactGeom (0)
-            #     new_distance = max (
-            #         0, (position - contact.getPos ()).length () -
-            #         self.contact_dist)
-            #     if new_distance < distance:
-            #         camera_pos = position + direction * (- new_distance) #+ \
-            #                      #self.contact_off
+        #     # cyl = OdeCappedCylinderGeom (self.contact_dist, self.distance)
+        #     # cyl.setHpr ()
+        #     # Find where to replace the camera
+        #     ray = OdeRayGeom (self.distance)
+        #     ray.set (camera_pos, direction)
+        #     ray.setCollideBits (level_physics_category) # hackish
+        #     ray.setCategoryBits (0)
+        #     result = physics.collide_world (ray)
+        #     print "CABRON!"
+        #     if result and result.getNumContacts () > 0:
+        #         contact  = result.getContactGeom (0)
+        #         new_distance = max (
+        #             0, (position - contact.getPos ()).length () -
+        #             self.contact_dist)
+        #         if new_distance < distance:
+        #             camera_pos = position + direction * (- new_distance) #+ \
+        #                          #self.contact_off
 
             
         self.camera.setPos (camera_pos)

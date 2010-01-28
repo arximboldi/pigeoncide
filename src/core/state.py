@@ -104,7 +104,8 @@ class StateManager (task.Task):
     def start (self, name, *a, **k):
         if self._state_stack:
             raise StateError ('State manager already started.')
-        self._push_state (self._fetch_state (name), name, *a, **k)
+        state, name = self._fetch_state (name)
+        self._push_state (state, name, *a, **k)
         self.restart ()
 
     def force_finish (self):
@@ -130,7 +131,7 @@ class StateManager (task.Task):
             self.kill ()
     
     def _enter_state (self, name, *a, **k):
-        state = self._fetch_state (name)
+        state, name = self._fetch_state (name)
         if self._state_stack:
             self._state_stack [-1].do_sink ()
         self._push_state (state, name, *a, **k)
@@ -143,7 +144,7 @@ class StateManager (task.Task):
             self._state_stack [-1].do_unsink ()
     
     def _change_state (self, name, *a, **k):
-        state = self._fetch_state (name)
+        state, name = self._fetch_state (name)
         self._pop_state ()
         self._push_state (state, name, *a, **k)
     
@@ -151,11 +152,11 @@ class StateManager (task.Task):
         parent = None
         if self._state_stack:
             parent = self._state_stack [-1]
-        state = state_cls (state_manager = self, parent_state = parent, *a, **k)
+        state = state_cls (state_manager = self, parent_state  = parent)
         state.state_name = state_name
         self._tasks.add (state)
         self._events.connect (state.events)
-        state.do_setup ()
+        state.do_setup (*a, **k)
         self._state_stack.append (state)
 
     def _pop_state (self):
@@ -166,8 +167,8 @@ class StateManager (task.Task):
         
     def _fetch_state (self, name_or_cls):
         if not isinstance (name_or_cls, str):
-            return name_or_cls
+            return name_or_cls, '<unknown-state>'
         try:
-            return self._state_factory [name_or_cls]
+            return self._state_factory [name_or_cls], name_or_cls
         except Exception:
             raise StateError ("Unknown state " + name)

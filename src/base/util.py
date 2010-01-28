@@ -64,7 +64,7 @@ class MultiMethod (object):
             raise TypeError ("no match")
         return function(*args)
 
-    def register(self, types, function):
+    def register (self, types, function):
         if types in self.typemap:
             raise TypeError ("duplicate registration")
         self.typemap[types] = function
