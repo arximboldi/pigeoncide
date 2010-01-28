@@ -17,12 +17,19 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from base.conf import *
-from timer import *
-import task
+"""
+Import this or patch_messenger before any other module usin Panda base.
+"""
 
 import patch_messenger
+
+from base.conf import GlobalConf
+from timer import Timer
+from input import MouseTask
+import task
+
 from direct.showbase.ShowBase import ShowBase
+from direct.showbase.Audio3DManager import Audio3DManager
 from direct.filter.CommonFilters import CommonFilters
 from pandac.PandaModules import *
 
@@ -33,7 +40,8 @@ class PandaController (object):
     DEFAULT_HEIGHT = 600
     DEFAULT_FPS = 60
     DEFAULT_FRAME_METER = False
-
+    DEFAULT_MUSIC_VOLUME = .02
+    DEFAULT_SOUND_VOLUME = .02
     DEFAULT_MAX_DELTA = 1. / 20.
 
     def __init__ (self):
@@ -42,7 +50,10 @@ class PandaController (object):
         self._timer.max_delta = self.DEFAULT_MAX_DELTA
         self._tasks = task.TaskGroup ()
         self._tasks.add (self._panda_task)
-    
+        self._music = None
+        self._mouse_task = None
+        self._relative_mouse = False
+        
     @property
     def timer (self):
         return self._timer
@@ -52,13 +63,15 @@ class PandaController (object):
         return self._tasks
 
     def start (self, title):
-        
         cfg = GlobalConf ().child ('panda') 
 
         self.set_defaults (cfg)
         self.base = ShowBase ()
         self.base.disableMouse ()
-
+        self.audio = self.base.sfxManagerList [0]
+        self.audio3d = Audio3DManager (self.audio, camera)
+        self.audio3d.setListenerVelocityAuto ()
+        
         self.create_properties (title)
         self.update_properties (cfg)
         self.listen_conf (cfg)
@@ -66,43 +79,62 @@ class PandaController (object):
         loadPrcFileData ("", "interpolate-frames 1")
         path = getModelPath ()
         path.prependPath ('./data')
-        
-        
-        self.base.enableParticles ()
-
-        self.filters = CommonFilters (self.base.win, self.base.cam)
                 
+        self.base.enableParticles ()
+        
     def loop (self):        
         self._timer.reset ()
-        self._timer.loop (self._tasks.update)
-        
+        self._timer.loop (self._loop_fn)
+
+    def _loop_fn (self, timer):
+        task_count              = 1  # _panda_task
+        if self._relative_mouse:
+            task_count += 1          # _mouse_task
+        if self._tasks.count > task_count: 
+            return self._tasks.update (timer)
+        return False
+    
     def set_defaults (self, cfg):
         cfg.child ('fps').default (self.DEFAULT_FPS)
         cfg.child ('width').default (self.DEFAULT_WIDTH)
         cfg.child ('height').default (self.DEFAULT_HEIGHT)
         cfg.child ('fullscreen').default (self.DEFAULT_FULLSCREEN)
         cfg.child ('frame-meter').default (self.DEFAULT_FRAME_METER)
-
+        cfg.child ('music-volume').default (self.DEFAULT_MUSIC_VOLUME)
+        cfg.child ('sound-volume').default (self.DEFAULT_SOUND_VOLUME)
+        
     def listen_conf (self, cfg):
         cfg.on_conf_nudge += self.update_properties
         
         cfg.child ('fps').on_conf_change += self.update_fps
         cfg.child ('frame-meter').on_conf_change += self.update_frame_meter
+        cfg.child ('music-volume').on_conf_change += self.update_music_volume
+        cfg.child ('sound-volume').on_conf_change += self.update_sound_volume
+
+        self.audio.setVolume (cfg.child ('sound-volume').value)
     
     def create_properties (self, title):
         self._prop = WindowProperties ()
         self._prop.setTitle (title)
-        self._prop.setCursorHidden (True)
-        #self._prop.setMouseMode (WindowProperties.MRelative)
-
-    def hide_mouse (self):
-        self._prop.setCursorHidden (True)
-        self.base.win.requestProperties (self._prop)
-
-    def show_mouse (self):
-        self._prop.setCursorHidden (True)
-        self.base.win.requestProperties (self._prop)
-
+        
+    def relative_mouse (self):
+        if not self._relative_mouse:
+            self._prop.setCursorHidden (True)
+            self._prop.setMouseMode (WindowProperties.MRelative)
+            self.base.win.requestProperties (self._prop)
+            self._mouse_task = self._tasks.add (MouseTask ())
+            self._mouse_task.on_mouse_move += lambda x, y: \
+                messenger.send ('mouse-move', [(x, y)])
+            self._relative_mouse = True
+        
+    def absolute_mouse (self):
+        if self._relative_mouse:
+            if self._mouse_task:
+                self._mouse_task.kill ()
+            self._prop.setCursorHidden (False)
+            self._prop.setMouseMode (WindowProperties.MAbsolute)
+            self.base.win.requestProperties (self._prop)
+    
     def has_shaders (self):
         return self.base.win.getGsg().getSupportsBasicShaders() == 0
         
@@ -121,8 +153,29 @@ class PandaController (object):
     def update_fps (self, cfg):
         self._timer.fps = cfg.value
 
+    def update_music_volume (self, cfg):
+        if self._music:
+            self._music.setVolume (cfg.value)
+
+    def update_sound_volume (self, cfg):
+        if self.audio:
+            self.audio.setVolume (cfg.value)
+
     def _panda_task (self, timer):
-        if self._tasks.count > 1:
-            taskMgr.step ()
-            return task.running
-        return task.killed
+        taskMgr.step ()
+        return task.running
+    
+    def loop_music (self, file):
+        if self._music:
+            self._music.setLoop (False)
+            self.tasks.add (task.sequence (
+                task.linear (self._music.setVolume,
+                             self._music.getVolume (), 0.0)))
+
+        volume = GlobalConf ().path ('panda.music-volume').value 
+        self._music = loader.loadSfx (file)
+        self._music.setLoop (True)
+        self.tasks.add (task.sequence (
+            task.linear (self._music.setVolume, 0.0, volume, init = True)))
+        self._music.play ()
+

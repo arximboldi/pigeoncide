@@ -23,21 +23,26 @@ from physical import PhysicalEntityManager
 from task import TaskEntityManager
 from panda import PandaEntityManager
 
-
 class GameEntityManager (
     PhysicalEntityManager,   
     PandaEntityManager,
     TaskEntityManager):
     pass
 
-
 class GameState (State):
 
     def __init__ (self, *a, **k):
         super (GameState, self).__init__ (*a, **k)
-        self._entities = GameEntityManager (tasks = self.tasks,
-                                            phys_events = self.events)
-
+        self._entities = GameEntityManager (
+            tasks       = self.tasks,
+            phys_events = self.events,
+            audio3d     = self.manager.panda.audio3d)
+    
     @property
     def entities (self):
         return self._entities
+
+    def do_release (self):
+        self._entities.dispose ()
+        super (GameState, self).do_release ()
+

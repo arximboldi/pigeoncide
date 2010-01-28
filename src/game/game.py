@@ -20,12 +20,14 @@
 from pandac.PandaModules import Vec4, Vec3, AmbientLight, PointLight
 
 from base.conf import GlobalConf
-from base.meta import mixin
+from base.meta import mixin, Mockup
 from base.sender import AutoSender, AutoReceiver
 from base.util import delayed
+from base.signal import weak_slot
 
+from core import task
 from core import shader
-from core.input import InputTask
+from core.input import KeyboardTask
 from ent.game import GameState
 
 from camera import FastEntityFollower, SlowEntityFollower
@@ -33,9 +35,9 @@ from boy import Boy
 from level import Level
 from player import PlayerEntityDecorator
 from pigeon import Pigeon
-from flock import Flock, make_random_flock
-
-DEBUG_INSTANCE = None
+from flock import FlockEntity, make_random_flock
+from hud import Hud
+import ui
 
 PLAYER_INPUT_MAP = {
     'on_move_forward'  : 'panda-w',
@@ -56,96 +58,147 @@ CAMERA_INPUT_MAP = {
     'on_angle_change'  : 'panda-mouse-move'
 }
 
-GameInput        = mixin (InputTask, AutoSender)
+GameInput        = mixin (KeyboardTask, AutoSender)
 PlayerController = mixin (PlayerEntityDecorator, AutoReceiver)
 CameraController = mixin (FastEntityFollower, AutoReceiver)
 
-class Game (GameState):
+
+class GameIntro (GameState):
 
     def do_setup (self):
-        global DEBUG_INSTANCE
-        DEBUG_INSTANCE = self
+        self.text = ui.TextEntity (
+            entities = self.entities,
+            font = 'font/gilles.ttf',
+            bg   = (0, 0, 0, 0),
+            text =
+            (('You have to kill pigeons %i in this level...\n' +
+             'Can you make it?')
+             % self.parent_state.total_pigeons))
 
-        shader.enable_glow (self.manager.panda)
+        self.help_text = ui.TextEntity (
+            entities = self.entities,
+            font = 'font/alte-regular.ttf',
+            shadow = (0, 0, 0, 0),
+            bg = (0, 0, 0, 0),
+            fg = (1, 1, 0, .3),
+            pos = (0, -.9),
+            scale = 0.05,
+            text = 'Press enter to continue...')
 
-        #self.manager.panda.base.render.setShaderAuto ()
-        #filterok = self.manager.panda.filters.setBloom (blend = (0, 0, 0, 1))
-        # filterok = self.manager.panda.filters.setBloom (
-        #     blend = (0, 0, 0, 1),
-        #     desat = -0.5,
-        #     intensity = 3.0,
-        #     size = 1)
-
+        self.help_text.fade_in (duration = 2)
+        self.text.fade_in (duration = 2)
+        self.events.event ('panda-enter').connect (self.finish_intro)
         
-        self.manager.panda.hide_mouse ()
-        
-        cfg = GlobalConf ().child ('game')
-        cfg.child ('music-volume').set_value (0.01)
-        
-        # Input helper
-        player_input = GameInput (PLAYER_INPUT_MAP)
-        camera_input = GameInput (CAMERA_INPUT_MAP)
+    def finish_intro (self):
+        self.help_text.fade_out ()
+        self.text.fade_out ().add_next (task.run (self.kill))
 
-        # TODO: Event entity to make this automatically ;)
-        self.events.connect (player_input)
-        self.events.connect (camera_input)
-        self.tasks.add (player_input)
-        self.tasks.add (camera_input)
 
-        # Music
-        music = loader.loadSfx ('snd/houmdrak.mp3')
-        music.setLoop (True)
-        music.play ()
-        music.setVolume (cfg.child ('music-volume').value)
-        print "volume: ", cfg.child ('music-volume').value
+class Game (GameState):
+
+    def do_setup (self, level_cls = Level):
+        super (Game, self).do_setup ()
         
-        # Game entities
-        boy = Boy (entities = self.entities)
-        flock1 = make_random_flock (self.entities, 20,
-                                    boid_cls = delayed (Pigeon) (the_boy = boy))
-        # flock2 = make_random_flock (self.entities, 10,
-        #                             boid_cls  = delayed (Pigeon) (the_boy = boy))
-
-        level = Level (entities = self.entities)
-        boy.set_position (Vec3 (0, 70, 20))
-        level.set_position (Vec3 (0, 0, 0))
+        self.level = level_cls ()
         
-        # Camera and player controller
-        camera_ctl = CameraController (entities = self.entities,
-                                       camera = base.camera)
-        player_ctl = PlayerController (entities = self.entities,
-                                       delegate = boy)
-        boy.connect (camera_ctl)
-        #flock.leader.connect (cameractl)
-        camera_input.connect (camera_ctl)
-        player_input.connect (player_ctl)
+        self.setup_panda ()
+        self.level.setup_entities (self.entities)
+        self.setup_input ()
+        self.setup_controllers ()
+        self.setup_hud ()
+        self.setup_logic ()
 
-        # Skybox
-        sky = loader.loadModel ('sky/boxsky.egg')
-        sky.setScale (1000., 1000., 1000.)
-        sky.reparentTo (base.cam)
-        
-        # Aesthetics
-        plightnode = PointLight ("point light")
-        plightnode.setAttenuation (Vec3 (1, 0.0000005, 0.0000001))
-        plight = render.attachNewNode (plightnode)
-        plight.setPos (100, -100, 1000)
-        alightnode = AmbientLight ("ambient light")
-        alightnode.setColor (Vec4 (0.1, 0.1, 0.1, 1))
-        alight = render.attachNewNode (alightnode)
-        render.setLight (alight)
-        render.setLight (plight)
-        base.setBackgroundColor (Vec4 (.4, .6, .9, 1))
-
-        # Helper
         self.events.event ('panda-escape').connect (self.kill)
         self.events.event ('panda-p').connect (self.toggle_pause)
-        # Preload all the shit
-        map (loader.loadModel, [
-            '../data/mesh/stick_arch_sub.x'
-            ])
-     
+        
+        self.manager.enter_state (GameIntro)
+
+    @weak_slot
+    def on_kill_pigeon (self):
+        self.hud.dec_counter ('pigeons', 1)
+        self.dead_pigeons += 1
+        if self.dead_pigeons >= self.total_pigeons:
+            self.win_game ()
+
+    @weak_slot
+    def on_kill_boy (self):
+        self.fail_game ("kill-boy")
+
+    @weak_slot
+    def on_finish_time (self):
+        self.fail_game ("finish-time")
+
+    def win_game (self):
+        print "win-game"
+
+    def fail_game (self, reason):
+        print "fail-game: ", reason
+        
+    def do_update (self, timer):
+        super (Game, self).do_update (timer)
+
+    def setup_panda (self):
+        panda = self.manager.panda
+        shader.enable_glow (panda)        
+        panda.relative_mouse ()
+        panda.loop_music (self.level.music)
+
+    def setup_input (self):
+        self.player_input = GameInput (PLAYER_INPUT_MAP)
+        self.camera_input = GameInput (CAMERA_INPUT_MAP)
+        self.events.connect (self.player_input)
+        self.events.connect (self.camera_input)
+        self.tasks.add (self.player_input)
+        self.tasks.add (self.camera_input)        
+
+    def setup_controllers (self):
+        self.camera_ctl = CameraController (
+            entities = self.entities,
+            camera = base.camera)
+        self.player_ctl = PlayerController (
+            entities = self.entities,
+            delegate = self.level.boy)
+        self.level.boy.connect (self.camera_ctl)
+        self.camera_input.connect (self.camera_ctl)
+        self.player_input.connect (self.player_ctl)
+
+    def setup_hud (self):
+        self.hud = Hud (entities = self.entities)
+        self.hud.add_counter ('clock',   'hud/clock.png')
+        self.hud.add_counter ('pigeons', 'hud/pigeon.png')
+        self.hud.add_counter ('fields',  'hud/pigeon.png')
+        self.hud.hide ()
+    
+    def setup_logic (self):
+        total_pigeons = 0
+        for f in self.level.flocks:
+            total_pigeons += len (f.boids)
+            for b in f.boids:
+                b.on_death += self.on_kill_pigeon
+        
+        self.total_pigeons = total_pigeons
+        self.dead_pigeons = 0
+        self.level.boy.on_death += self.on_kill_boy
+
+        self.timer = self.tasks.add (
+            task.TimerTask (time = self.level.max_time))
+        self.timer.on_tick = lambda: self.hud.set_counter (
+            'clock', int (self.timer.remaining))
+        self.timer.on_finish = self.on_finish_time
+        
+    def do_sink (self):
+        super (Game, self).do_sink ()
+        self.events.quiet = True
+        self.hud.soft_hide ()
+        self.timer.pause ()
+        
+    def do_unsink (self):
+        super (Game, self).do_unsink ()
+        self.events.quiet = False
+        self.hud.soft_show ()
+        self.timer.resume ()
+        
     def do_release (self):
-        self.manager.panda.show_mouse ()
+        self.level.dispose () # TODO: To entity!
         shader.disable_glow (self.manager.panda)
-        # TODO
+        super (Game, self).do_release ()

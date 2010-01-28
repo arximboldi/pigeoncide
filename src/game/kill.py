@@ -17,7 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from base.signal import weak_slot
+from base.signal import weak_slot, Signal
 from base.util import printfn
 from ent.physical import PhysicalEntityBase
 from ent.panda import ModelEntityBase
@@ -38,6 +38,8 @@ class KillableEntity (ModelEntityBase, PhysicalEntityBase):
         super (KillableEntity, self).__init__ (*a, **k)
 
         self.enable_collision ()
+
+        self.on_death = Signal ()
         self.on_collide += self.on_kill_collision
 
         self._smoke_particles = self.load_particles ('data/part/smoke.ptf')
@@ -66,12 +68,9 @@ class KillableEntity (ModelEntityBase, PhysicalEntityBase):
                 task.wait (2.),
                 task.run (self.dispose)))
             
-            self.on_die ()
+            self.on_death ()
             self.dead = True
-
-            # import game
-            # game.DEBUG_INSTANCE.pause ()
-
+    
     def load_particles (self, name):
         p = ParticleEffect ()
         p.loadConfig (Filename (name))
@@ -82,9 +81,6 @@ class KillableEntity (ModelEntityBase, PhysicalEntityBase):
         p.setShaderOff ()
         return p
     
-    def on_die (self):
-        pass
-
     def dispose (self):
         self._smoke_particles.removeNode ()
         self._fire_particles.removeNode ()

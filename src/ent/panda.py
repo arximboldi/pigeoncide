@@ -26,34 +26,62 @@ from direct.showbase.Audio3DManager import Audio3DManager
 
 class PandaEntityManager (EntityManager):
 
-    def __init__ (self, render = None, audio3d = None, *a, **k):
+    _owns_render   = False
+    _owns_render2d = False
+    _owns_audio3d  = False
+    
+    def __init__ (self,
+                  render   = None,
+                  render2d = None,
+                  audio3d  = None,
+                  *a, **k):
         super (PandaEntityManager, self).__init__ (*a, **k)
+
         if render:
             self.render = render
         else:
             node = NodePath (PandaNode ('entities'))
             node.reparentTo (base.render)
             self.render = node
+            self._owns_render = True
 
+        if render2d:
+            self.render = render2d
+        else:
+            node = NodePath (PandaNode ('entities'))
+            node.reparentTo (base.render2d)
+            self.render2d = node
+            self._owns_render2d = True
+        
         if audio3d:
             self.audio3d = audio3d
         else:
             self.audio3d = Audio3DManager (base.sfxManagerList [0], camera)
             self.audio3d.setListenerVelocityAuto ()
+            self._owns_audio3d = True
+    
+    def dispose (self):
+        super (PandaEntityManager, self).dispose ()
+        
+        if self._owns_render:
+            self.render.removeNode ()
+        if self._owns_render2d:
+            self.render2d.removeNode ()
+        
 
 
-class PandaEntity (SpatialEntity):
+class PandaEntityBase (SpatialEntity):
 
     def __init__ (self,
                   entities  = None,
                   node_name = 'entity',
                   *a, **k):
-        super (PandaEntity, self).__init__ (
+        super (PandaEntityBase, self).__init__ (
             entities = entities,
             *a, **k)
         
         self._node = NodePath (PandaNode (node_name))
-        self._node.reparentTo (render)
+        self._node.reparentTo (self.get_parent_node ())
         self._panda_sounds = []
         
     @property
@@ -61,23 +89,23 @@ class PandaEntity (SpatialEntity):
         return self._node
         
     def set_position (self, pos):
-        super (PandaEntity, self).set_position (pos)
+        super (PandaEntityBase, self).set_position (pos)
         if not pos.isNan ():
             self._node.setPos (pos)
         
     def set_hpr (self, hpr):
-        super (PandaEntity, self).set_hpr (hpr)
+        super (PandaEntityBase, self).set_hpr (hpr)
         self._node.setHpr (hpr)
                 
     def set_scale (self, scale):
-        super (PandaEntity, self).set_scale (scale)
+        super (PandaEntityBase, self).set_scale (scale)
         self._node.setScale (scale)
 
     def dispose (self):
         audio3d = self.entities.audio3d
         map (audio3d.detachSound, self._panda_sounds)
         self._node.removeNode ()
-        super (PandaEntity, self).dispose ()
+        super (PandaEntityBase, self).dispose ()
         
     def load_sound (self, name):
         audio3d = self.entities.audio3d
@@ -86,6 +114,18 @@ class PandaEntity (SpatialEntity):
         audio3d.setSoundVelocityAuto (snd)
         self._panda_sounds.append (snd) 
         return snd
+
+
+class PandaEntity (PandaEntityBase):
+
+    def get_parent_node (self):
+        return self.entities.render
+
+
+class Panda2dEntity (PandaEntityBase):
+
+    def get_parent_node (self):
+        return self.entities.render2d
 
 
 class DelegatePandaEntity (DelegateSpatialEntity):

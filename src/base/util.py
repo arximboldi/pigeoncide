@@ -26,7 +26,7 @@ class Selfable (object):
 
 
 def linear (min, max, val):
-    return min + val * (max - min)
+    return min + (max - min) * val
 
 
 def nop (*a, **k):

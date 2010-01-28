@@ -70,8 +70,9 @@ def make_glow (data_dir = './src/core/sha'):
 
     finalcard = blur_ybuffer.getTextureCard ()
     finalcard.setAttrib (ColorBlendAttrib.make (ColorBlendAttrib.MAdd))
+
     return finalcard
-    #finalcard.reparentTo (render2d)
+
 
 def enable_glow (panda):
     if not hasattr (panda, '_glow_filter'):

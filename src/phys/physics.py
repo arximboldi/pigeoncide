@@ -17,6 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from base.singleton import Singleton
 from pandac.PandaModules import *
 from core.task import Task
 from base.util import nop, remove_if
@@ -28,7 +29,17 @@ def get_ode_id (ode_object):
 def get_ode_id_str (ode_object):
     return str (ode_object).split (" ") [-1].rstrip (")")
 
+
 class Physics (Task):
+    """
+    TODO: This class should not be a singleton, but for some reason
+    Panda doesn't like having few worlds at the same time. Or more
+    exactly, actually everything breaks when one kills the second
+    world... completely odd. We can try to run a profiler on the C++
+    code (sysprof, for example) to try to investigate more...
+    """
+
+    __metaclass__ = Singleton
 
     time_step = .1 / 60.
 
@@ -66,7 +77,7 @@ class Physics (Task):
             self._space.setCollisionEvent ('ode-collision')
             events.event ('panda-ode-collision').connect (self.on_collision)
             self._geom_cbs = {}
-            
+    
     def on_collision (self, ev):
         geom1 = str (ev.getGeom1 ())
         geom2 = str (ev.getGeom2 ())
@@ -137,6 +148,14 @@ class Physics (Task):
         #      self._world.quickStep (self.time_step)
         #      self._time_acc -= self.time_step
         #      self._group.empty ()
+
+    def dispose (self):
+        pass
+        # self.kill ()
+        # TODO: Needed?
+        # self._group.destroy ()
+        # self._space.destroy ()
+        # self._world.destroy ()        
         
     gravity = property (get_gravity, set_gravity) 
 

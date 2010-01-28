@@ -38,11 +38,7 @@ class Boy (ObservableSpatialEntity,
               'idle' : 'mesh/boy-idle.egg',
               'feed' : 'mesh/boy-feed.egg',
               'hit'  : 'mesh/boy-feed.egg' }
-    
-    # MODEL = '../data/mesh/ralph.egg.pz'
-    # ANIMS = { 'run'  : '../data/mesh/ralph-run.egg.pz',
-    #           'walk' : '../data/mesh/ralph-walk.egg.pz' }
-    
+        
     def __init__ (self, model = MODEL, *a, **k):
         super (Boy, self).__init__ (geometry = geom.capsule (1.0, 7.0),
                                     mass     = mass.capsule (2, 3, 1.0, 7.0),
@@ -50,13 +46,12 @@ class Boy (ObservableSpatialEntity,
                                     anims    = self.ANIMS,
                                     *a, **k)
 
-        #self.model_position = Vec3 (.0, .0, -5.0)
         self.model_position = Vec3 (.0, .0, -4.0)
         self.model_scale = Vec3 (.1, .1, .1)
-        self.model.pprint ()
         self.enable_collision ()
-
-        hand_joint = self.model.exposeJoint (None, 'modelRoot', 'Bip01_R_Finger0')
+        
+        hand_joint = self.model.exposeJoint (
+            None, 'modelRoot', 'Bip01_R_Finger0')
         weapon = loader.loadModel ('mesh/baseball_bat.x')
         weapon.reparentTo (hand_joint)
         weapon.setScale (100., 100., 100.)

@@ -17,6 +17,8 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from base.signal import weak_slot
+
 from ent.observer import ObservableSpatialEntity
 from ent.panda import ModelEntity
 from ent.physical import (StandingPhysicalEntityDecorator,
@@ -29,7 +31,7 @@ from core import task
 import phys.geom as geom
 import phys.mass as mass
 
-from flock import BoidParams, BoidEntity, Flock
+from flock import BoidParams, BoidEntity, FlockEntity
 from kill import KillableEntity
 from crawler import CrawlerEntityDecorator
 
@@ -54,6 +56,8 @@ class Pigeon (BoidEntity,
             mass     = mass.sphere (1, 2),
             model    = model,
             *a, **k)
+
+        self.on_death += self.on_pigeon_death
 
         self.physical_hpr = Vec3 (90, 0, 0)
         self.the_boy = the_boy
@@ -87,10 +91,12 @@ class Pigeon (BoidEntity,
         vlen = self.linear_velocity.length ()
         self.geom.setParams (2., vlen * timer.delta)
 
-    def on_die (self):
+    @weak_slot
+    def on_pigeon_death (self):
         self.force_finish ()
         self.disable_physics ()
         random.choice (self.die_sounds).play ()
+
 
 class PatrolState (State):
 

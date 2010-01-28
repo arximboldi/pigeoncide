@@ -40,11 +40,20 @@ from base.util import Selfable
 
 class EntityManager (Selfable):
 
+    def __init__ (self, *a, **k):
+        super (EntityManager, self).__init__ (*a, **k)
+        self.entities = []
+    
+    def dispose (self):
+        for x in self.entities:
+            x.dispose ()
+        self.entities = []
+    
     def _add_entity (self, ent):
-        pass
+        self.entities.append (ent)
 
     def _del_entity (self, ent):
-        pass
+        self.entities.remove (ent)
 
 
 class Entity (object):
@@ -60,9 +69,6 @@ class Entity (object):
     
     def dispose (self):
         self.entities._del_entity (self)
-
-    def dispose (self):
-        pass
 
 
 class DelegateEntity (Entity):

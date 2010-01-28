@@ -64,8 +64,6 @@ class Group (Entity):
 
 
 class Field (PandaEntity, StaticPhysicalEntity):
-
-    MODEL = '../data/mesh/box.egg.pz'
     
     def __init__ (self, fst = None, snd = None, *a, **k):
 
@@ -76,7 +74,7 @@ class Field (PandaEntity, StaticPhysicalEntity):
         
         model.reparentTo (self.node)
         self.position = fst.position - Vec3 (0, 0, 6)
-        self.physical_position = Vec3 (0, 0, -5)
+        self.physical_position = Vec3 (0, 0, -15)
 
         model.setScale (near0, near0, near0)
         fst.init_task ().add_next (
@@ -88,12 +86,12 @@ class Field (PandaEntity, StaticPhysicalEntity):
         sound = self.load_sound ('snd/electrocute_very_long.wav')
         sound.setLoop (True)
         sound.play ()
-        sound.setVolume (0.01)
+        sound.setVolume (0.1)
 
         
 class Stick (ModelEntity, StaticPhysicalEntity):
 
-    MODEL = '../data/mesh/stick_arch_sub.x'
+    MODEL = 'mesh/stick_arch_sub.x'
 
     def __init__ (self, *a, **k):
         super (Stick, self).__init__ (
@@ -188,7 +186,6 @@ def make_laser_model (fst, snd, height):
     
     tex = loader.loadTexture ('./data/tex/laser2.png')
     ts = TextureStage ('ts')
-    #ts.setMode (TextureStage.MReplace)
     laser.setTexture (ts, tex)
     laser.setTransparency (TransparencyAttrib.MDual) 
 

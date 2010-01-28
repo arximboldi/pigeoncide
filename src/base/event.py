@@ -30,10 +30,11 @@ _log = get_log (__name__)
 
 class EventManager (Sender, Receiver):
 
+    quiet = False
+    
     def __init__ (self):
         super (EventManager, self).__init__ ()
         self._events = {}
-        self.quiet = False
         
     def notify (self, name, *args, **kw):
         if not self.quiet:

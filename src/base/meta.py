@@ -19,6 +19,11 @@
 
 from util import memoize
 
+class Mockup (object):
+
+    def __getattribute__ (self, name):
+        return lambda *a, **k: None
+
 
 @memoize
 def mixin (one, two, *args):

@@ -88,7 +88,7 @@ class Task (object):
         return self._state
 
     @property
-    def parent (self):
+    def parent_task (self):
         return self._task_manager
     
     def _set_parent (self, manager):
@@ -142,6 +142,14 @@ class TaskGroup (Task):
         self._tasks = []
         for task in tasks:
             self.add (task)
+
+    def __del__ (self):
+        self.clear ()
+    
+    def clear (self):
+        for t in self._tasks:
+            t._set_parent (None)
+        self._tasks = []
         
     def do_update (self, timer):
         super (TaskGroup, self).do_update (timer)
@@ -187,15 +195,38 @@ class WaitTask (Task):
             self.remaining = 0
 
 
+class TimerTask (WaitTask):
+
+    def do_update (self, timer):
+        super (TimerTask, self).do_update (timer)
+        if self.remaining == 0:
+            self.on_finish ()
+        else:
+            self.on_tick ()
+    
+    def on_tick (self):
+        pass
+
+    def on_finish (self):
+        pass
+
+
 class FadeTask (Task):
 
-    def __init__ (self, func = nop, duration = 1.0, loop = False, *a, **k):
+    def __init__ (self,
+                  func = nop,
+                  duration = 1.0,
+                  loop = False,
+                  init = False,
+                  *a, **k):
         super (FadeTask, self).__init__ (*a, **k)
         self.func      = func
-        self.curr      = 0
+        self.curr      = 0.
         self.loop      = loop
         self.duration = duration
-        # func (0.0)
+
+        if init: 
+            func (0.0)
 
     def do_update (self, timer):
         super (FadeTask, self).do_update (timer)
@@ -225,6 +256,9 @@ parallel = TaskGroup
 wait = WaitTask
 
 fade = FadeTask
+
+def invfade (f, *a, **k):
+    return fade (lambda x: f (1.0 - x), *a, **k)
 
 def linear (f, min, max, *a, **k):
     return fade (lambda x: f (util.linear (min, max, x)), *a, **k)

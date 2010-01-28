@@ -43,7 +43,7 @@ class FastEntityFollower (EntityFollowerBase):
     min_distance = 10.
     max_distance = 1000.
     delta_dist   = 5
-    speed        = 2.
+    speed        = 0.01
     ent_position = Vec3 (0, 0, 0)
     ent_angle    = 0
     offset       = Vec3 (0, 0, 10)

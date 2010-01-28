@@ -50,12 +50,12 @@ import random
 import weakref
 import math
 
-class Flock (TaskEntity):
+class FlockEntity (TaskEntity):
 
     flock_bounds = ((-300, -300, 0), (300, 300, 200))
 
     def __init__ (self, *a, **k):
-        super (Flock, self).__init__(*a, **k)
+        super (FlockEntity, self).__init__(*a, **k)
         self.boids = []
         self.leader = None
         self.boids_cache = []
@@ -251,9 +251,9 @@ class BoidEntityDecorator (
 
 def make_random_flock (entities,
                        num_boids,
-                       bounds    = Flock.flock_bounds,
+                       bounds    = FlockEntity.flock_bounds,
                        boid_cls  = BoidEntity,
-                       flock_cls = Flock):
+                       flock_cls = FlockEntity):
 
     flock = flock_cls (entities = entities)
     (minx, miny, minz), (maxx, maxy, maxz) = bounds

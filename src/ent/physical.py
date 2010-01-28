@@ -20,6 +20,7 @@
 from entity import *
 from task import TaskEntity
 from core.util import *
+from core.task import TaskError
 
 from pandac.PandaModules import *
 import math
@@ -33,6 +34,8 @@ from base.signal import Signal
 
 class PhysicalEntityManager (EntityManager):
 
+    _owns_physics = False
+    
     def __init__ (self,
                   physics = None,
                   phys_events = None,
@@ -43,8 +46,18 @@ class PhysicalEntityManager (EntityManager):
             self.physics = physics
         else:
             self.physics = Physics (phys_events)
-            
-        self.tasks.add (self.physics)
+            self._owns_physics = True
+        
+        try:
+            # TODO: Make mixin initialization order irrelevant
+            self.tasks.add (self.physics)
+        except TaskError, e:
+            pass
+        
+    def dispose (self):
+        super (PhysicalEntityManager, self).dispose ()
+        if self._owns_physics:
+            self.physics.dispose ()
 
 
 class PhysicalEntityBase (SpatialEntity):
@@ -98,10 +111,12 @@ class PhysicalEntityBase (SpatialEntity):
         self._geom.destroy ()
         super (PhysicalEntityBase, self).dispose ()
 
-    physical_position = property (get_physical_position,
-                                  lambda self, x: self.set_physical_position)
-    physical_hpr      = property (get_physical_hpr,
-                                  lambda self, x: self.set_physical_hpr)
+    physical_position = property (
+        get_physical_position,
+        lambda self, x: self.set_physical_position (x))
+    physical_hpr      = property (
+        get_physical_hpr,
+        lambda self, x: self.set_physical_hpr (x))
         
 
 class StaticPhysicalEntity (PhysicalEntityBase):
@@ -159,11 +174,11 @@ class DynamicPhysicalEntity (PhysicalEntityBase, TaskEntity):
         return self._body
 
     def set_physical_position (self, pos):
-        super (StaticPhysicalEntity, self).set_physical_position (pos)
+        super (DynamicPhysicalEntity, self).set_physical_position (pos)
         self._body.setPosition (self._position + self._physical_position)
 
     def set_physical_hpr (self, hpr):
-        super (StaticPhysicalEntity, self).set_physical_hpr (hpr)
+        super (DynamicPhysicalEntity, self).set_physical_hpr (hpr)
         self._body.setQuaternion (hpr_to_quat (self._position + hpr))
 
     def get_linear_velocity (self):

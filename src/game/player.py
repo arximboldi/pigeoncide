@@ -58,7 +58,7 @@ class PlayerEntityBase (Entity):
     max_rotate_speed   = 2.0
     max_run_speed      = 60
     max_walk_speed     = 30
-    steer_speed        = 2.
+    steer_speed        = 0.01
     
     def __init__ (self, *a, **k):
         super (PlayerEntityBase, self).__init__ (*a, **k)
@@ -66,9 +66,7 @@ class PlayerEntityBase (Entity):
         self.actions  = 0x0
         self.laser    = laser.Group (self.entities)
         self.model.loop (self.anim_stand)
-        self.model.listJoints ()
-
-        
+                
     def on_place_stick_down (self):
         stick = laser.Stick (entities = self.entities)
         direction = Vec3 (math.sin (self.angle), math.cos (self.angle), 0)

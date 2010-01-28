@@ -19,12 +19,13 @@
 
 from direct.showbase.ShowBase import ShowBase
 
-from base.sender import Receiver
+from base.signal import Signal
+from base.sender import Sender, Receiver
 from base.log import get_log
 from base.util import flip_dict
 from error import CoreError
 from task import Task
-
+import os
 
 _log = get_log (__name__)
 
@@ -95,28 +96,49 @@ class KeyboardTask (EventMap, Task):
             f (timer)
 
 
-class InputTask (KeyboardTask):
+need_mouse_hack = os.name == 'posix'
 
-    def __init__ (self, *a, **k):
-        super (InputTask, self).__init__ (*a, **k)
+class MouseTask (Task):
+
+    def __init__ (self, device = 0, *a, **k):
+        super (MouseTask, self).__init__ (*a, **k)
+        self.device = device
         self._last_x  = -1
         self._last_y  = -1
         self._is_init = False
+        self._reset_mouse ()
+        self.on_mouse_move = Signal ()
         
+    def _reset_mouse (self):
+        if not need_mouse_hack:
+            return
+        
+        window = base.win
+        prop = window.getProperties ()
+        if prop.hasSize ():
+            new_x = prop.getXSize () / 2
+            new_y = prop.getYSize () / 2
+            window.movePointer (0, new_x, new_y)
+            self._last_x = new_x 
+            self._last_y = new_y
+            self._is_init = True
+    
     def do_update  (self, timer):
-        super (InputTask, self).do_update (timer)
+        super (MouseTask, self).do_update (timer)
 
-        if base.mouseWatcherNode.hasMouse():
-            x = base.mouseWatcherNode.getMouseX ()
-            y = base.mouseWatcherNode.getMouseY ()
+        if base.win.hasPointer (0):
+            p = base.win.getPointer (0)
+            x = p.getX ()
+            y = p.getY ()
             delta_x = x - self._last_x
             delta_y = y - self._last_y
             if self._is_init and \
                 (abs (delta_x) > 0 or abs (delta_y) > 0):
-                self.receive ('panda-mouse-move', (delta_x, delta_y))
+                self.on_mouse_move (delta_x, delta_y)
             self._last_x = x
             self._last_y = y
             self._is_init = True
+            self._reset_mouse ()
 
 
 panda_special_keys = set ([

@@ -61,7 +61,6 @@ Display options:
         args.add ('M', 'hide-meter', OptionConfFlag (cfg.child ('frame-meter'), False))
         
     def do_execute (self, args):
-        
         _log.info ("Setting up engine...")
         self.panda.start (self.NAME + ' ' + self.VERSION)
         messenger._patch_add_forwarder (self.events)

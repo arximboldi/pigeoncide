@@ -28,14 +28,16 @@ class StateError (CoreError):
 
 class State (task.Task):
 
-    def __init__ (self, state_manager = None, *a, **k):
+    def __init__ (self, state_manager = None, parent_state = None, *a, **k):
         assert state_manager != None
         super (State, self).__init__ (*a, **k)
+        
         self._tasks = task.TaskGroup ()
         self._tasks.auto_kill = False
-        self._manager = ref (state_manager)
+        self._state_manager = ref (state_manager)
         self._events = EventManager ()
-        
+        self._parent_state = ref (parent_state) if parent_state else None
+    
     @property
     def events (self):
         return self._events
@@ -46,8 +48,14 @@ class State (task.Task):
 
     @property
     def manager (self):
-        return self._manager ()
+        return self._state_manager ()
 
+    @property
+    def parent_state (self):
+        if self._parent_state:
+            return self._parent_state ()
+        return None
+    
     def do_setup (self):
         pass
 
@@ -140,7 +148,10 @@ class StateManager (task.Task):
         self._push_state (state, name, *a, **k)
     
     def _push_state (self, state_cls, state_name, *a, **k):
-        state = state_cls (state_manager = self, *a, **k)
+        parent = None
+        if self._state_stack:
+            parent = self._state_stack [-1]
+        state = state_cls (state_manager = self, parent_state = parent, *a, **k)
         state.state_name = state_name
         self._tasks.add (state)
         self._events.connect (state.events)
@@ -153,8 +164,10 @@ class StateManager (task.Task):
         state.kill ()
         state.do_release ()
         
-    def _fetch_state (self, name):
+    def _fetch_state (self, name_or_cls):
+        if not isinstance (name_or_cls, str):
+            return name_or_cls
         try:
-            return self._state_factory [name]
+            return self._state_factory [name_or_cls]
         except Exception:
             raise StateError ("Unknown state " + name)
