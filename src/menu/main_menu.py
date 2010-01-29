@@ -19,7 +19,6 @@
 
 from direct.gui.DirectButton import DirectButton
 
-from basic import BasicMenu
 from option_menu import OptionsMenu
 from core import task
 
