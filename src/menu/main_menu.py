@@ -17,9 +17,10 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from direct.gui.DirectButton import DirectButton
+from direct.gui.DirectGui import *
+#from pandac.PandaModules import PandaNode
 
-from option_menu import OptionsMenu
+from option_menu import *
 from core import task
 
 class MainMenu (object):
@@ -31,54 +32,52 @@ class MainMenu (object):
         self.options_menu = OptionsMenu (state = self.state)
     
     def do_paint (self):
-        self.bt_red = loader.loadModel ('../data/menu/bt_red.egg')
-        self.font = loader.loadFont ('../data/font/three-hours.ttf')
         
         # Main-Buttons inicialitation
-        self.start = DirectButton(geom = self.bt_red,
+        self.start = DirectButton(geom = self.state.bt_red,
             geom_scale = (4.5, 2, 2),
             geom_pos = (.2, 0, 0.3),
             text = "Start",
-            text_font = self.font,
+            text_font = self.state.font,
             text_scale = (0.8, 0.9),
             scale = .1,
             pos = (-0.4, 0, 0.8),
             relief = None
             )
         
-        self.options = DirectButton(geom = self.bt_red,
+        self.options = DirectButton(geom = self.state.bt_red,
             geom_scale = (5.7, 2, 2.1),
             geom_pos = (0.2, 0, 0.3),
             text = "Options",
-            text_font = self.font,
+            text_font = self.state.font,
             text_scale = (0.8, 0.9),
             scale = .1,
             pos = (-0.1, 0, 0.55),
             relief = None
             ) 
 
-        self.credits = DirectButton(geom = self.bt_red,
+        self.credits = DirectButton(geom = self.state.bt_red,
             geom_scale = (5, 2, 2.1),
             geom_pos = (0.2, 0, 0.3),
             text = "Credits",
-            text_font = self.font,
+            text_font = self.state.font,
             text_scale = (0.8, 0.9),
             scale = .1,
             pos = (0, 0, 0.3),
             relief = None
             ) 
         
-        self.exit = DirectButton(geom = self.bt_red,
+        self.exit = DirectButton(geom = self.state.bt_red,
             geom_scale = (4, 2, 2),
             geom_pos = (0.2, 0, 0.3),
             text = "Exit",
-            text_font = self.font,
+            text_font = self.state.font,
             text_scale = (0.8, 0.9),
             scale = .1,
-            pos = (-0, 0, 0.05),
+            pos = (0, 0, 0.05),
             relief = None
             ) 
-      
+        
     
     def do_connect (self):
         # Buttons task assigment
@@ -88,14 +87,21 @@ class MainMenu (object):
             task.wait (1),
             task.run (lambda: self.state.manager.change_state ('game'))
         ))
-        self.options["command"] = lambda: self.state.tasks.add( task.parallel(
-            task.run (self.state.do_smile),
-            task.run (self.show_options)
-        ))
+        
+        self.options["command"] = lambda: self.state.tasks.add (task.sequence (
+            task.run (lambda: self.options.setProp ('state', DGG.DISABLED)),
+            task.parallel(
+                task.run (self.state.do_smile),
+                self.show_options ()
+            ),
+            task.run (lambda: self.options.setProp ('state', DGG.NORMAL))
+            ))
+            
         self.exit["command"] = lambda: self.state.tasks.add (task.sequence(
-            task.run (self.options_menu.do_destroy),
-            task.run (lambda: self.state.do_smile (1)),
-            task.wait (1),
+            task.parallel(
+                task.run (self.options_menu.do_destroy),
+                task.run (lambda: self.state.do_smile (1.5))
+            ),
             task.run (self.state.kill)
         ))
     
@@ -107,7 +113,9 @@ class MainMenu (object):
 
     def show_options (self):
         if not self.options_menu.active:
-            self.options_menu.do_paint ()
+            self.move_task = self.options_menu.do_paint ()
             self.options_menu.do_connect ()
         else:
-            self.options_menu.do_destroy ()
+            self.move_task = self.options_menu.do_destroy ()
+            
+        return self.move_task

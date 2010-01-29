@@ -17,7 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from direct.gui.DirectButton import DirectButton
+from direct.gui.DirectGui import *
 
 from core import task
 
@@ -30,130 +30,132 @@ class OptionsMenu (object):
         self.active = False
 
     def do_paint (self):
-        self.bt_yellow = loader.loadModel ('../data/menu/bt_yellow.egg')
-        self.font = loader.loadFont ('../data/font/three-hours.ttf')
-
         # Option-Buttons inicialitation
-        self.sound = DirectButton(geom = self.bt_yellow,
+        self.sound = DirectButton(geom = self.state.bt_yellow,
             geom_scale = (4.5, 2, 2),
             geom_pos = (.4, 0, 0.3),
             text = "Sound",
-            text_font = self.font,
+            text_font = self.state.font,
             text_scale = (0.8, 0.9),
             scale = .1,
             pos = (-0.1, 0, 0.55),
-            relief = None
+            relief = None,
+            state = DGG.DISABLED
             )
+        self.sound.setAlphaScale (0)
 
-        self.keyboard = DirectButton(geom = self.bt_yellow,
+        self.keyboard = DirectButton(geom = self.state.bt_yellow,
             geom_scale = (6.8, 2, 2.2),
             geom_pos = (.6, 0, 0.3),
             text = "Keyboard",
-            text_font = self.font,
+            text_font = self.state.font,
             text_scale = (0.8, 0.9),
             scale = .1,
             pos = (-0.1, 0, 0.55),
-            relief = None
+            relief = None,
+            state = DGG.DISABLED
             )
-            
-        self.screen = DirectButton(geom = self.bt_yellow,
+        self.keyboard.setAlphaScale (0)
+                    
+        self.screen = DirectButton(geom = self.state.bt_yellow,
             geom_scale = (4.7, 2, 2),
             geom_pos = (.4, 0, 0.3),
             text = "Screen",
-            text_font = self.font,
+            text_font = self.state.font,
             text_scale = (0.8, 0.9),
             scale = .1,
             pos = (-0.1, 0, 0.55),
-            relief = None
+            relief = None,
+            state = DGG.DISABLED
             )
-            
-        self.back = DirectButton(geom = self.bt_yellow,
+        self.screen.setAlphaScale (0)
+                    
+        self.back = DirectButton(geom = self.state.bt_yellow,
             geom_scale = (4, 2, 2),
             geom_pos = (.4, 0, 0.3),
             text = "Back",
-            text_font = self.font,
+            text_font = self.state.font,
             text_scale = (0.8, 0.9),
             scale = .1,
             pos = (-0.1, 0, 0.55),
-            relief = None
+            relief = None,
+            state = DGG.DISABLED
             )
+        self.back.setAlphaScale (0)
+        
+        #Movement task creation
+        self.move_task = task.sequence(
+            task.parallel(
+                task.sinusoid (lambda x: 
+                    self.sound.setPos ((x*0.55)-0.1, 0, 0.55+(x*0.25))),
+                task.sinusoid (lambda x: self.sound.setAlphaScale (x)),
+                
+                task.sinusoid (lambda x: 
+                    self.keyboard.setPos ((x*0.7)-0.1, 0, 0.55)),
+                task.sinusoid (lambda x: self.keyboard.setAlphaScale (x)),
 
-        self.state.tasks.add (task.parallel(
-            task.sinusoid (lambda x: 
-                self.sound.setPos ((x*0.55)-0.1, 0,(x*0.2)+.55)),
-            task.sinusoid (lambda x: self.sound.setAlphaScale (x))
-            ))
-            
-        self.state.tasks.add (task.parallel(
-            task.sinusoid (lambda x: 
-                self.keyboard.setPos ((x*0.7)-0.1, 0,(x*-0.05)+0.55)),
-            task.sinusoid (lambda x: self.keyboard.setAlphaScale (x))
-        ))
+                task.sinusoid (lambda x: 
+                    self.screen.setPos ((x*0.65)-0.1, 0, 0.55-(x*0.25))),
+                task.sinusoid (lambda x: self.screen.setAlphaScale (x)),
+
+                task.sinusoid (lambda x:
+                    self.back.setPos ((x*0.65)-0.1, 0, 0.55-(x*0.5))),
+                task.sinusoid (lambda x: self.back.setAlphaScale (x))
+            ),
+            task.run (lambda: self.sound.setProp('state',DGG.NORMAL)),
+            task.run (lambda: self.keyboard.setProp('state',DGG.NORMAL)),
+            task.run (lambda: self.screen.setProp('state',DGG.NORMAL)),
+            task.run (lambda: self.back.setProp('state',DGG.NORMAL))
+            )
         
-        self.state.tasks.add (task.parallel (
-            task.sinusoid (lambda x: 
-                self.screen.setPos ((x*0.65)-0.1, 0,(x*-0.30)+0.55)),
-            task.sinusoid (lambda x: self.screen.setAlphaScale (x))
-        ))
-        
-        self.state.tasks.add (task.parallel(
-            task.sinusoid (lambda x:
-                self.back.setPos ((x*0.55)-0.1, 0,(x*-0.55)+0.55)),
-            task.sinusoid (lambda x: self.back.setAlphaScale (x))
-        ))
-            
+        #The option_menu is set as active
         self.active = True
-            
+        
+        return self.move_task
+        
     def do_connect (self):
         # Buttons task assigment
         self.sound ["command"] = lambda: self.do_paint_sound ()
         self.keyboard ["command"] = lambda: self.do_paint_keyboard ()
         self.screen ["command"] = lambda: self.do_paint_screen ()
-        self.back ["command"] = lambda: self.do_destroy ()
+        self.back ["command"] = lambda: self.state.tasks.add (self.do_destroy())
         
     def do_destroy (self):
         if self.active:
-            #Each task moves the button back to the "option" button changing
-            #its alpha too.
-            self.state.tasks.add (task.parallel(
-                task.sequence (
-                    task.sinusoid (lambda x: 
-                        self.sound.setPos (0.45-(x*0.55), 0, .75-(x*0.2))),
-                    task.run (self.sound.destroy)
-                ),
-                task.sinusoid (lambda x: self.sound.setAlphaScale (1-x))
-            ))
-            
-            self.state.tasks.add (task.parallel (
-                task.sequence (
-                    task.sinusoid (lambda x: 
-                        self.keyboard.setPos (0.6-(x*0.7), 0, 0.5+(x*0.05))), 
-                    task.run (self.keyboard.destroy)
-                ),
-                task.sinusoid (lambda x: self.keyboard.setAlphaScale (1-x))
-            ))
-            
-        
-            self.state.tasks.add (task.parallel (
-                task.sequence (
-                    task.sinusoid (lambda x: 
-                        self.screen.setPos (0.55-(x*0.65), 0, 0.25+(x*0.3))),
-                    task.run (self.screen.destroy)
-                ),
-                task.sinusoid (lambda x: self.screen.setAlphaScale (1-x))
-            ))
+            #Buttons destroy
+            self.sound.setProp ('state',DGG.DISABLED)
+            self.keyboard.setProp ('state',DGG.DISABLED)
+            self.screen.setProp ('state',DGG.DISABLED)
+            self.back.setProp ('state',DGG.DISABLED)
 
-            self.state.tasks.add (task.parallel (
-                task.sequence (
+            #Movement task creation
+            self.move_task = task.sequence(
+                task.parallel(
                     task.sinusoid (lambda x: 
-                        self.back.setPos (0.45-(x*0.55), 0, (x*0.55))),
-                    task.run (self.back.destroy)
-                ),
-                task.sinusoid (lambda x: self.back.setAlphaScale (1-x))
-            ))
+                        self.sound.setPos (0.45-(x*0.55), 0, .8-(x*0.25))),
+                    task.sinusoid (lambda x: self.sound.setAlphaScale (1-x)),
                     
-            self.active = False
+                    task.sinusoid (lambda x: 
+                        self.keyboard.setPos (0.6-(x*0.7), 0, 0.55)),
+                    task.sinusoid (lambda x: self.keyboard.setAlphaScale (1-x)),
 
+                    task.sinusoid (lambda x: 
+                        self.screen.setPos (0.55-(x*0.65), 0, 0.3+(x*0.25))),
+                    task.sinusoid (lambda x: self.screen.setAlphaScale (1-x)),
+                    
+                    task.sinusoid (lambda x: 
+                        self.back.setPos (0.55-(x*0.65), 0, 0.05+(x*0.5))),
+                    task.sinusoid (lambda x: self.back.setAlphaScale (1-x))
+                ),
+                task.run (self.sound.destroy),
+                task.run (self.back.destroy),
+                task.run (self.keyboard.destroy),
+                task.run (self.screen.destroy)
+                )
+            #The option_menu is set as inactive 
+            self.active = False
+            
+            return self.move_task
             
     def do_paint_sound (self):
         pass
@@ -162,5 +164,10 @@ class OptionsMenu (object):
         pass
         
     def do_paint_screen (self):
-        pass
+        self.full_screen = DirectCheckButton(text = "Full screen" ,
+            pos = (.4, 0, -.5),
+            scale=.05,
+            #command=setText
+            )
+        
 
