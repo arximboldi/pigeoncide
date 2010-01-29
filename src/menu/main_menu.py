@@ -85,7 +85,7 @@ class MainMenu (object):
             task.run (self.options_menu.do_destroy),
             task.run (lambda: self.state.do_smile (1)),
             task.wait (1),
-            task.run (lambda: self.state.manager.change_state ('game'))
+            task.run (lambda: self.state.manager.leave_state ('game'))
         ))
         
         self.options["command"] = lambda: self.state.tasks.add (task.sequence (
