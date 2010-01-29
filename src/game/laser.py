@@ -101,7 +101,7 @@ class Stick (ModelEntity, StaticPhysicalEntity):
     def __init__ (self, *a, **k):
         super (Stick, self).__init__ (
             model = self.MODEL,
-            geometry = geom.box (1, 1, 1),
+            geometry = geom.box (5, 5, 50),
             *a, **k)
 
         self.model_position = Vec3 (0, 0, -5)

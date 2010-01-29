@@ -122,10 +122,10 @@ class GameQuit (LightGameState):
 
 class Game (GameState):
 
-    def do_setup (self, level_cls):
+    def do_setup (self, level):
         super (Game, self).do_setup ()
         
-        self.level = level_cls ()
+        self.level = level
         
         self.setup_panda ()
         self.level.setup_entities (self.entities)
@@ -258,5 +258,5 @@ class Game (GameState):
 
 
 class LoadGame (LoaderInterState):
-    data         = Level
+    load_data    = Level
     next_state   = Game

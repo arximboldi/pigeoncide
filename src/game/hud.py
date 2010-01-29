@@ -34,8 +34,9 @@ class Hud (Panda2dEntity):
         super (Hud, self).__init__ (*a, **k)
 
         self.font = loader.loadFont ('font/three-hours.ttf')
+        self.font.setPageSize (512, 512)
         self.font.setPixelsPerUnit (100)
-
+        
         self._next_position = Vec3 (0, 0, -.12)
         self.position = self.hud_position
         self._counter_nodes = []
