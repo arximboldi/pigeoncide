@@ -17,9 +17,30 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from base.signal import signal
+from base.log import get_log
+
+from ent.entity import SpatialEntity
 from ent.physical import StaticPhysicalEntity, DynamicPhysicalEntity
 from ent.panda import RelativeModelEntity, ModelEntity
+from ent.task import TaskEntity
 from base.signal import weak_slot
+
+from core.util import to_rad, normalize
+from phys import geom
+import physics
+from boy import Boy
+
+from pandac.PandaModules import Vec3
+import math
+
+
+_log = get_log (__name__)
+
+
+class Hittable (object):
+    hit_time = 0.0
+    on_hit   = signal ()
 
 class OwnedWeaponEntity (
     StaticPhysicalEntity,
@@ -31,34 +52,132 @@ class FreeWeaponEntity (
     ModelEntity):
     pass
 
-class WeaponEntity (Entity):
+class WeaponEntity (SpatialEntity, TaskEntity):
 
-    _owner    = None
+    weapon_model = ''
+
+    weapon_hit_delay   = 1.0
     
-    def __init__ (self, geom = None, hit_geom = None, *a, **k):
+    weapon_hit_force   = 10000
+    weapon_throw_force = 10000
+    
+    weapon_position = Vec3 (0, 0, 0)
+    weapon_hpr      = Vec3 (0, 0, 0)
+    weapon_scale    = Vec3 (0, 0, 0)
+
+    weapon_geom_owned = None
+    weapon_geom_free  = None
+    weapon_hit_radius = 1000
+
+    def __init__ (self, *a, **k):
         super (WeaponEntity, self).__init__ (*a, **k)
-        self._geom     = geom
-        self._hit_geom = hit_geom
+        self._hit_time = {}
+        self._timer = None
+        self._owner        = None
+        self._child_entity = None
+        self._make_free_entity ()
+        
+    def dispose (self):
+        if self._child_entity:
+            self._child_entity.dispose ()
+        super (WeaponEntity, self).dispose ()
+
+    def set_position (self, pos):
+        super (WeaponEntity, self).set_position (pos)
+        self._child_entity.position = pos
+
+    def _make_free_entity (self, *a, **k):
+        g = self.weapon_geom_free if self.weapon_geom_free \
+            else geom.mesh (self.weapon_model, scale = self.weapon_scale)
+        self._make_child_entity (FreeWeaponEntity,
+                                 geom = g,
+                                 category = physics.weapon_category,
+                                 *a, **k)
+        self._child_entity.on_collide += self.on_touch
+        
+    def _make_owned_entity (self, *a, **k):
+        g = self.weapon_geom_owned if self.weapon_geom_owned \
+            else geom.sphere (self.weapon_hit_radius)
+        self._make_child_entity (OwnedWeaponEntity,
+                                 geom = self.weapon_geom_owned,
+                                 collide  = physics.pigeon_category,
+                                 category = physics.null_category,
+                                 *a, **k)
+    
+    def _make_child_entity (self, entity_cls, *a, **k):
+        entity = entity_cls (entities = self.entities,
+                             model = self.weapon_model,
+                             *a, **k)
+        entity.model_hpr = self.weapon_hpr
+        entity.model_scale = self.weapon_scale
+        entity.model_position = self.weapon_position
+        entity.physics_hpr =  self.weapon_hpr
+        entity.physics_position = self.weapon_position
+
+        entity.enable_collision ()
+        self._child_entity = entity
 
     @weak_slot
-    def on_hit (self, ev, a, b):
-        pass
+    def on_touch (self, ev, me, other):
+        if isinstance (other, Boy):
+            self.set_owner (other)
 
-    def enable_hitting (self):
+    @weak_slot
+    def on_hit (self, ev, me, other):
+        """ Make sure that this gets executed on hittable only... """
+        _log.debug ("A weapon %s hitted a %s." % (str (me), str (other)))
+        if self._timer.elapsed - other.hit_time > self.weapon_hit_delay:
+            direction = normalize (other.position - self._owner.position)
+            other.add_force (
+                direction * self.weapon_hit_force * self._timer.delta)
+            other.on_hit (self)
+    
+    def do_update (self, timer):
+        super (WeaponEntity, self).do_update (self)
+        #print self._child_entity.position
+        self._timer = timer
+                
+    def start_hitting (self):
         if self._owner:
-            self.on_collide += self.on_hit
+            self._child_entity.on_collide += self.on_hit
 
-    def disable_hitting (self):
+    def finish_hitting (self):
         if self._owner:
-            self.on_collide -= self.on_hit
+            self._child_entity.on_collide -= self.on_hit
 
     def set_owner (self, owner):
-        self._owner = owner
-    
+        if self._owner or (owner and owner.add_weapon (self)):
+            self._child_entity.dispose ()    
+
+            if owner:
+                joint = owner.model.exposeJoint (None, 'modelRoot',
+                                                 'Bip01_R_Finger0')
+                self._make_owned_entity (parent_node = joint)
+                cx, cy, cz = self._child_entity.model_scale
+                sx, sy, sz = owner.model_scale
+                self._child_entity.model_scale = Vec3 (cx/sx, cy/sy, cz/sz) 
+                
+            if self._owner:
+                h, p, r = self._owner.hpr
+                h = to_rad (h)
+                self._make_free_entity ()
+                self._child_entity.add_force (Vec3 (math.sin(h), math.cos(h), 0)
+                                              * self.weapon_throw_force)
+                self._owner.del_weapon (self)
+                
+            self._owner = owner
+
     def get_owner (self):
         return self._owner
 
     owner = property (get_owner, set_owner)
 
-class BaseballBat (WeaponEntityBase):
-    pass
+
+class BaseballBat (WeaponEntity):
+
+    weapon_model    = 'obj/baseball-bat.egg'
+
+    weapon_free_geom = geom.capsule (5, 20)
+    weapon_scale    = Vec3 (.3, .3, .3)
+    weapon_position = Vec3 (-2, -5, 1)
+    weapon_hpr      = Vec3 (0, -90, 0)

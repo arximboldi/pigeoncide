@@ -29,10 +29,10 @@ from pigeon import Pigeon
 from flock import make_random_flock
 from loader import LoaderData
 from sky import SkyEntity
+import physics
+import weapon
 
 import random
-
-level_physics_category = 0x0002
 
 class LevelEntity (
     StaticPhysicalEntity,
@@ -97,7 +97,7 @@ class Level (LoaderData):
     offset      = Vec3 (0, 0, 0)
     sky         = 'sky/green-sky.egg'
     sky_scale   = 1000.
-    spawn_spots = [ (Vec3 (0, 70, 20), 0) ]
+    spawn_spots = [ (Vec3 (0, 0, 20), 0) ]
     flocks_def  = [ 20 ]
     max_time    = 120.
     max_sticks  = 4
@@ -114,7 +114,7 @@ class Level (LoaderData):
         self.level = LevelEntity (entities = entities,
                                   model    = self.model,
                                   geometry = geom.mesh (self.geometry),
-                                  category = level_physics_category)
+                                  category = physics.level_category)
         self.level.position = self.offset
 
     def setup_sky (self, entities):
@@ -139,7 +139,13 @@ class Level (LoaderData):
         self.do_cleanup ()
     
     def do_setup_entities (self, entities):
-        """ Override this """
+        """
+        Override this.
+        TODO: A nicer way to express the lights and weapons.
+        """
+        wep0 = weapon.BaseballBat (entities = entities)
+        wep0.position = Vec3 (0, 0, 20)
+        
         self.level.model.setTexture (loader.loadTexture ('lvl/grass.png'))
         
         plightnode = PointLight ("point light")

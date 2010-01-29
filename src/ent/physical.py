@@ -32,6 +32,7 @@ import phys.geom as geom
 
 from base.signal import Signal, weak_slot
 
+default_category = 0x0001
 
 class PhysicalEntityManager (EntityManager):
 
@@ -69,7 +70,7 @@ class PhysicalEntityBase (SpatialEntity):
     def __init__ (self,
                   entities = None,
                   geometry = geom.box (1, 1, 1),
-                  category = 0x0001,
+                  category = default_category,
                   collide  = 0xffff,
                   *a, **k):
         super (PhysicalEntityBase, self).__init__ (

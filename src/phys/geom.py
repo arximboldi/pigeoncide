@@ -30,8 +30,9 @@ def node (model, space):
     return OdeTriMeshGeom (space, OdeTriMeshData (model, False))
 
 @delayed
-def mesh (model, space):
+def mesh (model, space, scale = Vec3 (1, 1, 1)):
     cg_model = loader.loadModel (model)
+    cg_model.setScale (scale)
     return OdeTriMeshGeom (space,
                            OdeTriMeshData (cg_model, False))
 

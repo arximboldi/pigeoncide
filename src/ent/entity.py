@@ -47,10 +47,9 @@ class EntityManager (Selfable):
         self.entities = []
     
     def dispose (self):
-        for x in list (self.entities):
-            x.dispose ()
-        self.entities = []
-    
+        while self.entities:
+            self.entities [0].dispose ()
+            
     def _add_entity (self, ent):
         self.entities.append (ent)
 
@@ -65,7 +64,7 @@ class Entity (object):
         super (Entity, self).__init__ (*a, **k)
         self._entities = weakref.ref (entities)
         entities._add_entity (self)
-
+                
     @property
     def entities (self):
         return self._entities ()
@@ -73,8 +72,8 @@ class Entity (object):
     def dispose (self):
         _log.debug ("Disposing entity: %s" % self)
         self.entities._del_entity (self)
-
-
+        
+    
 class DelegateEntity (Entity):
 
     def __init__ (self,

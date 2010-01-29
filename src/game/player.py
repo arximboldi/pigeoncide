@@ -19,11 +19,16 @@
 
 import math
 
+from direct.interval.IntervalGlobal import *
+
 from base.signal import signal
 
 from base.sender import AutoReceiver
 from core.util import *
-from ent.entity import *
+from core import task
+
+from ent.entity import Entity
+from ent.task import TaskEntity
 from ent.physical import (StandingPhysicalEntity,
                           DelegateStandingPhysicalEntity)
 from ent.panda import ActorEntity, DelegateActorEntity
@@ -32,30 +37,32 @@ from pandac.PandaModules import Vec3
 import laser
 import math
 
-is_running        = 0x0001
-is_forward        = 0x0002
-is_feeding        = 0x0004
-is_idle           = 0x0008
-is_backward       = 0x0020
-is_strafe_l       = 0x0040
-is_strafe_r       = 0x0080
+is_running        = 1
+is_forward        = 1 << 2
+is_feeding        = 1 << 3
+is_backward       = 1 << 5
+is_strafe_l       = 1 << 6
+is_strafe_r       = 1 << 7
+is_jump           = 1 << 8
+is_hit            = 1 << 9
 
-
-class PlayerEntityBase (Entity):
+class PlayerEntityBase (TaskEntity):
     """
     Incomplete mixing requiring:
     - StandingPhisicalEntity
     - ModelPhysicalEntity
     """
 
-    anim_run   = 'run'
-    anim_walk  = 'walk'
-    anim_stand = 'idle'
+    animations = [ (is_hit,      'hit'),
+                   (is_running,  'run'),
+                   (is_forward,  'walk'),
+                   (is_backward, 'walk'),
+                   (0,           'idle') ]
 
     force              = 10000.0
     bw_force           = 10000.0
     strafe_force       = 10000.0
-    jump_force         = 150000.0
+    jump_force         = 3000.0
     
     max_rotate_speed   = 2.0
     max_run_speed      = 60
@@ -69,7 +76,47 @@ class PlayerEntityBase (Entity):
         self.angle    = 0
         self.actions  = 0x0
         self.laser    = laser.Group (self.entities)
-        self.model.loop (self.anim_stand)
+        
+        self._anim_interval = None
+        self._curr_anim     = 'idle'
+        self.update_animation ()
+        
+    def update_animation (self, loop = True):
+        for state, anim in self.animations:
+            if self.actions & state == state:
+                self.change_animation (anim, loop)
+                break
+    
+    def change_animation (self, anim, loop = True):
+        if anim != self._curr_anim:
+            if self._anim_interval:
+                self._anim_interval.finish ()
+            interv = self.model.actorInterval (anim)
+            if loop:
+                interv.loop ()
+            else:
+                interv = Sequence (interv, Func (self.update_animation))
+                interv.start ()
+            self._anim_interval = interv
+            self._curr_anim = anim
+
+    def start_action (self, action, loop = True):
+        self.actions |= action
+        self.update_animation (loop)
+
+    def stop_action (self, action, loop = True):
+        self.actions &= ~action
+        self.update_animation (loop)
+
+    def test_action (self, action):
+        return self.actions & action == action
+    
+    def do_update (self, timer):
+        super (PlayerEntityBase, self).do_update (timer)
+        if self.actions & is_jump:
+            self.add_force (Vec3 (0, 0, 1) * self.jump_force / timer.delta)
+            self.is_on_floor_timer = 0.
+            self.actions &= ~ is_jump
 
     def get_stick_position (self):
         direction = Vec3 (math.sin (self.angle), math.cos (self.angle), 0)
@@ -82,52 +129,42 @@ class PlayerEntityBase (Entity):
             stick.position = self.get_stick_position ()
             stick.hpr = self.hpr
             self.laser.add_stick (stick)
+
+    def on_hit_down (self):
+        # HACK! HACK! HACK! Technically we don't know here that we
+        # are working throu a delegate
+        weapon = self.delegate.weapon
+
+        if not self.test_action (is_hit) and weapon:
+            weapon.start_hitting ()
+            self.start_action (is_hit, False)
+            self.entities.tasks.add (task.sequence (
+                task.wait (1.),
+                task.run (weapon.finish_hitting),
+                task.run (lambda: self.stop_action (is_hit))))    
     
-    @property
-    def is_moving (self):
-        return (self.actions & is_forward)  or \
-               (self.actions & is_backward) or \
-               (self.actions & is_strafe_r) or \
-               (self.actions & is_strafe_l)
-
-    def animate_movement (self):
-        self.model.loop (self.anim_run
-                         if self.actions & is_running
-                         else self.anim_walk)
-
     def on_jump_down (self):
         if self.is_on_floor:
-            self.add_force (Vec3 (0, 0, 1) * self.jump_force)
-            self.is_on_floor_timer = 0.
-        
+            self.start_action (is_jump)
+                
     def on_run_down (self):
-        self.actions |= is_running
-        if self.is_moving:
-            self.model.loop (self.anim_run)
+        self.start_action (is_running)
         
     def on_run_up (self):
-        self.actions &= ~ is_running
-        if self.is_moving:
-            self.model.loop (self.anim_walk)
-            
+        self.stop_action (is_running)
+        
     def on_move_forward_down (self):
-        self.actions |= is_forward
-        self.animate_movement ()
+        self.start_action (is_forward)
         
     def on_move_forward_up (self):
-        self.actions &= ~ is_forward
-        if not self.is_moving:
-            self.model.loop (self.anim_stand)
+        self.stop_action (is_forward)
         
     def on_move_backward_down (self):
-        self.actions |= is_backward
-        self.animate_movement ()
+        self.start_action (is_backward)
 
     def on_move_backward_up (self):
-        self.actions &= ~ is_backward
-        if not self.is_moving:
-            self.model.loop (self.anim_stand)
-    
+        self.stop_action (is_backward)
+        
     def on_steer_left (self, timer):
         self.angle -= timer.delta * self.max_rotate_speed
         
@@ -141,22 +178,16 @@ class PlayerEntityBase (Entity):
         self._do_force (timer, self.bw_force, math.pi)
 
     def on_strafe_right_down (self):
-        self.actions |= is_strafe_r
-        self.animate_movement ()
+        self.start_action (is_strafe_r)
 
     def on_strafe_right_up (self):
-        self.actions &= ~ is_strafe_r
-        if not self.is_moving:
-            self.model.loop (self.anim_stand)
+        self.stop_action (is_strafe_r)
 
     def on_strafe_left_down (self):
-        self.actions |= is_strafe_l
-        self.animate_movement ()
+        self.start_action (is_strafe_l)
 
     def on_strafe_left_up (self):
-        self.actions &= ~ is_strafe_l
-        if not self.is_moving:
-            self.model.loop (self.anim_stand)
+        self.stop_action (is_strafe_l)
         
     def on_strafe_left (self, timer):
         self._do_force (timer, self.strafe_force, -math.pi/2)

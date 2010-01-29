@@ -34,6 +34,8 @@ import phys.mass as mass
 from flock import BoidParams, BoidEntity, FlockEntity
 from kill import KillableEntity
 from crawler import CrawlerEntityDecorator
+from weapon import Hittable
+from physics import pigeon_category
 
 import random
 import weakref
@@ -42,7 +44,8 @@ from pandac.PandaModules import Vec3
 class Pigeon (BoidEntity,
               ModelEntity,
               KillableEntity,
-              StateManager):
+              StateManager,
+              Hittable):
 
     MODEL = 'char/pigeon-anims.egg'
     ANIMS = { 'walk'    : 'char/pigeon-walk.egg',
@@ -59,6 +62,7 @@ class Pigeon (BoidEntity,
             geometry = geom.capsule (2, 1),
             mass     = mass.sphere (1, 2),
             model    = model,
+            category = pigeon_category,
             *a, **k)
 
         self.on_death += self.on_pigeon_death

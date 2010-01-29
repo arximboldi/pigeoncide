@@ -114,7 +114,7 @@ class RelativePandaEntityBase (TaskEntity):
 
     def __init__ (self, parent_node = None, *a, **k):
         self._parent_node = parent_node
-        super (RelativePandaEntityBase, self).__init__ (self, *a, **k)
+        super (RelativePandaEntityBase, self).__init__ (*a, **k)
 
     def set_parent_node (self, node):
         self.node.reparentTo (node)
@@ -127,7 +127,7 @@ class RelativePandaEntityBase (TaskEntity):
         pass
 
     def do_update (self, timer):
-        super (RelativePandaEntity, self).do_update (timer)
+        super (RelativePandaEntityBase, self).do_update (timer)
 
         old_position = self._node.getPos ()
         old_scale    = self._node.getScale ()

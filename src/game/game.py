@@ -49,6 +49,7 @@ PLAYER_INPUT_MAP = {
     'on_steer_right'   : 'panda-l',
     'on_jump'          : 'panda-space',
     'on_run'           : 'panda-c',
+    'on_hit'           : 'panda-e',
     'on_place_stick'   : 'panda-q',
     'on_steer'         : 'panda-mouse-move',
 }
@@ -212,7 +213,7 @@ class Game (GameState):
         self.hud = Hud (entities = self.entities)
         self.hud.add_counter ('clock',   'hud/clock.png')
         self.hud.add_counter ('pigeons', 'hud/pigeon.png')
-        self.hud.add_counter ('sticks',  'hud/pigeon.png')
+        self.hud.add_counter ('sticks',  'hud/stick.png')
         self.hud.hide ()
     
     def setup_logic (self):

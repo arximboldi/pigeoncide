@@ -26,6 +26,7 @@ from phys import geom
 from phys import mass
 
 from kill import KillableEntity
+import weakref
 
 class Boy (ObservableSpatialEntity,
            ActorEntity,
@@ -49,3 +50,13 @@ class Boy (ObservableSpatialEntity,
         self.model_position = Vec3 (.0, .0, -4.0)
         self.model_scale = Vec3 (.1, .1, .1)
         self.enable_collision ()
+        self.weapon = None
+        
+    def add_weapon (self, weapon):
+        if self.weapon:
+            return False
+        self.weapon = weakref.proxy (weapon)
+        return True
+    
+    def del_weapon (self, weapon):
+        self.weapon = None

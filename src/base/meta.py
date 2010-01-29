@@ -17,7 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from util import memoize
+from util import memoize, nop
 
 class Mockup (object):
 
@@ -64,7 +64,7 @@ def monkeypatch_extend (target, name = None):
 
 def instance_decorator (decorator):
     class Decorator (object):
-        def __init__ (self, func, *args, **kws):
+        def __init__ (self, func = nop, *args, **kws):
             self.__name__ = func.__name__
             self.__doc__ = func.__doc__
             self._func = func

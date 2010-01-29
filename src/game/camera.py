@@ -26,7 +26,7 @@ from base.util import bound
 from ent.observer import SpatialEntityListener
 from ent.entity import SpatialEntity, Entity
 
-from level import level_physics_category
+from physics import level_category
 
 import math
 import weakref
@@ -113,7 +113,7 @@ class FastEntityFollower (EntityFollowerBase):
 
         ray = OdeRayGeom (self.distance)
         ray.set (position + self.contact_off, - direction)
-        ray.setCollideBits (level_physics_category)
+        ray.setCollideBits (level_category)
         ray.setCategoryBits (0)
         result = physics.collide_world (ray)
         
