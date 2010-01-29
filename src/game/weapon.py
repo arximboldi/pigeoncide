@@ -47,3 +47,6 @@ class WeaponEntityBase (Entity):
         return self._owner
 
     owner = property (get_owner, set_owner)
+
+class BaseballBat (WeaponEntityBase):
+    pass

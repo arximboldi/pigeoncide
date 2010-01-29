@@ -72,7 +72,13 @@ class PandaEntityManager (EntityManager):
 
 
 class PandaEntityBase (SpatialEntity):
-
+    """
+    TODO: Here 'Base' in the name doesn't have the same meaning as in
+    the rest of the entities, where it reflects the common behaviour
+    to both Decorator or actual instance versions... Here it is just
+    to be able to parametrize wether it is a 2D or 3D entity.
+    """
+    
     def __init__ (self,
                   entities  = None,
                   node_name = 'entity',
@@ -104,18 +110,50 @@ class PandaEntityBase (SpatialEntity):
         return snd
 
 
-# class RelativePandaEntity (PandaEntityBase, TaskEntity):
+class RelativePandaEntityBase (TaskEntity):
 
-#     def __init__ (self, parent_node = None, *a, **k):
-#         self._parent_node = parent_node
-#         super (RelativePandaEntityBase, self)
+    def __init__ (self, parent_node = None, *a, **k):
+        self._parent_node = parent_node
+        super (RelativePandaEntityBase, self)
+
+    def set_parent_node (self, node):
+        self.node.reparentTo (node)
+        self._parent_node = node
         
-#     def get_parent_node ():
-#         return self._parent_node
+    def get_parent_node (self):
+        return self._parent_node
 
-#     def do_update (self, timer):
-#         super (RelativePandaEntity, self).do_update (timer):
-#             self.position = self._node.get
+    def get_root_node (self):
+        pass
+
+    def do_update (self, timer):
+        super (RelativePandaEntity, self).do_update (timer)
+
+        old_position = self._node.getPos ()
+        old_scale    = self._node.getScale ()
+        old_hpr      = self._node.getHpr ()
+        
+        self.node.wrtReparentTo (self.get_root_node ())
+        self.position = self._node.getPos ()
+        self.scale    = self._node.getScale ()
+        self.hpr      = self._node.getHpr ()
+
+        self._node.reparentTo (self._parent_node)
+        self._node.setPos (old_position)
+        self._node.setHpr (old_hpr)
+        self._node.setScale (old_scale)
+
+
+class RelativePandaEntity (RelativePandaEntityBase):
+
+    def get_root_node (self):
+        return self.entities.render
+
+
+class RelativePanda2dEntity (RelativePandaEntityBase):
+
+    def get_root_node (self):
+        return self.entities.render2d
 
 
 class NormalPandaEntityBase (PandaEntityBase):
@@ -153,8 +191,12 @@ class DelegatePandaEntity (DelegateSpatialEntity):
         return self.delegate.node
 
 
-class ModelEntityBase (PandaEntity):
-
+class ModelEntityBase (PandaEntityBase):
+    """
+    TODO: Rethink why not to merge this into PandaEntity and solve a
+    lot of trouble in the way.
+    """
+    
     @property
     def model (self):
         return self._model
@@ -182,7 +224,7 @@ class ModelEntityBase (PandaEntity):
     model_scale    = property (get_model_scale,    set_model_scale)
 
 
-class ModelEntity (ModelEntityBase):
+class ModelEntityImpl (ModelEntityBase):
 
     def __init__ (self,
                   model = None,
@@ -193,7 +235,17 @@ class ModelEntity (ModelEntityBase):
         self._model.reparentTo (self._node)
 
 
-class ActorEntity (ModelEntityBase):
+class RelativeModelEntity (
+    ModelEntityImpl,
+    RelativePandaEntity)
+
+
+class ModelEntity (
+    ModelEntityImpl,
+    PandaEntity)
+
+
+class ActorEntityImpl (ModelEntityBase):
 
     def __init__ (self,
                   model = None,
@@ -204,6 +256,16 @@ class ActorEntity (ModelEntityBase):
         self._model = Actor (loader.loadModel (model), anims)
         self._model.loadAnims (anims)
         self._model.reparentTo (self._node)
+
+
+class RelativeActorEntity (
+    ActorEntityImpl,
+    RelativePandaEntity)
+
+
+class ActorEntity (
+    ActorEntityImpl,
+    PandaEntity)
 
 
 class DelegateModelEntity (DelegatePandaEntity):
