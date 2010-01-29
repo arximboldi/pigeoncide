@@ -18,7 +18,10 @@
 #
 
 
-from pandac.PandaModules import Vec3, OdeRayGeom, OdeSphereGeom, OdeCappedCylinderGeom
+from pandac.PandaModules import (
+    Vec3, OdeRayGeom, OdeSphereGeom, OdeCappedCylinderGeom)
+
+from core import task
 from base.util import bound
 from ent.observer import SpatialEntityListener
 from ent.entity import SpatialEntity, Entity
@@ -50,6 +53,28 @@ class FastEntityFollower (EntityFollowerBase):
     contact_dist = 5
     contact_off  = Vec3 (0, 0, -5)
     control_angle = False
+
+    _spin_task   = None
+    
+    def loop_angle (self, *a, **k):
+        if self._spin_task:
+            self._spin_task.kill ()
+
+        self._spin_task = self.entities.tasks.add (
+            task.linear (self.set_angle, self.angle, self.angle + 2. * math.pi,
+                         loop = True, *a, **k))
+
+    def restore_angle (self, *a, **k):
+        if self._spin_task:
+            self._spin_task.kill ()
+        self._spin_task = self.entities.tasks.add (
+            task.sinusoid (self.set_angle, self.angle, 0.))
+    
+    def set_angle (self, val):
+        self.angle = val
+
+    def set_hangle (self, val):
+        self.hangle = val
     
     def on_zoom_in (self):
         self.distance += self.delta_dist
@@ -140,7 +165,6 @@ class SlowEntityFollower (EntityFollowerBase):
         super (SlowEntityFollower, self).handle_connect (entity)
 
         if isinstance (entity, SpatialEntity):
-            print entity
             targetpos = entity.position
             targethpr = entity.hpr
             

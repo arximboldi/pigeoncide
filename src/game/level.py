@@ -41,46 +41,66 @@ class LevelEntity (
 
 class Level (LoaderData):
     
-    load_models   = [ 'mesh/boy.egg',
-                      'mesh/boy-walk.egg',
-                      'mesh/boy-feed.egg',
-                      'mesh/boy-hit.egg',
-                      'mesh/boy-run.egg',
-                      'mesh/stick_arch_sub.x',
-                      'mesh/pigeon.x' ]
+    load_models   = [ 'char/boy-anims.egg',
+                      'char/boy-walk.egg',
+                      'char/boy-feed.egg',
+                      'char/boy-hit.egg',
+                      'char/boy-run.egg',
+                      'char/pigeon-anims.egg',
+                      'char/pigeon-walk.egg',
+                      'char/pigeon-takeoff.egg',
+                      'char/pigeon-land.egg',
+                      'char/pigeon-idle.egg',
+                      'char/pigeon-fly.egg',
+                      'obj/stick.egg',
+                      'obj/stick-hl.egg',
+                      'obj/baseball-bat.egg' ]
     
-    load_textures = [ 'mesh/boy_texture.png',
-                      'mesh/boy_texture-glow.png',
-                      'mesh/pigeon.png',
-                      'mesh/pigeon-glow.png',
-                      'sky/1.png',
-                      'sky/2.png',
-                      'sky/3.png',
-                      'sky/4.png',
-                      'sky/5.png',
-                      'sky/6.png',
-                      'sky/1-glow.png',
-                      'sky/2-glow.png',
-                      'sky/3-glow.png',
-                      'sky/4-glow.png',
-                      'sky/5-glow.png',
-                      'sky/6-glow.png' ]
+    load_textures = [ 'char/boy.png',
+                      'char/boy-glow.png',
+                      'char/pigeon.png',
+                      'char/pigeon-glow.png',
+                      'sky/green-1.png',
+                      'sky/green-2.png',
+                      'sky/green-3.png',
+                      'sky/green-4.png',
+                      'sky/green-5.png',
+                      'sky/green-6.png',
+                      'sky/green-1-glow.png',
+                      'sky/green-2-glow.png',
+                      'sky/green-3-glow.png',
+                      'sky/green-4-glow.png',
+                      'sky/green-5-glow.png',
+                      'sky/green-6-glow.png',
+                      'obj/baseball-bat.png',
+                      'obj/baseball-bat-glow.png',
+                      'obj/black.png',
+                      'obj/stick.png',
+                      'obj/stick-hl.png',
+                      'obj/stick-glow.png',
+                      'obj/stick-hl-glow.png',
+                      'hud/pigeon.png',
+                      'hud/clock.png' ]
     
-    load_sounds = [ 'snd/electrocute_medium.wav',
-                    'snd/electrocute_short.wav',
-                    'snd/electrocute_very_long.wav' ]
+    load_sounds = [ 'snd/humdrak.mp3',
+                    'snd/electrocute-medium.wav',
+                    'snd/electrocute-short.wav',
+                    'snd/electrocute-long.wav' ]
     
-    load_fonts  = []
+    load_fonts  = [ 'font/gilles.ttf',
+                    'font/three-hours.ttf',
+                    'font/alte-bold.ttf' ]
     
     music       = 'snd/houmdrak.mp3'
-    model       = 'mesh/cloud.x'
-    geometry    = 'mesh/cloud.x'
+    model       = 'lvl/cloud.egg'
+    geometry    = 'lvl/cloud.egg'
     offset      = Vec3 (0, 0, 0)
-    sky         = 'sky/boxsky.egg'
+    sky         = 'sky/green-sky.egg'
     sky_scale   = 1000.
     spawn_spots = [ (Vec3 (0, 70, 20), 0) ]
     flocks_def  = [ 20 ]
     max_time    = 60.
+    max_sticks  = 4
     flocks      = []
     
     def setup_entities (self, entities):
@@ -120,7 +140,7 @@ class Level (LoaderData):
     
     def do_setup_entities (self, entities):
         """ Override this """
-        self.level.model.setTexture (loader.loadTexture ('sky/south-epo.png'))
+        self.level.model.setTexture (loader.loadTexture ('lvl/grass.png'))
         
         plightnode = PointLight ("point light")
         plightnode.setAttenuation (Vec3 (1, 0.0000005, 0.0000001))

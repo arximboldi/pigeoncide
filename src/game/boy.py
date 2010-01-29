@@ -32,12 +32,12 @@ class Boy (ObservableSpatialEntity,
            StandingPhysicalEntity,
            KillableEntity):
 
-    MODEL = 'mesh/boy.egg'
-    ANIMS = { 'run'  : 'mesh/boy-run.egg',
-              'walk' : 'mesh/boy-walk.egg',
-              'idle' : 'mesh/boy-idle.egg',
-              'feed' : 'mesh/boy-feed.egg',
-              'hit'  : 'mesh/boy-feed.egg' }
+    MODEL = 'char/boy-anims.egg'
+    ANIMS = { 'run'  : 'char/boy-run.egg',
+              'walk' : 'char/boy-walk.egg',
+              'idle' : 'char/boy-idle.egg',
+              'feed' : 'char/boy-feed.egg',
+              'hit'  : 'char/boy-hit.egg' }
         
     def __init__ (self, model = MODEL, *a, **k):
         super (Boy, self).__init__ (geometry = geom.capsule (1.0, 7.0),
@@ -52,7 +52,8 @@ class Boy (ObservableSpatialEntity,
         
         hand_joint = self.model.exposeJoint (
             None, 'modelRoot', 'Bip01_R_Finger0')
-        weapon = loader.loadModel ('mesh/baseball_bat.x')
+        weapon = loader.loadModel ('obj/baseball-bat.egg')
         weapon.reparentTo (hand_joint)
-        weapon.setScale (100., 100., 100.)
-        weapon.setHpr (120, 0, 0)
+        weapon.setScale (2., 2., 2.)
+        weapon.setPos (-2, -5, 1)
+        weapon.setHpr (0, -90, 0)

@@ -19,6 +19,8 @@
 
 import math
 
+from base.signal import signal
+
 from base.sender import AutoReceiver
 from core.util import *
 from ent.entity import *
@@ -30,7 +32,7 @@ from pandac.PandaModules import Vec3
 import laser
 import math
 
-is_walking        = 0x0001
+is_running        = 0x0001
 is_forward        = 0x0002
 is_feeding        = 0x0004
 is_idle           = 0x0008
@@ -53,12 +55,14 @@ class PlayerEntityBase (Entity):
     force              = 10000.0
     bw_force           = 10000.0
     strafe_force       = 10000.0
-    jump_force         = 10000.0
+    jump_force         = 150000.0
     
     max_rotate_speed   = 2.0
     max_run_speed      = 60
     max_walk_speed     = 30
     steer_speed        = 0.01
+
+    can_place_stick    = True
     
     def __init__ (self, *a, **k):
         super (PlayerEntityBase, self).__init__ (*a, **k)
@@ -66,16 +70,19 @@ class PlayerEntityBase (Entity):
         self.actions  = 0x0
         self.laser    = laser.Group (self.entities)
         self.model.loop (self.anim_stand)
-                
-    def on_place_stick_down (self):
-        stick = laser.Stick (entities = self.entities)
+
+    def get_stick_position (self):
         direction = Vec3 (math.sin (self.angle), math.cos (self.angle), 0)
+        return self.position + direction * 5
 
-        stick.position = self.position + direction * 5
-        stick.hpr = self.hpr
-
-        self.laser.add_stick (stick)
-        
+    @signal
+    def on_place_stick_down (self):
+        if self.can_place_stick:
+            stick = laser.Stick (entities = self.entities)
+            stick.position = self.get_stick_position ()
+            stick.hpr = self.hpr
+            self.laser.add_stick (stick)
+    
     @property
     def is_moving (self):
         return (self.actions & is_forward)  or \
@@ -84,19 +91,24 @@ class PlayerEntityBase (Entity):
                (self.actions & is_strafe_l)
 
     def animate_movement (self):
-        self.model.loop (self.anim_walk
-                         if self.actions & is_walking
-                         else self.anim_run)
+        self.model.loop (self.anim_run
+                         if self.actions & is_running
+                         else self.anim_walk)
 
-    def on_walk_down (self):
-        self.actions |= is_walking
-        if self.is_moving:
-            self.model.loop (self.anim_walk)
+    def on_jump_down (self):
+        if self.is_on_floor:
+            self.add_force (Vec3 (0, 0, 1) * self.jump_force)
+            self.is_on_floor_timer = 0.
         
-    def on_walk_up (self):
-        self.actions &= ~ is_walking
+    def on_run_down (self):
+        self.actions |= is_running
         if self.is_moving:
             self.model.loop (self.anim_run)
+        
+    def on_run_up (self):
+        self.actions &= ~ is_running
+        if self.is_moving:
+            self.model.loop (self.anim_walk)
             
     def on_move_forward_down (self):
         self.actions |= is_forward
@@ -161,9 +173,9 @@ class PlayerEntityBase (Entity):
         velocity     = self.linear_velocity
         vel_on_dir   = direction * velocity.dot (direction)
 
-        speed_limit  = self.max_walk_speed \
-                       if self.actions & is_walking \
-                       else self.max_run_speed 
+        speed_limit  = self.max_run_speed \
+                       if self.actions & is_running \
+                       else self.max_walk_speed 
 
         if vel_on_dir.lengthSquared () < speed_limit ** 2:
             self.add_force (direction * force)

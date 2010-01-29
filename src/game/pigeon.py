@@ -44,8 +44,12 @@ class Pigeon (BoidEntity,
               KillableEntity,
               StateManager):
 
-    MODEL = '../data/mesh/pigeon-old.x'
-    ANIMS = {}
+    MODEL = 'char/pigeon-anims.egg'
+    ANIMS = { 'walk'    : 'char/pigeon-walk.egg',
+              'fly'     : 'char/pigeon-fly.egg',
+              'takeoff' : 'char/pigeon-takeoff.egg',
+              'land'    : 'char/pigeon-land.egg',
+              'idle'    : 'char/pigeon-idle.egg' }
     
     def __init__ (self,
                   model = MODEL,
@@ -65,13 +69,14 @@ class Pigeon (BoidEntity,
         
         # Fix model coordinates
         self.model_position = Vec3 (0, 0, -2)
-        self.model_scale    = Vec3 (0.05, 0.05, 0.05)
+        self.model_scale    = Vec3 (0.08, 0.08, 0.08)
         self.model_hpr      = Vec3 (180, 0, 0)
-
+        # self.model.setTexture (loader.loadTexture ('obj/black.png'))
+        
         # Sounds
         self.die_sounds = map (self.load_sound,
-                               [ 'snd/electrocute_medium.wav',
-                                 'snd/electrocute_short.wav' ])
+                               [ 'snd/electrocute-medium.wav',
+                                 'snd/electrocute-short.wav' ])
 
         # Setup AI state machine
         self.add_state ('patrol', PatrolState)

@@ -230,7 +230,7 @@ class FadeTask (Task):
 
     def do_update (self, timer):
         super (FadeTask, self).do_update (timer)
-        self.func (self.curr)
+        self.func (self.curr / self.duration)
         self.curr += timer.delta / self.duration
 
         if self.curr >= self.duration:
@@ -264,7 +264,8 @@ def linear (f, min, max, *a, **k):
     return fade (lambda x: f (util.linear (min, max, x)), *a, **k)
 
 def sinusoid (f, min = 0.0, max = 1.0, *a, **k):
-    return fade (lambda x: f (min + max * math.sin (x * math.pi / 2.)), *a, **k)
+    return fade (
+        lambda x: f (min + (max - min) * math.sin (x * math.pi / 2.)), *a, **k)
 
 def run (func):
     return FuncTask (lambda t: None if func () else None)

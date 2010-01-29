@@ -19,6 +19,7 @@
 
 from entity import *
 from task import TaskEntity
+
 from core.util import *
 from core.task import TaskError
 
@@ -29,7 +30,7 @@ from phys.physics import Physics
 import phys.mass as mass
 import phys.geom as geom
 
-from base.signal import Signal
+from base.signal import Signal, weak_slot
 
 
 class PhysicalEntityManager (EntityManager):
@@ -304,9 +305,30 @@ class StandingPhysicalEntityBase (TaskEntity):
     def __init__ (self, *a, **k):
         super (StandingPhysicalEntityBase, self).__init__ (*a, **k)
         self.angle = 0
+        self.enable_collision ()
+        self.on_collide += self.on_standing_collide
+        self._is_on_floor = False
+        self.is_on_floor_timer = 0.
         
+    @property
+    def is_on_floor (self):
+        return self._is_on_floor
+    
+    @weak_slot
+    def on_standing_collide (self, ev, me, other):
+        pos = ev.getContactPoint (0)
+        if pos.getZ () < self.position.getZ ():
+            self._is_on_floor = True
+            self.is_on_floor_timer = 0.3
+    
     def do_update (self, timer):
         self.update_standing ()
+
+        self.is_on_floor_timer -= timer.delta
+        if self.is_on_floor_timer < 0.0:
+            self.is_on_floor_timer = 0.0
+            self._is_on_floor = False
+            
         super (StandingPhysicalEntityBase, self).do_update (timer)
 
     def update_standing (self):
@@ -323,8 +345,8 @@ class StandingPhysicalEntityBase (TaskEntity):
 
 
 class StandingPhysicalEntity (
-    DynamicPhysicalEntity,
-    StandingPhysicalEntityBase):
+    StandingPhysicalEntityBase,
+    DynamicPhysicalEntity):
     pass
 
 
@@ -335,11 +357,23 @@ class StandingPhysicalEntityDecorator (
 
 class DelegateStandingPhysicalEntity (DelegateDynamicPhysicalEntity):
 
+    @property
+    def is_on_floor (self):
+        return self.delegate.is_on_floor
+
     def _set_angle (self, angle):
         self.delegate.angle = angle
 
     def _get_angle (self):
         return self.delegate.angle
 
+    def _set_is_on_floor_timer (self, is_on_floor_timer):
+        self.delegate.is_on_floor_timer = is_on_floor_timer
+
+    def _get_is_on_floor_timer (self):
+        return self.delegate.is_on_floor_timer
+
+    is_on_floor_timer = property (_get_is_on_floor_timer,
+                                  _set_is_on_floor_timer)
     angle = property (_get_angle, _set_angle)
 

@@ -48,7 +48,7 @@ PLAYER_INPUT_MAP = {
     'on_steer_left'    : 'panda-k',
     'on_steer_right'   : 'panda-l',
     'on_jump'          : 'panda-space',
-    'on_walk'          : 'panda-c',
+    'on_run'           : 'panda-c',
     'on_place_stick'   : 'panda-q',
     'on_steer'         : 'panda-mouse-move',
 }
@@ -68,7 +68,7 @@ class GameIntro (LightGameState):
 
     def do_setup (self):
         self.black = ui.ImageEntity (entities = self.entities,
-                                     image = 'tex/black.png')
+                                     image    = 'obj/black.png')
         self.black.alpha = 1.0
         self.black.fade_out ()
         
@@ -88,21 +88,36 @@ class GameIntro (LightGameState):
         self.help_text = ui.TextEntity (
             entities = self.entities,
             font     = 'font/alte-regular.ttf',
-            fg       = (1, 1, 0, .3),
+            fg       = (1, 1, 0, .9),
             pos      = (0, -.9),
             scale    = 0.05,
             text     = 'Press enter to continue...')
         
-        self.help_text.fade_in (duration = 2)
-        self.text.fade_in (duration = 2)
+        self.help_text.fade_in (duration = 1)
+        self.text.fade_in (duration = 1)
 
         self.events.event ('panda-enter').connect (self.finish_intro)
         self.events.event ('panda-escape').connect (self.kill)
         self.events.event ('panda-escape').connect (self.parent_state.kill)
+
+        self.parent_state.camera_ctl.loop_angle (duration = 4.)
         
     def finish_intro (self):
         self.help_text.fade_out ()
         self.text.fade_out ().add_next (task.run (self.kill))
+        self.parent_state.camera_ctl.restore_angle ()
+
+
+class GameFail (LightGameState):
+    pass
+
+
+class GameWin (LightGameState):
+    pass
+
+
+class GameQuit (LightGameState):
+    pass
 
 
 class Game (GameState):
@@ -139,6 +154,26 @@ class Game (GameState):
     def on_finish_time (self):
         self.fail_game ("finish-time")
 
+    @weak_slot
+    def on_place_stick (self):
+        if self.player_ctl.can_place_stick:
+            self.num_sticks -= 1
+            if self.num_sticks == 0:
+                self.player_ctl.can_place_stick = False
+            self.hud.set_counter ('sticks', self.num_sticks)
+
+    def highlight_stick_task (self, timer):
+        pos = self.player_ctl.get_stick_position ()
+        best = self.player_ctl.laser.best_stick (pos)
+        if best != self._curr_best_stick:
+            if self._curr_best_stick:
+                self._curr_best_stick.unhighlight ()
+            if self.player_ctl.can_place_stick:
+                self._curr_best_stick = best
+                if best:
+                    best.highlight ()
+        return task.running
+    
     def win_game (self):
         print "win-game"
 
@@ -177,7 +212,7 @@ class Game (GameState):
         self.hud = Hud (entities = self.entities)
         self.hud.add_counter ('clock',   'hud/clock.png')
         self.hud.add_counter ('pigeons', 'hud/pigeon.png')
-        self.hud.add_counter ('fields',  'hud/pigeon.png')
+        self.hud.add_counter ('sticks',  'hud/pigeon.png')
         self.hud.hide ()
     
     def setup_logic (self):
@@ -191,11 +226,18 @@ class Game (GameState):
         self.dead_pigeons = 0
         self.level.boy.on_death += self.on_kill_boy
 
+        self.num_sticks = self.level.max_sticks
+        self.player_ctl.on_place_stick_down += self.on_place_stick
+        self.hud.set_counter ('sticks', self.num_sticks)
+        
         self.timer = self.tasks.add (
             task.TimerTask (time = self.level.max_time))
         self.timer.on_tick = lambda: self.hud.set_counter (
             'clock', int (self.timer.remaining))
         self.timer.on_finish = self.on_finish_time
+
+        self.tasks.add (self.highlight_stick_task)
+        self._curr_best_stick = None
         
     def do_sink (self):
         super (Game, self).do_sink ()

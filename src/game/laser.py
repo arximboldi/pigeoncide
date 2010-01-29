@@ -45,7 +45,15 @@ class Group (Entity):
         self.sticks = []
         
     def add_stick (self, stick):
-        pos = stick.position
+        best = self.best_stick (stick.position)
+        if best:
+            self.parts.append (
+                Field (fst      = stick,
+                       snd      = best,
+                       entities = self.entities))
+        self.sticks.append (stick)
+
+    def best_stick (self, pos):
         bestdist = self.field_dist_sq
         best = None
 
@@ -54,13 +62,7 @@ class Group (Entity):
             if dist < bestdist:
                 bestdist = dist
                 best = curr
-        
-        if best:
-            self.parts.append (
-                Field (fst      = stick,
-                       snd      = best,
-                       entities = self.entities))
-        self.sticks.append (stick)
+        return best
 
 
 class Field (PandaEntity, StaticPhysicalEntity):
@@ -91,21 +93,38 @@ class Field (PandaEntity, StaticPhysicalEntity):
         
 class Stick (ModelEntity, StaticPhysicalEntity):
 
-    MODEL = 'mesh/stick_arch_sub.x'
+    MODEL = 'obj/stick.egg'
+    HL_MODEL = 'obj/stick-hl.egg'
 
+    _is_highlight = False
+    
     def __init__ (self, *a, **k):
         super (Stick, self).__init__ (
             model = self.MODEL,
             geometry = geom.box (1, 1, 1),
             *a, **k)
 
-        self.model_position = Vec3 (0, 0, -0.13)
+        self.model_position = Vec3 (0, 0, -5)
+        self.model.setTwoSided (True) # HACK
 
+        self.hl_model = loader.loadModel (self.HL_MODEL)
+        self.hl_model.setScale (1.3, 1.3, 1)
+        
         self.scale = Vec3 (near0, near0, near0)
-        tsk = task.sinusoid (lambda x: self.set_scale (Vec3 (x, x, x)), 0., 50.)
-                              
+        tsk = task.sinusoid (lambda x: self.set_scale (Vec3 (x, x, x)), 0., 1.3)
+        
         self.entities.tasks.add (tsk)
         self.init_task = weakref.ref (tsk)
+
+    def highlight (self):
+        if not self._is_highlight:
+            self.hl_model.reparentTo (self.model)
+            self._is_highlight = True
+            
+    def unhighlight (self):
+        if self._is_highlight:
+            self.hl_model.detachNode ()
+            self._is_highlight = False
 
 
 def make_laser_model (fst, snd, height):
@@ -184,14 +203,14 @@ def make_laser_model (fst, snd, height):
     laser.setTwoSided (False)
     laser.setPos (0, 0, -13)
     
-    tex = loader.loadTexture ('./data/tex/laser2.png')
+    tex = loader.loadTexture ('obj/laser.png')
     ts = TextureStage ('ts')
     laser.setTexture (ts, tex)
     laser.setTransparency (TransparencyAttrib.MDual) 
-
-    tex = loader.loadTexture ('./data/tex/laser2-glow.png')
-    ts = TextureStage ('ts')
-    ts.setMode (TextureStage.MGlow)
-    laser.setTexture (ts, tex)
+    
+    # tex = loader.loadTexture ('./data/tex/laser2-glow.png')
+    # ts = TextureStage ('ts')
+    # ts.setMode (TextureStage.MGlow)
+    # laser.setTexture (ts, tex)
 
     return laser
