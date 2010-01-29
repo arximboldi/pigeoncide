@@ -82,7 +82,7 @@ class Level (LoaderData):
                       'hud/pigeon.png',
                       'hud/clock.png' ]
     
-    load_sounds = [ 'snd/humdrak.mp3',
+    load_sounds = [ 'snd/houmdrak.mp3',
                     'snd/electrocute-medium.wav',
                     'snd/electrocute-short.wav',
                     'snd/electrocute-long.wav' ]
