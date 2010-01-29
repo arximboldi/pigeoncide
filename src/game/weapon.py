@@ -17,14 +17,26 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from ent.physical import StaticPhysicalEntity, DynamicPhysicalEntity
+from ent.panda import RelativeModelEntity, ModelEntity
 from base.signal import weak_slot
 
-class WeaponEntityBase (Entity):
+class OwnedWeaponEntity (
+    StaticPhysicalEntity,
+    RelativeModelEntity):
+    pass
+
+class FreeWeaponEntity (
+    DynamicPhysicalEntity,
+    ModelEntity):
+    pass
+
+class WeaponEntity (Entity):
 
     _owner    = None
     
     def __init__ (self, geom = None, hit_geom = None, *a, **k):
-        super (WeaponEntityBase, self).__init__ (*a, **k)
+        super (WeaponEntity, self).__init__ (*a, **k)
         self._geom     = geom
         self._hit_geom = hit_geom
 

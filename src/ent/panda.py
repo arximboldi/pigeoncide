@@ -114,7 +114,7 @@ class RelativePandaEntityBase (TaskEntity):
 
     def __init__ (self, parent_node = None, *a, **k):
         self._parent_node = parent_node
-        super (RelativePandaEntityBase, self)
+        super (RelativePandaEntityBase, self).__init__ (self, *a, **k)
 
     def set_parent_node (self, node):
         self.node.reparentTo (node)
@@ -229,20 +229,20 @@ class ModelEntityImpl (ModelEntityBase):
     def __init__ (self,
                   model = None,
                   *a, **k):
-        super (ModelEntity, self).__init__ (*a, **k)
+        super (ModelEntityImpl, self).__init__ (*a, **k)
 
         self._model = loader.loadModel (model)
         self._model.reparentTo (self._node)
 
-
 class RelativeModelEntity (
     ModelEntityImpl,
-    RelativePandaEntity)
-
+    RelativePandaEntity):
+    pass
 
 class ModelEntity (
     ModelEntityImpl,
-    PandaEntity)
+    PandaEntity):
+    pass
 
 
 class ActorEntityImpl (ModelEntityBase):
@@ -251,21 +251,21 @@ class ActorEntityImpl (ModelEntityBase):
                   model = None,
                   anims = {},
                   *a, **k):
-        super (ActorEntity, self).__init__ (*a, **k)
+        super (ActorEntityImpl, self).__init__ (*a, **k)
 
         self._model = Actor (loader.loadModel (model), anims)
         self._model.loadAnims (anims)
         self._model.reparentTo (self._node)
 
-
 class RelativeActorEntity (
     ActorEntityImpl,
-    RelativePandaEntity)
-
+    RelativePandaEntity):
+    pass
 
 class ActorEntity (
     ActorEntityImpl,
-    PandaEntity)
+    PandaEntity):
+    pass
 
 
 class DelegateModelEntity (DelegatePandaEntity):

@@ -49,11 +49,3 @@ class Boy (ObservableSpatialEntity,
         self.model_position = Vec3 (.0, .0, -4.0)
         self.model_scale = Vec3 (.1, .1, .1)
         self.enable_collision ()
-        
-        hand_joint = self.model.exposeJoint (
-            None, 'modelRoot', 'Bip01_R_Finger0')
-        weapon = loader.loadModel ('obj/baseball-bat.egg')
-        weapon.reparentTo (hand_joint)
-        weapon.setScale (2., 2., 2.)
-        weapon.setPos (-2, -5, 1)
-        weapon.setHpr (0, -90, 0)
