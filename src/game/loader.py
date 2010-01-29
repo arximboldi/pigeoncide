@@ -38,10 +38,14 @@ class LoaderError (GameError): pass
 class LoaderInterState (State):
 
     load_data   = None
+
     next_state  = None
     next_args   = []
     next_kwargs = {}
 
+    last_state  = None
+    last_args   = []
+    last_kwargs = {}
     
     def do_setup (self, data = None):
         if data:
@@ -56,7 +60,7 @@ class LoaderInterState (State):
         self._data.load_phase = loader_loading
         self.manager.enter_state (LoaderState, self._data)
     
-    def do_unsink (self):
+    def do_unsink (self, last_state = None, *last_args, **last_kwargs):
         if self._data.load_phase == loader_loading:
             _log.debug ('Entering state: ' + str (self.next_state))
             self._data.load_phase = loader_running
@@ -66,9 +70,22 @@ class LoaderInterState (State):
                                       **self.next_kwargs)
 
         elif self._data.load_phase == loader_running:
+            if last_state:
+                self.last_state  = last_state
+                self.last_args   = last_args
+                self.last_kwargs = last_kwargs
             _log.debug ('Cleaning data for state: ' + str (self.next_state))
             self._data.load_phase = loader_cleaning
-            self.manager.change_state (CleanerState, self._data)
+            self.manager.enter_state (CleanerState, self._data)
+            
+        elif self._data.load_phase == loader_cleaning:
+            _log.debug ('Loader finished, entering: ' + str (self.next_state))
+            if self.last_state:
+                self.manager.change_state (self.last_state,
+                                           *self.last_args,
+                                           **self.last_kwargs)
+            else:
+                self.leave_state ()
         else:
             raise LoaderError ('Unknown phase: ' + str (self._data.load_phase))
 

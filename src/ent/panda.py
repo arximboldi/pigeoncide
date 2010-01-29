@@ -18,6 +18,8 @@
 #
 
 from entity import *
+from task import TaskEntity
+
 from pandac.PandaModules import *
 from direct.actor.Actor import Actor
 from direct.showbase.ShowBase import ShowBase
@@ -67,7 +69,6 @@ class PandaEntityManager (EntityManager):
             self.render.removeNode ()
         if self._owns_render2d:
             self.render2d.removeNode ()
-        
 
 
 class PandaEntityBase (SpatialEntity):
@@ -88,19 +89,6 @@ class PandaEntityBase (SpatialEntity):
     def node (self):
         return self._node
         
-    def set_position (self, pos):
-        super (PandaEntityBase, self).set_position (pos)
-        if not pos.isNan ():
-            self._node.setPos (pos)
-        
-    def set_hpr (self, hpr):
-        super (PandaEntityBase, self).set_hpr (hpr)
-        self._node.setHpr (hpr)
-                
-    def set_scale (self, scale):
-        super (PandaEntityBase, self).set_scale (scale)
-        self._node.setScale (scale)
-
     def dispose (self):
         audio3d = self.entities.audio3d
         map (audio3d.detachSound, self._panda_sounds)
@@ -116,13 +104,43 @@ class PandaEntityBase (SpatialEntity):
         return snd
 
 
-class PandaEntity (PandaEntityBase):
+# class RelativePandaEntity (PandaEntityBase, TaskEntity):
+
+#     def __init__ (self, parent_node = None, *a, **k):
+#         self._parent_node = parent_node
+#         super (RelativePandaEntityBase, self)
+        
+#     def get_parent_node ():
+#         return self._parent_node
+
+#     def do_update (self, timer):
+#         super (RelativePandaEntity, self).do_update (timer):
+#             self.position = self._node.get
+
+
+class NormalPandaEntityBase (PandaEntityBase):
+
+    def set_position (self, pos):
+        super (NormalPandaEntityBase, self).set_position (pos)
+        if not pos.isNan ():
+            self._node.setPos (pos)
+        
+    def set_hpr (self, hpr):
+        super (NormalPandaEntityBase, self).set_hpr (hpr)
+        self._node.setHpr (hpr)
+                
+    def set_scale (self, scale):
+        super (NormalPandaEntityBase, self).set_scale (scale)
+        self._node.setScale (scale)
+
+
+class PandaEntity (NormalPandaEntityBase):
 
     def get_parent_node (self):
         return self.entities.render
 
 
-class Panda2dEntity (PandaEntityBase):
+class Panda2dEntity (NormalPandaEntityBase):
 
     def get_parent_node (self):
         return self.entities.render2d

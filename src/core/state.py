@@ -116,8 +116,8 @@ class StateManager (task.Task):
     def enter_state (self, name, *a, **k):
         self._tasks.add (lambda: self._enter_state (name, *a, **k))
 
-    def leave_state (self):
-        self._tasks.add (lambda: self._leave_state ())
+    def leave_state (self, *a, **k):
+        self._tasks.add (lambda: self._leave_state (*a, **k))
 
     def change_state (self, name, *a, **k):
         self._tasks.add (lambda: self._change_state (name, *a, **k))
@@ -136,12 +136,12 @@ class StateManager (task.Task):
             self._state_stack [-1].do_sink ()
         self._push_state (state, name, *a, **k)
 
-    def _leave_state (self):
+    def _leave_state (self, *a, **k):
         if not self._state_stack:
             raise StateError ('State manager empty, nothing to leave.')
         self._pop_state ()
         if self._state_stack:
-            self._state_stack [-1].do_unsink ()
+            self._state_stack [-1].do_unsink (*a, **k)
     
     def _change_state (self, name, *a, **k):
         state, name = self._fetch_state (name)
