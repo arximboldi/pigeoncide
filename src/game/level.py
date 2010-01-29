@@ -99,7 +99,7 @@ class Level (LoaderData):
     sky_scale   = 1000.
     spawn_spots = [ (Vec3 (0, 70, 20), 0) ]
     flocks_def  = [ 20 ]
-    max_time    = 60.
+    max_time    = 120.
     max_sticks  = 4
     flocks      = []
     
