@@ -86,7 +86,7 @@ class LoaderInterState (State):
                                            *self.last_args,
                                            **self.last_kwargs)
             else:
-                self.leave_state ()
+                self.manager.leave_state ()
         else:
             raise LoaderError ('Unknown phase: ' + str (self._data.load_phase))
 
@@ -184,6 +184,4 @@ class CleanerState (State):
         for res, cleaner in zip (data.load_results, self._cleaners):
             for r in res:
                 cleaner (r)
-
-        gc.collect () # Force garbage collection
         self.kill ()

@@ -27,7 +27,7 @@ from direct.gui.OnscreenText import OnscreenText
 class Hud (Panda2dEntity):
 
     hud_position  = Vec3 (-0.88, 0, 1) 
-    hide_position = Vec3 (-.5, 0, 0)
+    hide_position = Vec3 (-.6, 0, 0)
     show_position = Vec3 (0, 0, 0)
     
     def __init__ (self, *a, **k):
@@ -35,7 +35,7 @@ class Hud (Panda2dEntity):
 
         self.font = loader.loadFont ('font/three-hours.ttf')
         self.font.setPageSize (512, 512)
-        self.font.setPixelsPerUnit (100)
+        self.font.setPixelsPerUnit (120)
         
         self._next_position = Vec3 (0, 0, -.12)
         self.position = self.hud_position
