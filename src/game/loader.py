@@ -26,6 +26,7 @@ from ent.game import LightGameState
 from pandac.PandaModules import FontPool
 
 import ui
+import gc
 
 _log = get_log (__name__)
 
@@ -183,5 +184,6 @@ class CleanerState (State):
         for res, cleaner in zip (data.load_results, self._cleaners):
             for r in res:
                 cleaner (r)
-        
+
+        gc.collect () # Force garbage collection
         self.kill ()
