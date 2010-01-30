@@ -81,9 +81,17 @@ class Screen (object):
             )
         
         self.full_screen = DirectCheckButton (text = "Full screen",
-            indicatorValue = self.cfg.child ('fullscreen').get_value(),            pos = (.4, 0, -.5),
+            indicatorValue = self.cfg.child ('fullscreen').get_value(),
+            pos = (.4, 0, -.5),
             scale = .05,
             command = self.change_full
+            )
+            
+        self.fps_display = DirectCheckButton (text = "FPS display",
+            indicatorValue = self.cfg.child ('frame-metter').get_value(),
+            pos = (.4, 0, -.7),
+            scale = .05,
+            command = self.change_fps
             )
 
     def do_enable (self):
@@ -94,11 +102,12 @@ class Screen (object):
         
     def do_destroy (self):
         self.res_menu.destroy ()
+        self.fps_display ()
         self.full_screen.destroy ()
         self.active = False
         
-    def get_active (self):
-        return self.active
+    def change_fps (self, status):
+        self.cfg.child ('frame-metter').set_value (status)
         
     def change_full (self, status):
         self.cfg.child ('fullscreen').set_value (status)
