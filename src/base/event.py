@@ -35,6 +35,7 @@ class EventManager (Sender, Receiver):
     def __init__ (self):
         super (EventManager, self).__init__ ()
         self._events = {}
+        self.on_any_event = Signal ()
         
     def notify (self, name, *args, **kw):
         if not self.quiet:
@@ -45,16 +46,16 @@ class EventManager (Sender, Receiver):
 
     receive = notify
 
-    @signal
-    def on_any_event (self, *a, **k):
-        super (EventManager, self).send (*a, **k) 
+    def send (self, name, *a, **k):
+        self.on_any_event.notify (name, a, k)
+        super (EventManager, self).send (name, *a, **k)
     
     def event (self, name):
         if name in self._events:
             return self._events [name]
 
         signal = Signal ()
-        signal += lambda *a, **k: self.on_any_event (name, *a, **k)
+        signal += lambda *a, **k: self.send (name, *a, **k)
         self._events [name] = signal
         return signal
 

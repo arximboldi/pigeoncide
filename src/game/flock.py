@@ -71,12 +71,16 @@ class FlockEntity (TaskEntity):
         
     def dispose (self):
         super (FlockEntity, self).dispose ()
-        # for x in self.boids:
-        #     x.dispose ()
-
+        
     def add_boid (self, boid):
         self.boids.append (boid)
-        if len (self.boids) == 1:
+        boid.flock = weakref.proxy (self)
+        if len (self.boids) > 0:
+            self.leader = boid
+
+    def del_boid (self, boid):
+        self.boids.remove (boid)
+        if len (self.boids) > 0:
             self.leader = boid
 
     def do_update (self, timer):
@@ -88,6 +92,8 @@ class BoidParams (object):
 
     # All rules effect
     boid_power        = 1000
+    boid_flying       = True
+    boid_flocking     = True
 
     # Individual rule effect
     boid_f_cohesion   = 0.01
@@ -120,15 +126,25 @@ class BoidEntityBase (TaskEntity):
 
         self._debug_line = LineNodePath (self.entities.render,
                                          'caca', 2, Vec4 (1, 0, 0, 0))
-        self.body.setGravityMode (False)
-            
+
+        self.change_params (self.params)
+
+    def change_params (self, params):
+        if params.boid_flocking and not self.params.boid_flocking:
+            self.flock.add_boid (self)
+        elif not params.boid_flocking and self.params.boid_flocking:
+            self.flock.del_boid (self)
+        self.body.setGravityMode (not params.boid_flying)
+        self.params = params
+    
     def dispose (self):
         self.flock.remove (self)
         super (BoidEntityBase, self).dispose ()
         
     def do_update (self, timer):
         super (BoidEntityBase, self).do_update (timer)
-        self.update_flocking (timer)
+        if self.params.boid_flocking:
+            self.update_flocking (timer)
 
     def update_flocking (self, timer):
         self._curr_position = self.position

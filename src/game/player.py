@@ -46,12 +46,12 @@ action_strafe_r       = 1 << 7
 action_jump           = 1 << 8
 action_hit            = 1 << 9
 
-noise_hit   = 60
+noise_hit   = 0.
 noise_jump  = 200.
 noise_run   = 50.
 noise_stick = 30
 noise_throw = 30
-noise_walk  = 10
+noise_walk  = 0.
 
 class PlayerEntityBase (TaskEntity):
     """

@@ -77,6 +77,7 @@ class Pigeon (BoidEntity,
             category = pigeon_category,
             *a, **k)
 
+        self.on_hit   += self.on_pigeon_hit
         self.on_death += self.on_pigeon_death
         for boy in boys:
             boy.on_boy_noise += self.on_boy_noise
@@ -95,8 +96,9 @@ class Pigeon (BoidEntity,
         self.add_state ('follow', FollowState)
         self.add_state ('fear',   FearState)
         self.add_state ('eat',    EatState)
-
-        self.start ('follow', boys [0])
+        self.add_state ('hit',    HitState)
+        
+        self.start ('walk')
 
     def do_update (self, timer):
         """
@@ -107,6 +109,10 @@ class Pigeon (BoidEntity,
         vlen = self.linear_velocity.length ()
         self.geom.setParams (2., vlen * timer.delta)
 
+    @weak_slot
+    def on_pigeon_hit (self, x):
+        self.enter_state ('hit')
+        
     @weak_slot
     def on_boy_noise (self, boy, rad):
         if (boy.position - self.position).lengthSquared () < rad ** 2:
@@ -127,11 +133,11 @@ class PigeonState (State):
     params = BoidParams
     
     def do_setup (self, *a, **k):
-        self.manager.params = self.params
+        self.manager.change_params (self.params)
         self.do_pigeon_setup (*a, **k)
 
     def do_unsink (self, *a, **k):
-        self.manager.params = self.params
+        self.manager.change_params (self.params)
 
     do_pigeon_setup = nop
     do_pigeon_unsink = nop
@@ -144,21 +150,32 @@ class FollowState (PigeonState):
     def do_pigeon_setup (self, boy):
         boy.on_entity_set_position += self.on_boy_set_position
 
-
 class FearState (FollowState, task.WaitTask):
     class params (BoidParams):
         boid_f_target = - 0.002
     duration = 10.
 
-
 class EatState (State):
     pass
 
-class WalkState (State):
-    pass
+class WalkState (PigeonState):
+    class params (BoidParams):
+        boid_flying   = False
+        boid_speed    = 10
+        boid_max_far  = 300
+        boid_f_bounds = 0.1
 
 class PatrolState (PigeonState):
-    pass
+    class params (BoidParams):
+        boid_speed  = 100.
+
+class HitState (PigeonState, task.WaitTask):
+    class params (BoidParams):
+        boid_flocking = False
+        boid_speed    = 1000
+    duration = 5.
+
+
 
 """
 class FlockingState (State):

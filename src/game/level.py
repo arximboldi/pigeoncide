@@ -98,7 +98,7 @@ class Level (LoaderData):
     offset      = Vec3 (0, 0, 0)
     sky         = 'sky/green-sky.egg'
     sky_scale   = 1000.
-    spawn_spots = [ (Vec3 (0, 0, 40), 0) ]
+    spawn_spots = [ (Vec3 (0, 0, 30), 0) ]
     flocks_def  = [ 20 ]
     max_time    = 120.
     max_sticks  = 4
@@ -145,7 +145,7 @@ class Level (LoaderData):
         TODO: A nicer way to express the lights and weapons.
         """
         wep0 = weapon.BaseballBat (entities = entities)
-        wep0.position = Vec3 (0, 0, 40)
+        wep0.position = Vec3 (0, 0, 30)
         
         self.level.model.setTexture (loader.loadTexture ('lvl/grass.png'))
         

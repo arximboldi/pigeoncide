@@ -22,7 +22,7 @@ from pandac.PandaModules import Vec4, Vec3, AmbientLight, PointLight
 from base.conf import GlobalConf
 from base.meta import mixin, Mockup
 from base.sender import AutoSender, AutoReceiver
-from base.util import delayed
+from base.util import delayed, printfn
 from base.signal import weak_slot
 
 from core import task
@@ -126,7 +126,7 @@ class Game (GameState):
 
     def do_setup (self, level):
         super (Game, self).do_setup ()
-        
+                
         self.level = level
         
         self.setup_panda ()

@@ -93,7 +93,7 @@ class WeaponEntity (SpatialEntity, TaskEntity):
 
     weapon_geom_owned = None
     weapon_geom_free  = None
-    weapon_hit_radius = 1000
+    weapon_hit_radius = 7.
 
     def __init__ (self, *a, **k):
         super (WeaponEntity, self).__init__ (*a, **k)
@@ -116,7 +116,7 @@ class WeaponEntity (SpatialEntity, TaskEntity):
         g = self.weapon_geom_free if self.weapon_geom_free \
             else geom.mesh (self.weapon_model, scale = self.weapon_scale)
         self._make_child_entity (FreeWeaponEntity,
-                                 geom = g,
+                                 geometry = g,
                                  category = physics.weapon_category,
                                  *a, **k)
         self._child_entity.on_collide += self.on_touch
@@ -125,11 +125,11 @@ class WeaponEntity (SpatialEntity, TaskEntity):
         g = self.weapon_geom_owned if self.weapon_geom_owned \
             else geom.sphere (self.weapon_hit_radius)
         self._make_child_entity (OwnedWeaponEntity,
-                                 geom = self.weapon_geom_owned,
+                                 geometry = g,
                                  collide  = physics.pigeon_category,
                                  category = physics.null_category,
                                  *a, **k)
-    
+        
     def _make_child_entity (self, entity_cls, *a, **k):
         entity = entity_cls (entities = self.entities,
                              model = self.weapon_model,
@@ -154,6 +154,7 @@ class WeaponEntity (SpatialEntity, TaskEntity):
         _log.debug ("A weapon %s hitted a %s." % (str (me), str (other)))
         if self._timer.elapsed - other.hit_time > self.weapon_hit_delay:
             direction = normalize (other.position - self._owner.position)
+            direction.setZ (0.5)
             other.add_force (
                 direction * self.weapon_hit_force * self._timer.delta)
             other.on_hit (self)
