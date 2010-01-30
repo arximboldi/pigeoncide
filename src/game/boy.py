@@ -17,38 +17,70 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from base.signal import signal
+
+from ent.entity import Entity
 from ent.observer import ObservableSpatialEntity
-from ent.panda import ActorEntity
-from ent.physical import StandingPhysicalEntity
+from ent.panda import DelegateActorEntity, ActorEntity
+from ent.physical import DelegateStandingPhysicalEntity, StandingPhysicalEntity
 from pandac.PandaModules import Vec3
 
 from phys import geom
 from phys import mass
 
 from kill import KillableEntity
-from weapon import WeaponOwner
+from weapon import WeaponOwner, DelegateWeaponOwner
 
-class Boy (ObservableSpatialEntity,
-           ActorEntity,
-           StandingPhysicalEntity,
-           KillableEntity,
-           WeaponOwner):
 
-    MODEL = 'char/boy-anims.egg'
-    ANIMS = { 'run'  : 'char/boy-run.egg',
-              'walk' : 'char/boy-walk.egg',
-              'idle' : 'char/boy-idle.egg',
-              'feed' : 'char/boy-feed.egg',
-              'hit'  : 'char/boy-hit.egg' }
-        
-    def __init__ (self, model = MODEL, *a, **k):
-        super (Boy, self).__init__ (geometry = geom.capsule (1.0, 7.0),
-                                    mass     = mass.capsule (2, 3, 1.0, 7.0),
-                                    model    = model,
-                                    anims    = self.ANIMS,
-                                    *a, **k)
+class BoyBase (Entity):
 
+    boy_model = 'char/boy-anims.egg'
+    boy_anims = { 'run'  : 'char/boy-run.egg',
+                  'walk' : 'char/boy-walk.egg',
+                  'idle' : 'char/boy-idle.egg',
+                  'feed' : 'char/boy-feed.egg',
+                  'hit'  : 'char/boy-hit.egg' }
+
+    on_boy_noise = signal ()
+
+    def emit_noise (self, rad):
+        self.on_boy_noise (self, rad)
+    
+    def __init__ (self, model = boy_model, anims = boy_anims, *a, **k):
+        super (BoyBase, self).__init__ (
+            geometry = geom.capsule (1.0, 7.0),
+            mass     = mass.capsule (2, 3, 1.0, 7.0),
+            model    = model,
+            anims    = anims,
+            *a, **k)
         self.model_position = Vec3 (.0, .0, -4.0)
         self.model_scale = Vec3 (.1, .1, .1)
         self.enable_collision ()
 
+
+class Boy (BoyBase,
+           ObservableSpatialEntity,
+           ActorEntity,
+           StandingPhysicalEntity,
+           KillableEntity,
+           WeaponOwner):
+    pass
+
+
+class DelegateBoy (
+    BoyBase,
+    #DelegateObservableSpatialEntity,
+    DelegateActorEntity,
+    DelegateStandingPhysicalEntity,
+    #DelegateKillableEntity,
+    DelegateWeaponOwner):
+    """
+    TODO: Add missing delegates. Read TODO note in entity.py.
+    """
+
+    @property
+    def on_boy_noise (self):
+        return self.delegate.on_boy_noise
+
+    def emit_noise (self, rad):
+        self.delegate.emit_noise (rad)

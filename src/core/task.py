@@ -183,9 +183,16 @@ class TaskGroup (Task):
 
 class WaitTask (Task):
 
-    def __init__ (self, time = 0., *a, **k):
+    duration = 0.
+    
+    def __init__ (self, duration = None, *a, **k):
         super (WaitTask, self).__init__ (*a, **k)
-        self.remaining = time
+        if duration is not None:
+            self.duration = duration
+        self.remaining = self.duration
+
+    def restart_wait (self):
+        self.remaining = self.duration
                 
     def do_update (self, timer):
         super (WaitTask, self).do_update (timer)

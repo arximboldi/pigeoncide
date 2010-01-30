@@ -19,12 +19,16 @@
 
 from weakref import ref
 
+from base.log import get_log
 from base.event import *
 from error import *
 import task
 
+_log = get_log (__name__)
+
 class StateError (CoreError):
     pass
+
 
 class State (task.Task):
 
@@ -141,6 +145,8 @@ class StateManager (task.Task):
             raise StateError ('State manager empty, nothing to leave.')
         self._pop_state ()
         if self._state_stack:
+            _log.debug ("Resuming state '%s' on machine %s" %
+                        (str (self.current.state_name), str (self)))
             self._state_stack [-1].do_unsink (*a, **k)
     
     def _change_state (self, name, *a, **k):
@@ -149,6 +155,8 @@ class StateManager (task.Task):
         self._push_state (state, name, *a, **k)
     
     def _push_state (self, state_cls, state_name, *a, **k):
+        _log.debug ("Entering state '%s' on machine %s" %
+                    (str (state_name), str (self)))
         parent = None
         if self._state_stack:
             parent = self._state_stack [-1]
@@ -160,6 +168,8 @@ class StateManager (task.Task):
         self._state_stack.append (state)
 
     def _pop_state (self):
+        _log.debug ("Leaving state '%s' on machine %s" %
+                    (str (self.current.state_name), str (self)))
         state = self._state_stack.pop ()
         self._events.disconnect (state.events)
         state.kill ()

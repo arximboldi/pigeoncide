@@ -18,9 +18,10 @@
 #
 
 from base.signal import weak_slot
+from base.util import nop
 
 from ent.observer import ObservableSpatialEntity
-from ent.panda import ModelEntity
+from ent.panda import ActorEntity
 from ent.physical import (StandingPhysicalEntityDecorator,
                           DynamicPhysicalEntity)
 
@@ -41,55 +42,61 @@ import random
 import weakref
 from pandac.PandaModules import Vec3
 
+
 class Pigeon (BoidEntity,
-              ModelEntity,
+              ActorEntity,
               KillableEntity,
               StateManager,
               Hittable):
+    """
+    TODO: Actually a StateManager has too much innecesary overhead. We
+    could try to make a lightweight version of it for this kind of
+    use.
+    """
+    
+    pigeon_model = 'char/pigeon-anims.egg'
+    pigeon_anims = { 'walk'    : 'char/pigeon-walk.egg',
+                     'fly'     : 'char/pigeon-fly.egg',
+                     'takeoff' : 'char/pigeon-takeoff.egg',
+                     'land'    : 'char/pigeon-land.egg',
+                     'idle'    : 'char/pigeon-idle.egg' }
 
-    MODEL = 'char/pigeon-anims.egg'
-    ANIMS = { 'walk'    : 'char/pigeon-walk.egg',
-              'fly'     : 'char/pigeon-fly.egg',
-              'takeoff' : 'char/pigeon-takeoff.egg',
-              'land'    : 'char/pigeon-land.egg',
-              'idle'    : 'char/pigeon-idle.egg' }
+    pigeon_death_sounds = [ 'snd/electrocute-medium.wav',
+                            'snd/electrocute-short.wav' ]
     
     def __init__ (self,
-                  model = MODEL,
-                  the_boy = None,
+                  model = pigeon_model,
+                  anims = pigeon_anims,
+                  boys  = [],
                   *a, **k):
         super (Pigeon, self).__init__ (
             geometry = geom.capsule (2, 1),
             mass     = mass.sphere (1, 2),
             model    = model,
+            anims    = anims,
             category = pigeon_category,
             *a, **k)
 
         self.on_death += self.on_pigeon_death
-
+        for boy in boys:
+            boy.on_boy_noise += self.on_boy_noise
+        
         self.physical_hpr = Vec3 (90, 0, 0)
-        self.the_boy = the_boy
         self.params = BoidParams ()
         
-        # Fix model coordinates
         self.model_position = Vec3 (0, 0, -2)
         self.model_scale    = Vec3 (0.08, 0.08, 0.08)
         self.model_hpr      = Vec3 (180, 0, 0)
-        # self.model.setTexture (loader.loadTexture ('obj/black.png'))
         
-        # Sounds
-        self.die_sounds = map (self.load_sound,
-                               [ 'snd/electrocute-medium.wav',
-                                 'snd/electrocute-short.wav' ])
+        self.death_sounds = map (self.load_sound, self.pigeon_death_sounds)
 
-        # Setup AI state machine
         self.add_state ('patrol', PatrolState)
         self.add_state ('walk',   WalkState)
         self.add_state ('follow', FollowState)
         self.add_state ('fear',   FearState)
-        self.add_state ('food',   FoodState)
+        self.add_state ('eat',    EatState)
 
-        self.start ('follow')
+        self.start ('follow', boys [0])
 
     def do_update (self, timer):
         """
@@ -101,33 +108,57 @@ class Pigeon (BoidEntity,
         self.geom.setParams (2., vlen * timer.delta)
 
     @weak_slot
+    def on_boy_noise (self, boy, rad):
+        if (boy.position - self.position).lengthSquared () < rad ** 2:
+            if self.current.state_name != 'fear':
+                self.enter_state ('fear', boy)
+            else:
+                self.current.restart_wait ()
+
+    @weak_slot
     def on_pigeon_death (self):
         self.force_finish ()
         self.disable_physics ()
-        random.choice (self.die_sounds).play ()
+        random.choice (self.death_sounds).play ()
 
 
-class PatrolState (State):
-
-    min_wait = 5
-    max_wait = 10
-
-    def do_setup (self):
-        return None
-        self.tasks.add (task.sequence (
-            task.wait (random.uniform (self.min_wait,
-                                       self.max_wait)),
-            lambda: self.manager.change_state ('walk')))
-
-class FollowState (State):
+class PigeonState (State):
     
-    def do_update (self, timer):
-        super (FollowState, self).do_update (timer)
-        self.manager.params.boid_target = self.manager.the_boy.position        
+    params = BoidParams
+    
+    def do_setup (self, *a, **k):
+        self.manager.params = self.params
+        self.do_pigeon_setup (*a, **k)
 
-class FearState (State): pass
-class WalkState (State): pass
-class FoodState (State): pass
+    def do_unsink (self, *a, **k):
+        self.manager.params = self.params
+
+    do_pigeon_setup = nop
+    do_pigeon_unsink = nop
+
+
+class FollowState (PigeonState):    
+    @weak_slot
+    def on_boy_set_position (self, boy, pos):
+        self.params.boid_target = pos
+    def do_pigeon_setup (self, boy):
+        boy.on_entity_set_position += self.on_boy_set_position
+
+
+class FearState (FollowState, task.WaitTask):
+    class params (BoidParams):
+        boid_f_target = - 0.002
+    duration = 10.
+
+
+class EatState (State):
+    pass
+
+class WalkState (State):
+    pass
+
+class PatrolState (PigeonState):
+    pass
 
 """
 class FlockingState (State):

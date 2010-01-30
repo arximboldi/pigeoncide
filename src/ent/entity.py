@@ -146,3 +146,10 @@ class DelegateSpatialEntity (DelegateEntity):
     hpr      = property (get_hpr,      set_hpr)
     scale    = property (get_scale,    set_scale)
 
+"""
+TODO:
+Building the delegates has proven to be a bit... boring. Maybe using
+base.proxy and some meta-programming magic we can make all this much
+much easier.
+"""
+

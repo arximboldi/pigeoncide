@@ -131,7 +131,7 @@ class Level (LoaderData):
         self.boy.angle = boy_angle
 
     def setup_flocks (self, entities):
-        boid_cls = delayed (Pigeon) (the_boy = self.boy)
+        boid_cls = delayed (Pigeon) (boys = [self.boy])
         for x in self.flocks_def:
             self.flocks.append (
                 make_random_flock (entities, 20, boid_cls = boid_cls))

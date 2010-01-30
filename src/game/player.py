@@ -29,23 +29,29 @@ from core import task
 
 from ent.entity import Entity
 from ent.task import TaskEntity
-from ent.physical import (StandingPhysicalEntity,
-                          DelegateStandingPhysicalEntity)
-from ent.panda import ActorEntity, DelegateActorEntity
 from pandac.PandaModules import Vec3
 
-from weapon import DelegateWeaponOwner, WeaponOwner
+from boy import Boy, DelegateBoy
+
+
 import laser
 import math
 
-is_running        = 1
-is_forward        = 1 << 2
-is_feeding        = 1 << 3
-is_backward       = 1 << 5
-is_strafe_l       = 1 << 6
-is_strafe_r       = 1 << 7
-is_jump           = 1 << 8
-is_hit            = 1 << 9
+action_running        = 1
+action_forward        = 1 << 2
+action_feeding        = 1 << 3
+action_backward       = 1 << 5
+action_strafe_l       = 1 << 6
+action_strafe_r       = 1 << 7
+action_jump           = 1 << 8
+action_hit            = 1 << 9
+
+noise_hit   = 60
+noise_jump  = 200.
+noise_run   = 50.
+noise_stick = 30
+noise_throw = 30
+noise_walk  = 10
 
 class PlayerEntityBase (TaskEntity):
     """
@@ -54,10 +60,10 @@ class PlayerEntityBase (TaskEntity):
     - ModelPhysicalEntity
     """
 
-    animations = [ (is_hit,      'hit'),
-                   (is_running,  'run'),
-                   (is_forward,  'walk'),
-                   (is_backward, 'walk'),
+    animations = [ (action_hit,      'hit'),
+                   (action_running,  'run'),
+                   (action_forward,  'walk'),
+                   (action_backward, 'walk'),
                    (0,           'idle') ]
 
     force              = 10000.0
@@ -114,10 +120,10 @@ class PlayerEntityBase (TaskEntity):
     
     def do_update (self, timer):
         super (PlayerEntityBase, self).do_update (timer)
-        if self.actions & is_jump:
+        if self.actions & action_jump:
             self.add_force (Vec3 (0, 0, 1) * self.jump_force / timer.delta)
             self.is_on_floor_timer = 0.
-            self.actions &= ~ is_jump
+            self.actions &= ~ action_jump
 
     def get_stick_position (self):
         direction = Vec3 (math.sin (self.angle), math.cos (self.angle), 0)
@@ -130,48 +136,52 @@ class PlayerEntityBase (TaskEntity):
             stick.position = self.get_stick_position ()
             stick.hpr = self.hpr
             self.laser.add_stick (stick)
-
+            self.emit_noise (noise_stick)
+            
     def on_throw_weapon_down (self):
         weapon = self.weapon
-        if not self.test_action (is_hit) and weapon:
+        if not self.test_action (action_hit) and weapon:
             weapon.set_owner (None)
-            self.start_action (is_hit, False)
+            self.start_action (action_hit, False)
+            self.emit_noise (noise_throw)
             self.entities.tasks.add (task.sequence (
                 task.wait (1.),
-                task.run (lambda: self.stop_action (is_hit))))
+                task.run (lambda: self.stop_action (action_hit))))
 
     def on_hit_down (self):
         weapon = self.weapon
 
-        if not self.test_action (is_hit) and weapon:
+        if not self.test_action (action_hit) and weapon:
             weapon.start_hitting ()
-            self.start_action (is_hit, False)
+            self.start_action (action_hit, False)
+            self.emit_noise (noise_hit)
             self.entities.tasks.add (task.sequence (
                 task.wait (1.),
                 task.run (weapon.finish_hitting),
-                task.run (lambda: self.stop_action (is_hit))))    
+                task.run (lambda: self.stop_action (action_hit))))    
     
     def on_jump_down (self):
+        self.emit_noise (noise_jump)
         if self.is_on_floor:
-            self.start_action (is_jump)
+            self.start_action (action_jump)
                 
     def on_run_down (self):
-        self.start_action (is_running)
+        self.start_action (action_running)
         
     def on_run_up (self):
-        self.stop_action (is_running)
+        self.stop_action (action_running)
         
     def on_move_forward_down (self):
-        self.start_action (is_forward)
+        self.start_action (action_forward)
         
     def on_move_forward_up (self):
-        self.stop_action (is_forward)
+        self.stop_action (action_forward)
         
     def on_move_backward_down (self):
-        self.start_action (is_backward)
+        self.start_action (action_backward)
 
     def on_move_backward_up (self):
-        self.stop_action (is_backward)
+        self.stop_action (action_backward)
         
     def on_steer_left (self, timer):
         self.angle -= timer.delta * self.max_rotate_speed
@@ -179,32 +189,40 @@ class PlayerEntityBase (TaskEntity):
     def on_steer_right (self, timer):
         self.angle += timer.delta * self.max_rotate_speed
 
-    def on_move_forward (self, timer): 
+    def on_move_forward (self, timer):
+        self.emit_move_noise ()
         self._do_force (timer, self.force, 0)
 
     def on_move_backward (self, timer):
+        self.emit_move_noise ()
         self._do_force (timer, self.bw_force, math.pi)
 
     def on_strafe_right_down (self):
-        self.start_action (is_strafe_r)
+        self.start_action (action_strafe_r)
 
     def on_strafe_right_up (self):
-        self.stop_action (is_strafe_r)
+        self.stop_action (action_strafe_r)
 
     def on_strafe_left_down (self):
-        self.start_action (is_strafe_l)
+        self.start_action (action_strafe_l)
 
     def on_strafe_left_up (self):
-        self.stop_action (is_strafe_l)
+        self.stop_action (action_strafe_l)
         
     def on_strafe_left (self, timer):
+        self.emit_move_noise ()
         self._do_force (timer, self.strafe_force, -math.pi/2)
         
     def on_strafe_right (self, timer):
+        self.emit_move_noise ()
         self._do_force (timer, self.strafe_force, math.pi/2)
 
     def on_steer (self, (px, py)):
         self.angle  += px * self.steer_speed
+
+    def emit_move_noise (self):
+        self.emit_noise (noise_run if self.test_action (action_running)
+                         else noise_walk)
     
     def _do_force (self, timer, force, angle):
         direction    = Vec3 (math.sin (self.angle + angle),
@@ -213,24 +231,16 @@ class PlayerEntityBase (TaskEntity):
         vel_on_dir   = direction * velocity.dot (direction)
 
         speed_limit  = self.max_run_speed \
-                       if self.actions & is_running \
+                       if self.actions & action_running \
                        else self.max_walk_speed 
 
         if vel_on_dir.lengthSquared () < speed_limit ** 2:
             self.add_force (direction * force)
 
 
-class PlayerEntity (
-    PlayerEntityBase,
-    WeaponOwner,
-    StandingPhysicalEntity,
-    ActorEntity):
+class PlayerEntity (PlayerEntityBase, Boy):
     pass
 
 
-class PlayerEntityDecorator (
-    PlayerEntityBase,
-    DelegateWeaponOwner,
-    DelegateStandingPhysicalEntity,
-    DelegateActorEntity):
+class PlayerEntityDecorator (PlayerEntityBase, DelegateBoy):
     pass
