@@ -108,7 +108,7 @@ class Level (LoaderData):
         self.setup_level (entities)
         self.setup_sky (entities)
         self.setup_boy (entities)
-        self.setup_flocks (entities)                
+        self.setup_flocks (entities)           
         self.do_setup_entities (entities)
 
     def setup_level (self, entities):

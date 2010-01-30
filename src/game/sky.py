@@ -26,8 +26,14 @@ class SkyEntity (TaskEntity, ModelEntity):
         super (SkyEntity, self).__init__ (*a, **k)
         
         if camera == None:
-            camera = base.cam
+            camera = base.camera
         self.camera = camera
 
+    def get_parent_node (self):
+        return render # HACK to avoid lighting, the lights are
+                      # installed in a subnode.
+    
     def do_update (self, timer):
+        super (SkyEntity, self).do_update (timer)
         self.position = self.camera.getPos ()
+
