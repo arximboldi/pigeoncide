@@ -50,6 +50,7 @@ PLAYER_INPUT_MAP = {
     'on_jump'          : 'panda-space',
     'on_run'           : 'panda-c',
     'on_hit'           : 'panda-e',
+    'on_throw_weapon'  : 'panda-r',
     'on_place_stick'   : 'panda-q',
     'on_steer'         : 'panda-mouse-move',
 }

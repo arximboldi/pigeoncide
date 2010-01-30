@@ -52,6 +52,7 @@ class Level (LoaderData):
                       'char/pigeon-land.egg',
                       'char/pigeon-idle.egg',
                       'char/pigeon-fly.egg',
+                      'lvl/modelillo.egg',
                       'obj/stick.egg',
                       'obj/stick-hl.egg',
                       'obj/baseball-bat.egg' ]
@@ -92,12 +93,12 @@ class Level (LoaderData):
                     'font/alte-bold.ttf' ]
     
     music       = 'snd/houmdrak.mp3'
-    model       = 'lvl/cloud.egg'
-    geometry    = 'lvl/cloud.egg'
+    model       = 'lvl/modelillo.egg'
+    geometry    = 'lvl/modelillo.egg'
     offset      = Vec3 (0, 0, 0)
     sky         = 'sky/green-sky.egg'
     sky_scale   = 1000.
-    spawn_spots = [ (Vec3 (0, 0, 20), 0) ]
+    spawn_spots = [ (Vec3 (0, 0, 40), 0) ]
     flocks_def  = [ 20 ]
     max_time    = 120.
     max_sticks  = 4
@@ -144,7 +145,7 @@ class Level (LoaderData):
         TODO: A nicer way to express the lights and weapons.
         """
         wep0 = weapon.BaseballBat (entities = entities)
-        wep0.position = Vec3 (0, 0, 20)
+        wep0.position = Vec3 (0, 0, 40)
         
         self.level.model.setTexture (loader.loadTexture ('lvl/grass.png'))
         

@@ -20,7 +20,7 @@
 from base.signal import signal
 from base.log import get_log
 
-from ent.entity import SpatialEntity
+from ent.entity import SpatialEntity, DelegateSpatialEntity, Entity
 from ent.physical import StaticPhysicalEntity, DynamicPhysicalEntity
 from ent.panda import RelativeModelEntity, ModelEntity
 from ent.task import TaskEntity
@@ -29,8 +29,7 @@ from base.signal import weak_slot
 from core.util import to_rad, normalize
 from phys import geom
 import physics
-from boy import Boy
-
+import weakref
 from pandac.PandaModules import Vec3
 import math
 
@@ -52,14 +51,41 @@ class FreeWeaponEntity (
     ModelEntity):
     pass
 
+
+class WeaponOwnerBase (Entity):
+    
+    weapon = None
+    last_weapon_time = 0.0
+    
+    def add_weapon (self, weapon):
+        if self.weapon:
+            return False
+        self.weapon = weakref.proxy (weapon)
+        return True
+    
+    def del_weapon (self, weapon):
+        self.weapon = None
+
+class WeaponOwner (
+    WeaponOwnerBase,
+    SpatialEntity):
+    pass
+
+class DelegateWeaponOwner (DelegateSpatialEntity):
+
+    @property
+    def weapon (self):
+        return self.delegate.weapon
+
+
 class WeaponEntity (SpatialEntity, TaskEntity):
 
     weapon_model = ''
 
     weapon_hit_delay   = 1.0
     
-    weapon_hit_force   = 10000
-    weapon_throw_force = 10000
+    weapon_hit_force   = 10000.
+    weapon_throw_force = 500.
     
     weapon_position = Vec3 (0, 0, 0)
     weapon_hpr      = Vec3 (0, 0, 0)
@@ -119,7 +145,7 @@ class WeaponEntity (SpatialEntity, TaskEntity):
 
     @weak_slot
     def on_touch (self, ev, me, other):
-        if isinstance (other, Boy):
+        if isinstance (other, WeaponOwner):
             self.set_owner (other)
 
     @weak_slot
@@ -134,7 +160,6 @@ class WeaponEntity (SpatialEntity, TaskEntity):
     
     def do_update (self, timer):
         super (WeaponEntity, self).do_update (self)
-        #print self._child_entity.position
         self._timer = timer
                 
     def start_hitting (self):
@@ -145,8 +170,16 @@ class WeaponEntity (SpatialEntity, TaskEntity):
         if self._owner:
             self._child_entity.on_collide -= self.on_hit
 
+    def may_take_weapon (self, owner):
+        return owner and \
+               self._timer.elapsed - owner.last_weapon_time > 1.0 and \
+               owner.add_weapon (self)
+    
     def set_owner (self, owner):
-        if self._owner or (owner and owner.add_weapon (self)):
+        if self._owner or self.may_take_weapon (owner):
+            old_position = self._child_entity.position
+            old_hpr      = self._child_entity.hpr
+            
             self._child_entity.dispose ()    
 
             if owner:
@@ -159,11 +192,17 @@ class WeaponEntity (SpatialEntity, TaskEntity):
                 
             if self._owner:
                 h, p, r = self._owner.hpr
-                h = to_rad (h)
+                h = to_rad (h - 90)
+                direction = Vec3 (math.cos (h), math.sin (h), 0)
                 self._make_free_entity ()
-                self._child_entity.add_force (Vec3 (math.sin(h), math.cos(h), 0)
-                                              * self.weapon_throw_force)
+                self._child_entity.position = old_position
+                self._child_entity.hpr      = old_hpr
+                # TODO: This is not affecting!
+                self._child_entity.add_force (direction *
+                                              self.weapon_throw_force /
+                                              self._timer.delta)
                 self._owner.del_weapon (self)
+                self._owner.last_weapon_time = self._timer.elapsed
                 
             self._owner = owner
 

@@ -34,6 +34,7 @@ from ent.physical import (StandingPhysicalEntity,
 from ent.panda import ActorEntity, DelegateActorEntity
 from pandac.PandaModules import Vec3
 
+from weapon import DelegateWeaponOwner, WeaponOwner
 import laser
 import math
 
@@ -130,10 +131,17 @@ class PlayerEntityBase (TaskEntity):
             stick.hpr = self.hpr
             self.laser.add_stick (stick)
 
+    def on_throw_weapon_down (self):
+        weapon = self.weapon
+        if not self.test_action (is_hit) and weapon:
+            weapon.set_owner (None)
+            self.start_action (is_hit, False)
+            self.entities.tasks.add (task.sequence (
+                task.wait (1.),
+                task.run (lambda: self.stop_action (is_hit))))
+
     def on_hit_down (self):
-        # HACK! HACK! HACK! Technically we don't know here that we
-        # are working throu a delegate
-        weapon = self.delegate.weapon
+        weapon = self.weapon
 
         if not self.test_action (is_hit) and weapon:
             weapon.start_hitting ()
@@ -214,6 +222,7 @@ class PlayerEntityBase (TaskEntity):
 
 class PlayerEntity (
     PlayerEntityBase,
+    WeaponOwner,
     StandingPhysicalEntity,
     ActorEntity):
     pass
@@ -221,6 +230,7 @@ class PlayerEntity (
 
 class PlayerEntityDecorator (
     PlayerEntityBase,
+    DelegateWeaponOwner,
     DelegateStandingPhysicalEntity,
     DelegateActorEntity):
     pass
