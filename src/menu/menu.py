@@ -19,6 +19,7 @@
 
 from pandac.PandaModules import (Vec3, PandaNode, WindowProperties, FontPool)
 
+from base.log import get_log
 from core.state import State
 #from core.panda_controller import PandaController
 from core import task
@@ -26,7 +27,12 @@ from core import task
 from main_menu import *
 from game.loader import *
 
+_log = get_log (__name__)
+
 class Menu (State):
+
+    def __del__ (self):
+        _log.debug ("Releasing the menu from memory.")
 
     def do_setup (self, data):
         props = WindowProperties()
@@ -49,7 +55,7 @@ class Menu (State):
         self.main_menu.do_connect ()
 
     def do_release (self):
-        self.sound.stop ()
+        #self.sound.stop ()
         self.main_menu.do_destroy ()
         self.root.removeNode ()
     
@@ -72,17 +78,18 @@ class Menu (State):
             )
 
     def load_sound (self):
-        self.sound = loader.loadSfx ('snd/melancolik-drone.ogg')
-        self.sound.setVolume (.1)
-        self.sound.setLoop (True)
-        self.sound.play ()    
+#        self.sound = loader.loadSfx ('snd/melancolik-drone.ogg')
+        self.manager.panda.loop_music ('snd/melancolik-drone.ogg')
+#        self.sound.setVolume (.1)
+#        self.sound.setLoop (True)
+#        self.sound.play ()    
     
     def load_buttons (self):
         self.bt_yellow = loader.loadModel ('menu/bt_yellow.egg')
         self.bt_red = loader.loadModel ('menu/bt_red.egg')
 
     def load_fonts (self):
-        self.font = loader.loadFont ('font/three-hours.ttf')
+        self.font = loader.loadFont ('font/three-hours2.ttf')
         
     def do_smile (self, time = 0.2):
         self.tasks.add ( task.sequence(
@@ -100,7 +107,7 @@ class MenuData (LoaderData):
                       'menu/bt_yellow.egg'
                     ]
     load_sound  =   [ 'snd/melancolik-drone.ogg' ]
-    load_fonts  =   [ 'font/three-hours.ttf' ]
+    load_fonts  =   [ 'font/three-hours2.ttf' ]
     
 class LoadMenu (LoaderInterState):
     load_data = MenuData
