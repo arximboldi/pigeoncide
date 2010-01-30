@@ -18,7 +18,7 @@
 #
 
 from log import get_log
-from signal import Signal
+from signal import Signal, signal
 from sender import Sender, Receiver
 
 """
@@ -44,13 +44,17 @@ class EventManager (Sender, Receiver):
                 self.send (name, *args, **kw)
 
     receive = notify
+
+    @signal
+    def on_any_event (self, *a, **k):
+        super (EventManager, self).send (*a, **k) 
     
     def event (self, name):
         if name in self._events:
             return self._events [name]
 
         signal = Signal ()
-        signal += lambda *a, **k: self.send (name, *a, **k)
+        signal += lambda *a, **k: self.on_any_event (name, *a, **k)
         self._events [name] = signal
         return signal
 
