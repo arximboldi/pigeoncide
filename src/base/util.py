@@ -32,8 +32,11 @@ def linear (min, max, val):
 def nop (*a, **k):
     pass
 
+def trace (val):
+    print val
+    return val
 
-def bound (val, vmin, vmax):
+def clamp (val, vmin, vmax):
     if val < vmin: return vmin
     if val > vmax: return vmax
     return val

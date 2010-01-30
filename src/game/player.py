@@ -32,7 +32,7 @@ from ent.task import TaskEntity
 from pandac.PandaModules import Vec3
 
 from boy import Boy, DelegateBoy
-
+from pigeon import PigeonFood
 
 import laser
 import math
@@ -45,6 +45,7 @@ action_strafe_l       = 1 << 6
 action_strafe_r       = 1 << 7
 action_jump           = 1 << 8
 action_hit            = 1 << 9
+action_feed           = 1 << 10
 
 noise_hit   = 0.
 noise_jump  = 200.
@@ -52,6 +53,7 @@ noise_run   = 50.
 noise_stick = 30
 noise_throw = 30
 noise_walk  = 0.
+noise_feed  = 0.
 
 class PlayerEntityBase (TaskEntity):
     """
@@ -61,10 +63,11 @@ class PlayerEntityBase (TaskEntity):
     """
 
     animations = [ (action_hit,      'hit'),
+                   (action_feed,     'feed'),
                    (action_running,  'run'),
                    (action_forward,  'walk'),
                    (action_backward, 'walk'),
-                   (0,           'idle') ]
+                   (0,               'idle') ]
 
     force              = 10000.0
     bw_force           = 10000.0
@@ -125,15 +128,15 @@ class PlayerEntityBase (TaskEntity):
             self.is_on_floor_timer = 0.
             self.actions &= ~ action_jump
 
-    def get_stick_position (self):
+    def get_place_position (self, dist):
         direction = Vec3 (math.sin (self.angle), math.cos (self.angle), 0)
-        return self.position + direction * 5
+        return self.position + direction * dist
 
     @signal
     def on_place_stick_down (self):
         if self.can_place_stick:
             stick = laser.Stick (entities = self.entities)
-            stick.position = self.get_stick_position ()
+            stick.position = self.get_place_position (5.)
             stick.hpr = self.hpr
             self.laser.add_stick (stick)
             self.emit_noise (noise_stick)
@@ -159,6 +162,17 @@ class PlayerEntityBase (TaskEntity):
                 task.wait (1.),
                 task.run (weapon.finish_hitting),
                 task.run (lambda: self.stop_action (action_hit))))    
+
+    def on_feed_down (self):
+        if not self.test_action (action_feed):
+            pos = self.get_place_position (5)
+            food = PigeonFood (entities = self.entities)
+            food.position = pos
+            self.start_action (action_feed, False)
+            self.emit_noise (noise_feed)
+            self.entities.tasks.add (task.sequence (
+                task.wait (1.),
+                task.run (lambda: self.stop_action (action_feed))))    
     
     def on_jump_down (self):
         self.emit_noise (noise_jump)

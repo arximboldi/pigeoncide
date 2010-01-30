@@ -19,17 +19,28 @@
 
 from core.state import State
 
+from entity import EntityManager
 from physical import PhysicalEntityManager
 from task import TaskEntityManager
 from panda import PandaEntityManager
 
+import weakref
+
+class GameEntityManagerBase (EntityManager):
+
+    def __init__ (self, game = None, *a, **k):
+        super (GameEntityManagerBase, self).__init__ (*a, **k)
+        self.game = game
+
 class GameEntityManager (
+    GameEntityManagerBase,
     PhysicalEntityManager,   
     PandaEntityManager,
     TaskEntityManager):
     pass
 
 class LightGameEntityManager (
+    GameEntityManagerBase,
     PandaEntityManager,
     TaskEntityManager):
     pass
@@ -42,7 +53,8 @@ class GameState (State):
         self._entities = GameEntityManager (
             tasks       = self.tasks,
             phys_events = self.events,
-            audio3d     = self.manager.panda.audio3d)
+            audio3d     = self.manager.panda.audio3d,
+            game        = weakref.proxy (self))
     
     @property
     def entities (self):
@@ -59,7 +71,8 @@ class LightGameState (State):
         super (LightGameState, self).__init__ (*a, **k)
         self._entities = LightGameEntityManager (
             tasks       = self.tasks,
-            audio3d     = self.manager.panda.audio3d)
+            audio3d     = self.manager.panda.audio3d,
+            game        = weakref.proxy (self))
     
     @property
     def entities (self):

@@ -52,10 +52,11 @@ class Level (LoaderData):
                       'char/pigeon-land.egg',
                       'char/pigeon-idle.egg',
                       'char/pigeon-fly.egg',
-                      'lvl/modelillo.egg',
+                      'lvl/world.egg',
                       'obj/stick.egg',
                       'obj/stick-hl.egg',
-                      'obj/baseball-bat.egg' ]
+                      'obj/baseball-bat.egg',
+                      'obj/food.egg' ]
     
     load_textures = [ 'char/boy.png',
                       'char/boy-glow.png',
@@ -80,6 +81,7 @@ class Level (LoaderData):
                       'obj/stick-hl.png',
                       'obj/stick-glow.png',
                       'obj/stick-hl-glow.png',
+                      'obj/food.png',
                       'hud/pigeon.png',
                       'hud/clock.png' ]
     
@@ -93,8 +95,8 @@ class Level (LoaderData):
                     'font/alte-bold.ttf' ]
     
     music       = 'snd/houmdrak.mp3'
-    model       = 'lvl/modelillo.egg'
-    geometry    = 'lvl/modelillo.egg'
+    model       = 'lvl/world.egg'
+    geometry    = 'lvl/world.egg'
     offset      = Vec3 (0, 0, 0)
     sky         = 'sky/green-sky.egg'
     sky_scale   = 1000.
@@ -146,9 +148,9 @@ class Level (LoaderData):
         """
         wep0 = weapon.BaseballBat (entities = entities)
         wep0.position = Vec3 (0, 0, 30)
-        
-        self.level.model.setTexture (loader.loadTexture ('lvl/grass.png'))
-        
+
+        self.level.model.setTexture (loader.loadTexture ('lvl/world.png'))
+                
         plightnode = PointLight ("point light")
         plightnode.setAttenuation (Vec3 (1, 0.0000005, 0.0000001))
         plight = entities.render.attachNewNode (plightnode)

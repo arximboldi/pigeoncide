@@ -20,6 +20,12 @@
 from pandac.PandaModules import Quat
 import math
 
+def distance (a, b):
+    return (a - b).length ()
+
+def distance_sq (a, b):
+    return (a - b).lengthSquared ()
+
 def to_deg (rad):
     return rad * 180. / math.pi
 

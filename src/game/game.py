@@ -50,6 +50,7 @@ PLAYER_INPUT_MAP = {
     'on_jump'          : 'panda-space',
     'on_run'           : 'panda-c',
     'on_hit'           : 'panda-e',
+    'on_feed'          : 'panda-f',
     'on_throw_weapon'  : 'panda-r',
     'on_place_stick'   : 'panda-q',
     'on_steer'         : 'panda-mouse-move',
@@ -165,7 +166,7 @@ class Game (GameState):
             self.hud.set_counter ('sticks', self.num_sticks)
 
     def highlight_stick_task (self, timer):
-        pos = self.player_ctl.get_stick_position ()
+        pos = self.player_ctl.get_place_position (5)
         best = self.player_ctl.laser.best_stick (pos)
         if best != self._curr_best_stick:
             if self._curr_best_stick:
@@ -240,6 +241,8 @@ class Game (GameState):
 
         self.tasks.add (self.highlight_stick_task)
         self._curr_best_stick = None
+
+        self.pigeon_food = []
         
     def do_sink (self):
         super (Game, self).do_sink ()

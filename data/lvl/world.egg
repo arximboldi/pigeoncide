@@ -3,6 +3,9 @@
 <Comment> {
   "x2egg modelillo.x"
 }
+<Texture> tref1 {
+  world.png
+}
 <Material> mref1 {
   <Scalar> diffr { 0.8 }
   <Scalar> diffg { 0.8 }

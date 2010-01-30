@@ -21,9 +21,8 @@ from base.signal import weak_slot
 from base.util import nop
 
 from ent.observer import ObservableSpatialEntity
-from ent.panda import ActorEntity
-from ent.physical import (StandingPhysicalEntityDecorator,
-                          DynamicPhysicalEntity)
+from ent.panda import ActorEntity, ModelEntity
+from ent.physical import DynamicPhysicalEntity, StandingPhysicalEntity
 
 from core.state import StateManager, State
 from core.util import *
@@ -41,6 +40,36 @@ from physics import pigeon_category
 import random
 import weakref
 from pandac.PandaModules import Vec3
+
+class PigeonFood (ModelEntity,
+                  DynamicPhysicalEntity,
+                  ObservableSpatialEntity):
+
+    food_model = 'obj/food.egg'
+    amount     = 1.0
+    food_scale = 0.5
+    
+    def __init__ (self, *a, **k):
+        super (PigeonFood, self).__init__ (
+            model = self.food_model,
+            geometry = geom.box (2, 2, 0.5),
+            *a, **k)
+        self.model.setTexture (loader.loadTexture ('obj/food.png'))
+        self.model_scale = self.food_scale
+        # A bit hackish, I guess
+        self.entities.game.pigeon_food.append (self)
+        
+    def eat (self, cnt):
+        self.amount -= cnt
+        if self.amount <= 0.0:
+            self.dispose ()
+        else:
+            s = self.amount * self.food_scale
+            self.model_scale = Vec3 (s, s, s)
+
+    def dispose (self):
+        self.entities.game.pigeon_food.remove (self)
+        super (PigeonFood, self).dispose ()
 
 
 class Pigeon (BoidEntity,
@@ -91,7 +120,7 @@ class Pigeon (BoidEntity,
         
         self.death_sounds = map (self.load_sound, self.pigeon_death_sounds)
 
-        self.add_state ('patrol', PatrolState)
+        self.add_state ('fly',    FlyState)
         self.add_state ('walk',   WalkState)
         self.add_state ('follow', FollowState)
         self.add_state ('fear',   FearState)
@@ -115,7 +144,7 @@ class Pigeon (BoidEntity,
         
     @weak_slot
     def on_boy_noise (self, boy, rad):
-        if (boy.position - self.position).lengthSquared () < rad ** 2:
+        if distance_sq (boy.position, self.position) < rad ** 2:
             if self.current.state_name != 'fear':
                 self.enter_state ('fear', boy)
             else:
@@ -127,45 +156,110 @@ class Pigeon (BoidEntity,
         self.disable_physics ()
         random.choice (self.death_sounds).play ()
 
+    def find_food (self):
+        food = self.entities.game.pigeon_food
+        best = None
+        bestdist = 1000000.
+        pos = self.position
+        for f in food:
+            dist = distance_sq (f.position, pos)
+            if dist < bestdist:
+                bestdist = dist
+                best = f
+        return best
 
-class PigeonState (State):
-    
+    def check_food (self, change = False):
+        best = self.find_food ()
+        if best:
+            self.enter_state ('eat', best)
+
+
+class PigeonState (State):    
     params = BoidParams
-    
+    animation = 'idle'
+    anim_speed = 50.
     def do_setup (self, *a, **k):
+        self.params = self.params ()
         self.manager.change_params (self.params)
+        self.manager.model.loop (self.animation)
         self.do_pigeon_setup (*a, **k)
-
+    def do_sink (self):
+        self.pause ()
     def do_unsink (self, *a, **k):
         self.manager.change_params (self.params)
-
+        self.resume ()
+    def do_update (self, timer):
+        super (PigeonState, self).do_update (timer)
+        self.manager.model.setPlayRate (self.manager.linear_velocity.length () /
+                                        self.anim_speed,
+                                        self.animation)
     do_pigeon_setup = nop
     do_pigeon_unsink = nop
 
-
 class FollowState (PigeonState):    
     @weak_slot
-    def on_boy_set_position (self, boy, pos):
+    def on_target_set_position (self, target, pos):
         self.params.boid_target = pos
-    def do_pigeon_setup (self, boy):
-        boy.on_entity_set_position += self.on_boy_set_position
-
+    def do_pigeon_setup (self, target):
+        target.on_entity_set_position += self.on_target_set_position
+        self.params.boid_target = target.position
+        
 class FearState (FollowState, task.WaitTask):
+    animation  = 'fly'
+    anim_speed = 50
     class params (BoidParams):
         boid_f_target = - 0.002
+        boid_speed = 200
     duration = 10.
 
-class EatState (State):
-    pass
+class EatState (FollowState):
+    class params (BoidParams):
+        boid_flying   = False
+        boid_speed    = 20
+        boid_f_target   = 0.1
+        boid_f_randomness = 0.
+        boid_power = 100.
+        
+    glutony      = 0.3
+    eat_distance = 5
+    animation    = 'walk'
+    anim_speed   = 10.
+    def do_pigeon_setup (self, target):
+        super (EatState, self).do_pigeon_setup (target)
+        self.happy_meal = target
+    def do_update (self, timer):
+        super (EatState, self).do_update (self)
+        best = self.manager.find_food ()
+        if best != self.happy_meal and best:
+            self.manager.change_state ('eat', best)
+        elif self.happy_meal:
+            if distance_sq (self.happy_meal.position, self.manager.position) < \
+               self.eat_distance ** 2:
+                self.params.boid_speed = 0.001
+                self.params.boid_power = 0.001
+                self.happy_meal.eat (timer.delta * self.glutony)
+        else:
+            self.manager.leave_state ()
 
-class WalkState (PigeonState):
+class PatrolState (PigeonState):
+    def do_update (self, timer):
+        super (PatrolState, self).do_update (timer)
+        self.manager.check_food ()
+
+class WalkState (PatrolState):
+    animation     = 'walk'
+    anim_speed    = 7
     class params (BoidParams):
         boid_flying   = False
         boid_speed    = 10
         boid_max_far  = 300
         boid_f_bounds = 0.1
-
-class PatrolState (PigeonState):
+        boid_power    = 100.
+        boid_f_randomness = 0.
+        
+class FlyState (PatrolState):
+    animation  = 'fly'
+    anim_speed = 50.
     class params (BoidParams):
         boid_speed  = 100.
 
@@ -175,52 +269,3 @@ class HitState (PigeonState, task.WaitTask):
         boid_speed    = 1000
     duration = 5.
 
-
-
-"""
-class FlockingState (State):
-
-    def __init__ (self, *a, **k):
-        super (FlockingState, self).__init__ (*a, **k)
-        self.boid = PigeonBoid (flock    = self.manager.flock,
-                                delegate = self.manager)
-        
-    def do_release (self):
-        self.boid.dispose ()
-
-class CrawlingState (State):
-
-    def __init__ (self, *a, **k):
-        super (CrawlingState, self).__init__ (*a, **k)
-        self.crawler = CrawlerEntityDecorator (self.manager)
-        print self.manager.hpr
-        self.crawler.angle = to_rad (self.manager.hpr.getX ())
-        
-    def do_release (self):
-        self.crawler.dispose ()
-"""
-
-"""
-class PigeonBoid (BoidEntityDecorator):
-    patrol_dist = 100
-    patrol_dist_sq = patrol_dist ** 2
-    
-class PigeonFlock (Flock):        
-
-    def do_update (self, timer):
-        super (PigeonFlock, self).do_update (timer)
-
-        if all (map (self.reached_target, self.boids)):
-            (minx, miny, minz), (maxx, maxy, maxz) = self.flock_bounds 
-            new_target = Vec3 (random.uniform (minx, maxx),
-                               random.uniform (miny, maxy),
-                               random.uniform (minz, maxz))
-            for x in self.boids:
-                x.boid_target = new_target
-
-    def reached_target (self, pigeon):
-        return (
-            not pigeon.boid_target or
-            (pigeon.boid_target - pigeon.position).lengthSquared () <
-            pigeon.patrol_dist_sq)
-"""

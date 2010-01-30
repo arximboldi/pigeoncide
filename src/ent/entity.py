@@ -59,20 +59,26 @@ class EntityManager (Selfable):
 
 class Entity (object):
 
+    _disposed = False
+    
     def __init__ (self, entities = None, *a, **k):
         _log.debug ("Creating entity: %s" % self)
         super (Entity, self).__init__ (*a, **k)
         self._entities = weakref.ref (entities)
         entities._add_entity (self)
-                
+        
     @property
     def entities (self):
         return self._entities ()
     
     def dispose (self):
         _log.debug ("Disposing entity: %s" % self)
+        self._disposed = True
         self.entities._del_entity (self)
-        
+
+    def __nonzero__ (self):
+        return not self._disposed
+
     
 class DelegateEntity (Entity):
 

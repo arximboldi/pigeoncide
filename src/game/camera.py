@@ -22,7 +22,7 @@ from pandac.PandaModules import (
     Vec3, OdeRayGeom, OdeSphereGeom, OdeCappedCylinderGeom)
 
 from core import task
-from base.util import bound
+from base.util import clamp
 from ent.observer import SpatialEntityListener
 from ent.entity import SpatialEntity, Entity
 
@@ -92,6 +92,7 @@ class FastEntityFollower (EntityFollowerBase):
         if self.control_angle:
             self.angle  += px * self.speed
         self.hangle += py * self.speed
+        self.hangle = clamp (self.hangle, - math.pi / 2, math.pi / 2)
         self.update_camera ()
 
     def on_entity_set_hpr (self, ent, (h, p, r)):

@@ -116,7 +116,7 @@ class WeaponEntity (SpatialEntity, TaskEntity):
         g = self.weapon_geom_free if self.weapon_geom_free \
             else geom.mesh (self.weapon_model, scale = self.weapon_scale)
         self._make_child_entity (FreeWeaponEntity,
-                                 geometry = g,
+                                 #geometry = g,
                                  category = physics.weapon_category,
                                  *a, **k)
         self._child_entity.on_collide += self.on_touch
@@ -124,6 +124,7 @@ class WeaponEntity (SpatialEntity, TaskEntity):
     def _make_owned_entity (self, *a, **k):
         g = self.weapon_geom_owned if self.weapon_geom_owned \
             else geom.sphere (self.weapon_hit_radius)
+        
         self._make_child_entity (OwnedWeaponEntity,
                                  geometry = g,
                                  collide  = physics.pigeon_category,
