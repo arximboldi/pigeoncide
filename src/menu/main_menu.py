@@ -18,10 +18,10 @@
 #
 
 from direct.gui.DirectGui import *
-#from pandac.PandaModules import PandaNode
+
+from core import task
 
 from option_menu import *
-from core import task
 
 class MainMenu (object):
 
@@ -82,7 +82,7 @@ class MainMenu (object):
     def do_connect (self):
         # Buttons task assigment
         self.start["command"] = lambda: self.state.tasks.add( task.sequence(
-            task.run (self.options_menu.do_destroy),
+            self.options_menu.do_destroy (),
             task.run (lambda: self.state.do_smile (1)),
             task.wait (1),
             task.run (lambda: self.state.manager.leave_state ('game'))
@@ -99,12 +99,26 @@ class MainMenu (object):
             
         self.exit["command"] = lambda: self.state.tasks.add (task.sequence(
             task.parallel(
-                task.run (self.options_menu.do_destroy),
+                self.options_menu.do_destroy (),
                 task.run (lambda: self.state.do_smile (1.5))
             ),
             task.run (self.state.kill)
         ))
+        
+    def do_enable (self):
+        self.start.setProp ('state', DGG.NORMAL)
+        self.options.setProp ('state', DGG.NORMAL)
+        self.credits.setProp ('state', DGG.NORMAL)
+        self.exit.setProp ('state', DGG.NORMAL)
+        self.options_menu.do_enable ()
     
+    def do_disable (self):
+        self.start.setProp ('state', DGG.DISABLED)
+        self.options.setProp ('state', DGG.DISABLED)
+        self.credits.setProp ('state', DGG.DISABLED)
+        self.exit.setProp ('state', DGG.DISABLED)
+        self.options_menu.do_disable ()
+        
     def do_destroy (self):
         self.start.destroy()
         self.options.destroy()

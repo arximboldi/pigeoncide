@@ -19,13 +19,13 @@
 
 from direct.gui.DirectGui import *
 from direct.gui.OnscreenText import OnscreenText 
-from pandac.PandaModules import *
 
-from core import (patch_messenger, task)
-#from core import task
-from core.panda_controller import PandaController
-from base.conf import GlobalConf
-#from base.xml_conf import *
+from core import task
+
+from screen import *
+from sound import *
+from keyboard import *
+
 
 class OptionsMenu (object):
 
@@ -37,8 +37,6 @@ class OptionsMenu (object):
         self.sub_screen = Screen(state)
         self.sub_sound = Sound (state)
         self.sub_keyboard = Keyboard (state)
-        
-        self.cfg = GlobalConf().child ('panda')
 
     def do_paint (self):
         # Option-Buttons inicialitation
@@ -131,6 +129,26 @@ class OptionsMenu (object):
         self.screen ["command"] = self.show_screen
         self.back ["command"] = lambda: self.state.tasks.add (self.do_destroy())
         
+    def do_enable (self):
+        self.sound.setProp ('state',DGG.NORMAL)
+        self.keyboard.setProp ('state',DGG.NORMAL)
+        self.screen.setProp ('state',DGG.NORMAL)
+        self.back.setProp ('state',DGG.NORMAL)
+        
+        #self.sub_screen.do_enable ()
+        #self.sub_sound.do_enable ()
+        self.sub_keyboard.do_enable ()
+    
+    def do_disable (self):
+        self.sound.setProp ('state',DGG.DISABLED)
+        self.keyboard.setProp ('state',DGG.DISABLED)
+        self.screen.setProp ('state',DGG.DISABLED)
+        self.back.setProp ('state',DGG.DISABLED)
+        
+        #self.sub_screen.do_disable ()
+        #self.sub_sound.do_disable ()
+        self.sub_keyboard.do_disable ()
+    
     def do_destroy (self):
         if self.active:
             #Buttons destroy
@@ -197,155 +215,4 @@ class OptionsMenu (object):
             self.sub_keyboard.do_paint ()
         else:
             self.sub_keyboard.do_destroy ()
-    
-class Keyboard (object):
 
-    def __init__(self, state = None, *a, **k):
-        super (Keyboard, self).__init__ (*a, **k)
-        if state:
-            self.state = state
-        self.active = False
-        
-    def do_paint (self):
-        #cfg.child ('music-volume').default (self.DEFAULT_MUSIC_VOLUME)
-        self.active = True
-
-    def do_destroy (self):
-        self.active = False
-
-    def get_active (self):
-        return self.active
-
-class Sound (object):
-
-    def __init__(self, state = None, *a, **k):
-        super (Sound, self).__init__ (*a, **k)
-        if state:
-            self.state = state
-        self.active = False
-        self.cfg = GlobalConf().child ('panda')
-        
-            
-    def do_paint (self):
-        #
-        # TO DO:    - Place the sliders and label in correct place. 
-        #           - Test colors and style 
-        #
-        
-        self.active = True
-        
-        # Creates volume label and slider
-        self.vol_lab = OnscreenText(text = 'SFX',
-            font = self.state.font,
-            pos = (-0.5, 0.02),
-            scale = 0.07,
-            )
-        self.vol_slider = DirectSlider(range=(0, 1),
-            value = self.cfg.child ('sound-volume').value,
-            pageSize = 0.03,
-            command = self.change_snd,
-            pos = (-0.1, 0, 0.55),
-            )
-
-        # Creates music label and slider
-        self.mus_lab = OnscreenText(text = 'Music',
-            font = self.state.font,
-            pos = (-0.5, 0.02),
-            scale = 0.07
-            )
-        self.mus_slider = DirectSlider(range=(0, 1),
-            value = self.cfg.child ('music-volume').value,
-            pageSize = 0.03,
-            command = self.change_snd
-            )
-
-    def do_destroy (self):
-        self.mus_lab.destroy ()
-        self.mus_slider.destroy ()
-        self.vol_lab.destroy ()
-        self.vol_slider.destroy ()
-        self.active = False
-
-    def change_snd (self):
-        # Modifies config acording to sliders values
-        self.cfg.child ('sound-volume').set_value (self.vol_slider['value']) 
-        self.cfg.child ('music-volume').set_value (self.mus_slider['value'])
-
-class Screen (object):
-
-    def __init__(self, state = None, *a, **k):
-        super (Screen, self).__init__ (*a, **k)
-        if state:
-            self.state = state
-        self.active = False
-        self.cfg = GlobalConf().child ('panda')
-        
-    def do_paint (self):
-        # Get possible screen resolutions NOT AVAILABLE IN OSX
-        # di = base.pipe.getDisplayInformation()
-        # for index in range(di.getTotalDisplayModes()): 
-        #    sizes += (  str(di.getDisplayModeWidth(index)), 
-        #                str(di.getDisplayModeHeight(index))
-        #            )         
-        
-        actual_full = self.cfg.child ('fullscreen').value
-        actual_width = self.cfg.child ('width').value
-        actual_height = self.cfg.child ('height').value
-        self.active = True
-        
-        self.sizes = [  [640, 480],
-                        [800, 600],
-                        [1024, 768],
-                        [1280, 800],
-                        [1280, 1024],
-                        [1440, 900]
-                        ]
-
-        self.sizes_tx = []
-        for a in self.sizes:
-            self.sizes_tx += [str (a[0])+"x"+str (a[1])]
-        
-        # Gets the position of the actual config from self.sizes
-        init_item = self.sizes.index ([actual_width, actual_height])
-
-        #
-        # TO DO: place buttons in correct positions and FPS button
-        #
-        # cfg.child ('fps').default (self.DEFAULT_FPS)
-        # cfg.child ('frame-meter').default (self.DEFAULT_FRAME_METER)
-            
-        # Create a frame
-        self.res_menu = DirectOptionMenu (text="Resolution", 
-            scale = 0.1,
-            items = self.sizes_tx,
-            initialitem = init_item,
-            highlightColor = (0.65,0.65,0.65,1),
-            command = self.change_res
-            )
-        
-        self.full_screen = DirectCheckButton (text = "Full screen" ,
-            indicatorValue = self.cfg.child ('fullscreen').get_value(),            pos = (.4, 0, -.5),
-            scale = .05,
-            command = self.change_full
-            )
-    
-    def do_destroy (self):
-        self.res_menu.destroy ()
-        self.full_screen.destroy ()
-        self.active = False
-        
-    def get_active (self):
-        return self.active
-        
-    def change_full (self, status):
-        self.cfg.child ('fullscreen').set_value (status)
-        self.cfg.nudge ()
-        
-    def change_res (self, arg):
-        i = self.sizes_tx.index(arg)
-        self.cfg.child ('fullscreen').set_value (False)
-        self.cfg.child ('width').set_value (self.sizes[i][0])
-        self.cfg.child ('height').set_value (self.sizes[i][1])
-
-        self.full_screen["indicatorValue"] = False
-        self.cfg.nudge ()

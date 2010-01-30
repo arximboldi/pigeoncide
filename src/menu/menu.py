@@ -55,10 +55,13 @@ class Menu (State):
         self.main_menu.do_connect ()
 
     def do_release (self):
-        #self.sound.stop ()
         self.main_menu.do_destroy ()
         self.root.removeNode ()
     
+    def do_update (self, timer):
+        super (Menu, self).do_update (timer)
+        self.events.send ('garrapata')
+        
     def setup_camera(self):
         camera.setPosHpr( Vec3( 0.0, -22.0, 0.0), Vec3( 0.0, 0.0, 0 ) )
         
@@ -78,11 +81,7 @@ class Menu (State):
             )
 
     def load_sound (self):
-#        self.sound = loader.loadSfx ('snd/melancolik-drone.ogg')
         self.manager.panda.loop_music ('snd/melancolik-drone.ogg')
-#        self.sound.setVolume (.1)
-#        self.sound.setLoop (True)
-#        self.sound.play ()    
     
     def load_buttons (self):
         self.bt_yellow = loader.loadModel ('menu/bt_yellow.egg')
@@ -99,6 +98,12 @@ class Menu (State):
             task.run (lambda: self.bg_normal.setPos (-4.33, 0 , -0.89)),
             task.run (lambda: self.bg_smile.setPos (-4.33, 1 , -0.89))
             ))
+    
+    def do_enable (self):
+        self.main_menu.do_enable ()
+        
+    def do_disable (self):
+        self.main_menu.do_disable ()
         
 class MenuData (LoaderData):
     load_models =   [ 'menu/bg_normal.egg',
