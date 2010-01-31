@@ -66,6 +66,10 @@ class Screen (object):
             
         # Create a frame
         tx_scale = (0.7, 0.7)
+        self.rest_txt = OnscreenText (text = "Resolution",
+            font = self.state.font,
+            pos = (0.4, 0, -0.4)
+            )
         self.res_menu = DirectOptionMenu (text = "Resolution",
             text_font = self.state.font, 
             text_scale = tx_scale,
