@@ -23,8 +23,10 @@ from pandac.PandaModules import *
 
 from core import (patch_messenger, task)
 from core.panda_controller import PandaController
-from base.conf import GlobalConf
 from core.input import *
+from base.conf import GlobalConf
+
+from game.input import *
 
 class Keyboard (object):
 
@@ -33,7 +35,10 @@ class Keyboard (object):
         if state:
             self.state = state
         self.active = False
-        self.cfg = GlobalConf().child ('game')
+        load_game_defaults ()
+        self.cfg = GlobalConf().path ('game.player0.keys')
+
+        
         self.keys_txt = [   ("Forward",     'on_move_forward'),
                             ("Backward",    'on_move_backward'),
                             ("Strafe left", 'on_strafe_left'),
@@ -77,7 +82,7 @@ class Keyboard (object):
             ))
             i += 1
         
-        self.info_txt = OnscreenText (text = 'Select button',
+        self.info_txt = OnscreenText (text = 'Select action',
                 font = self.state.font,
                 pos = (0.4, init+dif*i-0.02),
                 scale = 0.04
@@ -106,7 +111,7 @@ class Keyboard (object):
         # Deactivate all buttons
         self.state.do_disable ()
         self.keys_lab[key].setText('_')
-        self.info_txt.setText ('Click any action to config')
+        self.info_txt.setText ('Click any key to config')
         self.slot = self.state.events.on_any_event.connect (
             lambda ev, *a, **k: self.get_key (ev, key))
                 
