@@ -90,7 +90,7 @@ class FlockEntity (TaskEntity):
 class BoidParams (object):
 
     # All rules effect
-    boid_power        = 1000
+    boid_power        = 100
     boid_flying       = True
     boid_flocking     = True
 
@@ -107,9 +107,9 @@ class BoidParams (object):
     # Constraints
     boid_speed        = 150
     boid_max_far      = 600
-    boid_center       = Vec3 (0, 0, 0)
+    boid_center       = Vec3 (0, 0, 20)
     boid_mindist      = 5
-    boid_maxdist      = 20.
+    boid_maxdist      = 30.
     boid_height       = 50.0    
     boid_target       = None
 
@@ -149,7 +149,7 @@ class BoidEntityBase (TaskEntity):
         linvel              = self.linear_velocity
         
         self.neighbours = self.find_neighbours ()
-
+        
         cohesion   = self.rule_cohesion ()
         avoidance  = self.rule_avoidance ()
         alignment  = self.rule_alignment ()
@@ -181,14 +181,16 @@ class BoidEntityBase (TaskEntity):
 
     def find_neighbours (self):
         mypos = self._curr_position
+        cls  = self.params.__class__
+        maxdist = self.params.boid_maxdist ** 2
         return [ (x, p, v)
                  for (x, p, v)
                  in self.flock.boids_cache
-                 if (mypos - p).lengthSquared () < self.params.boid_maxdist ** 2
+                 if distance_sq (mypos, p) < maxdist
                  # HACK to check same state !
-                 and x.params.__class__ == self.params.__class__
+                 and x.params.__class__ == cls
                  and x != self ]
-
+    
     def rule_avoidance (self):
         avoid = Vec3 ()
         mypos = self._curr_position
@@ -281,6 +283,5 @@ def make_random_flock (entities,
                            random.uniform (miny, maxy),
                            random.uniform (minz, maxz))
     flock.choose_leader ()
-    flock.flock_bounds = bounds
     
     return flock

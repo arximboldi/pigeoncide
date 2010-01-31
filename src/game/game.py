@@ -139,7 +139,7 @@ class Game (GameState):
 
         self.events.event ('panda-escape').connect (self.kill)
         self.events.event ('panda-p').connect (self.toggle_pause)
-        
+                
         self.manager.enter_state (GameIntro)
 
     @weak_slot

@@ -105,9 +105,9 @@ class Level (LoaderData):
     flocks_def  = [ 20 ]
     max_time    = 120.
     max_sticks  = 4
-    flocks      = []
     
     def setup_entities (self, entities):
+        self.flocks = []
         self.setup_level (entities)
         self.setup_sky (entities)
         self.setup_boy (entities)
@@ -137,7 +137,7 @@ class Level (LoaderData):
         boid_cls = delayed (Pigeon) (boys = [self.boy])
         for x in self.flocks_def:
             self.flocks.append (
-                make_random_flock (entities, 20, boid_cls = boid_cls))
+                make_random_flock (entities, x, boid_cls = boid_cls))
 
     def dispose (self):
         self.do_cleanup ()

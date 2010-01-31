@@ -89,7 +89,6 @@ class Timer (TimerBase):
         
     def tick (self):
         self._total_frame_count += 1
-        
         if self._fps > 0:
             self._frame_count += 1
             target_time = self._last_time + self._frame_count * self._rate

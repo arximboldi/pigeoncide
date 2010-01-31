@@ -18,7 +18,7 @@
 #
 
 from base.signal import weak_slot
-
+from base.log import get_log
 from base.util import *
 
 from ent.observer import ObservableSpatialEntity
@@ -42,6 +42,8 @@ from physics import pigeon_category
 import random
 import weakref
 from pandac.PandaModules import Vec3
+
+_log = get_log (__name__)
 
 class PigeonFood (ModelEntity,
                   DynamicPhysicalEntity,
@@ -174,7 +176,7 @@ class Pigeon (BoidEntity,
     @weak_slot
     def on_boy_noise (self, boy, rad):
         if distance_sq (boy.position, self.position) < rad ** 2:
-            if self.current.state_name != 'fear':
+            if self.current and self.current.state_name != 'fear':
                 self.enter_state ('fear', boy)
             else:
                 self.current.restart_wait ()
@@ -205,9 +207,11 @@ class Pigeon (BoidEntity,
     def check_limits (self):
         pos = self.position
         if pos.getZ () < self.pigeon_z_limit:
-            print "WARNING! WARNING!", self, pos
+            _log.debug ("Pigeon needs repositioning. %s, %s" %
+                        (str (pos), str (self)))
             if self.current.state_name != 'return':
                 self.enter_state ('return')
+
 
 class PigeonState (State, BoidParams):
 
