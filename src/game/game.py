@@ -185,10 +185,9 @@ class Game (GameState):
 
     @weak_slot
     def on_control_change (self, cfg):
+        self.player_input.unassoc_action (cfg.name)
         if cfg.value:
             self.player_input.assoc (cfg.name, cfg.value)
-        else:
-            self.player_input.unassoc_action (cfg.name)
     
     def setup_panda (self):
         panda = self.manager.panda
@@ -207,7 +206,8 @@ class Game (GameState):
         self.player_input.assoc ('on_steer', 'panda-mouse-move')
         cfg = GlobalConf ().path ('game.player0.keys')
         for c in cfg.childs ():
-            self.player_input.assoc (c.name, c.value)
+            if c.value:
+                self.player_input.assoc (c.name, c.value)
             c.on_conf_change += self.on_control_change
 
     def setup_controllers (self):
