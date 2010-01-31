@@ -35,10 +35,6 @@ class Menu (State):
         _log.debug ("Releasing the menu from memory.")
 
     def do_setup (self, data):
-        props = WindowProperties()
-        base.win.requestProperties(props)
-        base.setBackgroundColor( 1.0, 1.0, 1.0)
-        
         self.root = render.attachNewNode (PandaNode ('menu'))
         self.events.event ('panda-escape').connect (self.kill)
         self.manager.panda.absolute_mouse ()

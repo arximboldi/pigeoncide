@@ -135,10 +135,10 @@ class LoaderState (LightGameState):
         # TODO: We should cleanup the ui code to avoid this kind of shit.
         camera.setPosHpr (Vec3 (0.0, -22.0, 0.0), Vec3 (0.0, 0.0, 0))
         self._pic_boy = panda.ModelEntity (entities = self.entities,
-                                           model = 'hud/boy-smile.egg')
+                                           model = 'menu/bg_smile.egg')
         self._pic_boy.model.setTransparency (TransparencyAttrib.MAlpha)
-        self._pic_boy.position = Vec3 (-4.33, 1, -0.89)
-        self._pic_boy.scale    = Vec3 (1748./2480. *10, 9, 10)
+        self._pic_boy.model_position = Vec3 (-4.33, 0, -0.89)
+        self._pic_boy.model_scale    = Vec3 (1748./2480.*10, 1, 10)
         
         self._pic_red = ui.ImageEntity (entities = self.entities,
                                         image = 'hud/red-bg.png')
@@ -201,7 +201,8 @@ class LoaderState (LightGameState):
             if self._curr_thing < len (self._loaders):
                 self._curr_iter = iter (self._things [self._curr_thing])
             else:
-                self._txt_prg.fade_out ().add_next (task.run (self.kill))
+                self._txt_prg.fade_out ().add_next (task.run (
+                    self.manager.leave_state))
                 self.manager.panda.set_background_color (
                     * (self._blood_color if self._data.load_increasing else
                        Vec3 (1, 1, 1)))
