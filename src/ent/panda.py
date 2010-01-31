@@ -31,6 +31,8 @@ class PandaEntityManager (EntityManager):
     _owns_render   = False
     _owns_render2d = False
     _owns_audio3d  = False
+
+    _old_parent    = None
     
     def __init__ (self,
                   render   = None,
@@ -61,6 +63,16 @@ class PandaEntityManager (EntityManager):
             self.audio3d = Audio3DManager (base.sfxManagerList [0], camera)
             self.audio3d.setListenerVelocityAuto ()
             self._owns_audio3d = True
+
+    def disable_render ():
+        if not self._old_parent:
+            self._old_parent = self.render.getParent ()
+            self.render.node.detachNode ()
+
+    def enable_render ():
+        if self._old_parent:
+            self.render.reparentTo (self._old_parent)
+            self._old_parent = None
     
     def dispose (self):
         super (PandaEntityManager, self).dispose ()

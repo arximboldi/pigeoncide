@@ -61,7 +61,7 @@ class BoyBase (Entity):
         self.model_position = Vec3 (.0, .0, -4.0)
         self.model_scale = Vec3 (.1, .1, .1)
         self.enable_collision ()
-
+    
 
 class Boy (BoyBase,
            ObservableSpatialEntity,

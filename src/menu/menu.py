@@ -40,8 +40,8 @@ class Menu (State):
 
     def do_setup (self, data, type = 'main'):
         self.type = type
-        self.root = render.attachNewNode (PandaNode ('menu'))
-        self.events.event ('panda-escape').connect (self.kill)
+        self.root = base.cam.attachNewNode (PandaNode ('menu'))
+        self.events.event ('panda-escape').connect (self.manager.leave_state)
         self.manager.panda.absolute_mouse ()
         
         #Menu setup
@@ -64,19 +64,23 @@ class Menu (State):
         self.root.removeNode ()
         
     def setup_camera(self):
-        camera.setPosHpr( Vec3( 0.0, -22.0, 0.0), Vec3( 0.0, 0.0, 0 ) )
-        
+        #camera.setPosHpr( Vec3( 0.0, -22.0, 0.0), Vec3( 0.0, 0.0, 0 ) )
+        pass
+    
     def load_background(self):
+        bp = Vec3( 0.0, -22.0, 0.0)
+        pos = Vec3 (-4.33, 0, -0.89) - bp
+        
         self.bg_normal = loader.loadModel( 'menu/bg_normal.egg' )
         self.bg_normal.reparentTo ( self.root )
-        self.bg_normal.setPosHprScale (Vec3 (-4.33, 0, -0.89), 
+        self.bg_normal.setPosHprScale (pos, 
             Vec3 (0, 0, 0), 
             Vec3 (1748./2480 *10, 1, 10) 
             )
             
         self.bg_smile = loader.loadModel ('menu/bg_smile.egg')
-        self.bg_smile.reparentTo (self.root)
-        self.bg_smile.setPosHprScale (Vec3 (-4.33, 1, -0.89), 
+        #self.bg_smile.reparentTo (self.root)
+        self.bg_smile.setPosHprScale (pos, 
             Vec3 (0, 0, 0), 
             Vec3 (1748./2480 *10, 1, 10) 
             )
@@ -90,15 +94,20 @@ class Menu (State):
 
     def load_fonts (self):
         self.font = loader.loadFont ('font/three-hours2.ttf')
-        
+
+    def to_smile (self):
+        self.bg_smile.reparentTo (self.root)
+        self.bg_normal.detachNode ()
+
+    def to_normal (self):
+        self.bg_normal.reparentTo (self.root)
+        self.bg_smile.detachNode ()
+    
     def do_smile (self, time = 0.2):
         return task.sequence(
-            task.run (lambda: self.bg_smile.setPos (-4.33, 0 , -0.89)),
-            task.run (lambda: self.bg_normal.setPos (-4.33, 1 , -0.89)),
+            task.run (self.to_smile),
             task.wait (time),
-            task.run (lambda: self.bg_normal.setPos (-4.33, 0 , -0.89)),
-            task.run (lambda: self.bg_smile.setPos (-4.33, 1 , -0.89))
-            )
+            task.run (self.to_normal))
     
     def do_enable (self):
         self.main_menu.do_enable ()

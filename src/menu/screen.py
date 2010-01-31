@@ -138,7 +138,7 @@ class Screen (object):
             boxPlacement = 'right',
             boxRelief = None,
             command = self.change_shad,
-            pos = (-0.1, 0, -0.9)
+	    pos = (-0.1, 0, -0.9)
             )
 
     def do_enable (self):

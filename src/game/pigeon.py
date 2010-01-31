@@ -95,9 +95,6 @@ class Pigeon (BoidEntity,
                      'land'    : 'char/pigeon-land.egg',
                      'idle'    : 'char/pigeon-idle.egg' }
 
-    pigeon_death_sounds = [ 'snd/electrocute-medium.wav',
-                            'snd/electrocute-short.wav' ]
-
     pigeon_sweeping = True
     pigeon_min_eat_distance = 300.
     pigeon_z_limit = -50.
@@ -127,8 +124,6 @@ class Pigeon (BoidEntity,
         self.model_position = Vec3 (0, 0, -2)
         self.model_scale    = Vec3 (0.08, 0.08, 0.08)
         self.model_hpr      = Vec3 (180, 0, 0)
-        
-        self.death_sounds = map (self.load_sound, self.pigeon_death_sounds)
 
         self.add_state ('fly',    FlyState)
         self.add_state ('walk',   WalkState)
@@ -184,8 +179,6 @@ class Pigeon (BoidEntity,
     @weak_slot
     def on_pigeon_death (self):
         self.force_finish ()
-        self.disable_physics ()
-        random.choice (self.death_sounds).play ()
 
     def find_food (self):
         food = self.entities.game.pigeon_food

@@ -67,13 +67,10 @@ PlayerController = mixin (PlayerEntityDecorator, AutoReceiver)
 CameraController = mixin (FastEntityFollower, AutoReceiver)
 
 
-class GameIntro (LightGameState):
+class GameMessage (LightGameState):
 
-    def do_setup (self):
-        self.black = ui.ImageEntity (entities = self.entities,
-                                     image    = 'hud/red-bg.png')
-        self.black.alpha = 1.0
-        self.black.fade_out ()
+    def do_setup (self, message = '', action = 'continue'):
+        self.action = action
         
         self.text = ui.TextEntity (
             entities     = self.entities,
@@ -83,10 +80,7 @@ class GameIntro (LightGameState):
             shadowOffset = (.08, .08),
             wordwrap     = 30,
             scale        = 0.1,
-            text         =
-            (('You have to kill %i pigeons in this level...\n' +
-             'Can you make it?')
-             % self.parent_state.total_pigeons))
+            text         = message)
 
         self.help_text = ui.TextEntity (
             entities = self.entities,
@@ -100,14 +94,13 @@ class GameIntro (LightGameState):
         self.text.fade_in (duration = 1)
 
         self.events.event ('panda-enter').connect (self.finish_intro)
-        self.events.event ('panda-escape').connect (self.kill)
-        self.events.event ('panda-escape').connect (self.parent_state.kill)
-
+        
         self.parent_state.camera_ctl.loop_angle (duration = 4.)
         
     def finish_intro (self):
         self.help_text.fade_out ()
-        self.text.fade_out ().add_next (task.run (self.kill))
+        self.text.fade_out ().add_next (task.run (
+            self.manager.leave_state (self.action)))
         self.parent_state.camera_ctl.restore_angle ()
 
 
@@ -136,12 +129,30 @@ class Game (GameState):
         self.setup_controllers ()
         self.setup_hud ()
         self.setup_logic ()
-
-        self.events.event ('panda-escape').connect (self.kill)
+        self.enter_transition ()
+        
+        self.events.event ('panda-escape').connect (self.enter_menu)
         self.events.event ('panda-p').connect (self.toggle_pause)
-                
-        self.manager.enter_state (GameIntro)
 
+        self.manager.enter_state (
+            GameMessage, message =
+            (('You have to kill %i pigeons in this level...\n' +
+             'Can you make it?') % self.total_pigeons))
+
+    def enter_transition (self):
+        self._transition_bg = ui.ImageEntity (entities = self.entities,
+                                              image    = 'hud/red-bg.png')
+        self._transition_bg.alpha = 1.0
+        self._transition_bg.fade_out ()
+
+    def leave_transition (self):
+        self._transition_bg.fade_in ().add_next (task.run (lambda:
+            self.manager.leave_state (last_state = 'menu')))
+
+    def enter_menu (self):
+        self.manager.enter_state ('menu-noload', None, 'ingame')
+        
+        
     @weak_slot
     def on_kill_pigeon (self):
         self.hud.dec_counter ('pigeons', 1)
@@ -246,16 +257,23 @@ class Game (GameState):
         
     def do_sink (self):
         super (Game, self).do_sink ()
+        # if self.manager.current.state_name == 'menu-noload':
+        #     self.tasks.pause ()
         self.events.quiet = True
         self.hud.soft_hide ()
         self.timer.pause ()
         
-    def do_unsink (self):
+    def do_unsink (self, action = 'continue'):
         super (Game, self).do_unsink ()
-        self.events.quiet = False
-        self.hud.soft_show ()
-        self.timer.resume ()
-        
+        self.manager.panda.relative_mouse ()
+        self.tasks.resume ()
+        if action == 'continue':
+            self.events.quiet = False
+            self.hud.soft_show ()
+            self.timer.resume ()
+        elif action == 'quit':
+            self.leave_transition ()
+    
     def do_release (self):
         self.level.dispose () # TODO: To entity!
         shader.disable_glow (self.manager.panda)

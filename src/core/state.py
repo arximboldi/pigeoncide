@@ -137,10 +137,10 @@ class StateManager (task.Task):
     
     def _enter_state (self, name, *a, **k):
         state, name = self._fetch_state (name)
-        if self._state_stack:
-            self._state_stack [-1].do_sink ()
         self._push_state (state, name, *a, **k)
-
+        if len (self._state_stack) > 1:
+            self._state_stack [-2].do_sink ()
+    
     def _leave_state (self, *a, **k):
         if not self._state_stack:
             raise StateError ('State manager empty, nothing to leave.')

@@ -43,7 +43,8 @@ class PandaController (object):
     DEFAULT_MUSIC_VOLUME = .02
     DEFAULT_SOUND_VOLUME = .02
     DEFAULT_MAX_DELTA = 1. / 20.
-
+    DEFAULT_SHADERS = True
+    
     def __init__ (self):
         super (PandaController, self).__init__ ()
         self._timer = Timer ()
@@ -87,10 +88,10 @@ class PandaController (object):
         self._timer.loop (self._loop_fn)
 
     def _loop_fn (self, timer):
-        task_count              = 1  # _panda_task
+        task_count = 1               # _panda_task
         if self._relative_mouse:
             task_count += 1          # _mouse_task
-        if self._tasks.count > task_count: 
+        if self._tasks.count > task_count:
             return self._tasks.update (timer)
         return False
     
@@ -102,7 +103,7 @@ class PandaController (object):
         cfg.child ('frame-meter').default (self.DEFAULT_FRAME_METER)
         cfg.child ('music-volume').default (self.DEFAULT_MUSIC_VOLUME)
         cfg.child ('sound-volume').default (self.DEFAULT_SOUND_VOLUME)
-        
+                
     def listen_conf (self, cfg):
         cfg.on_conf_nudge += self.update_properties
         
@@ -129,6 +130,7 @@ class PandaController (object):
         
     def absolute_mouse (self):
         if self._relative_mouse:
+            self._relative_mouse = False
             if self._mouse_task:
                 self._mouse_task.kill ()
             self._prop.setCursorHidden (False)

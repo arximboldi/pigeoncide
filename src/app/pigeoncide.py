@@ -20,7 +20,7 @@
 from base.arg_parser import OptionWith
 from core.app import PandaApp
 
-from menu.menu import LoadMenu
+from menu.menu import LoadMenu, Menu
 from game.game import LoadGame
 
 
@@ -44,8 +44,9 @@ Extra options:
     def __init__ (self, *a, **k):
         super (PigeoncideApp, self).__init__ (*a, **k)
 
-        self.root_state = 'game'
-        
+        self.root_state = 'menu'
+
+        self.add_state ('menu-noload', Menu)
         self.add_state ('menu', LoadMenu)
         self.add_state ('game', LoadGame)
         

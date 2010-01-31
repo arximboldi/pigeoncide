@@ -53,7 +53,7 @@ class TimerBase (object):
 class Timer (TimerBase):
 
     def __init__ (self):
-        self._fps = 0  # frames per second
+        self._fps  = -1  # frames per second
         self._rate = 0  # ticks per frame
         self.reset ()
         self.max_delta = -1

@@ -89,32 +89,34 @@ class MainMenu (object):
         # Buttons task assigment
         if self.type == 'main':
             self.start["command"] = lambda: self.state.tasks.add( task.sequence(
-                self.options_menu.do_destroy (),
-                self.state.do_smile (5),
-                task.wait (1),
+                task.parallel (
+                    self.options_menu.do_destroy (),
+                    task.run (self.state.to_smile),
+                ),
                 task.run (lambda: self.state.manager.leave_state ('game'))
             ))
             self.exit["command"] = lambda: self.state.tasks.add (task.sequence(
                 task.parallel(
                     self.options_menu.do_destroy (),
-                    self.state.do_smile (1.5)
+                    task.run (self.state.to_smile),
                 ),
                 task.run (self.state.manager.leave_state)
             ))
         if self.type == 'ingame':
             self.start["command"] = lambda: self.state.tasks.add( task.sequence(
-                self.options_menu.do_destroy (),
-                self.state.do_smile (5),
-                task.wait (1),
-                task.run (lambda: self.state.manager.leave_state ('game'))
+                task.parallel (
+                    self.options_menu.do_destroy (),
+                    task.run (self.state.to_smile),
+                ),
+                task.run (lambda: self.state.manager.leave_state ('continue'))
             ))
             self.exit["command"] = lambda: self.state.tasks.add (task.sequence(
                 task.parallel(
                     self.options_menu.do_destroy (),
-                    self.state.do_smile (1.5)
+                    task.run (self.state.to_smile),
                 ),
-                task.run (self.state.manager.leave_state ('menu'))
-            ))            
+                task.run (lambda: self.state.manager.leave_state ('quit'))
+            ))
 
         self.options["command"] = lambda: self.state.tasks.add (task.sequence (
             task.run (lambda: self.options.setProp ('state', DGG.DISABLED)),
@@ -124,15 +126,7 @@ class MainMenu (object):
             ),
             task.run (lambda: self.options.setProp ('state', DGG.NORMAL))
             ))
-            
-        self.exit["command"] = lambda: self.state.tasks.add (task.sequence(
-            task.parallel(
-                self.options_menu.do_destroy (),
-                self.state.do_smile (1.5)
-            ),
-            task.run (self.state.manager.leave_state)
-        ))
-        
+    
     def do_enable (self):
         self.start.setProp ('state', DGG.NORMAL)
         self.options.setProp ('state', DGG.NORMAL)

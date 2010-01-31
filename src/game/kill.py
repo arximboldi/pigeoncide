@@ -21,19 +21,22 @@ from base.signal import weak_slot, Signal
 from base.util import printfn
 from ent.physical import PhysicalEntityBase
 from ent.panda import ModelEntityBase
+from ent.task import TaskEntity
 from laser import Field
 from core import task
 
 from pandac.PandaModules import *
 from direct.particles.ParticleEffect import ParticleEffect
+import random
 
-
-class KillableEntity (ModelEntityBase, PhysicalEntityBase):
+class KillableEntity (ModelEntityBase, PhysicalEntityBase, TaskEntity):
     """
     Incomplete mixin, must be combined with some form of physical
     entity and panda model entity.
     """
-    
+    kill_death_sounds = [ 'snd/electrocute-medium.wav',
+                          'snd/electrocute-short.wav' ]
+
     def __init__ (self, *a, **k):
         super (KillableEntity, self).__init__ (*a, **k)
 
@@ -44,32 +47,46 @@ class KillableEntity (ModelEntityBase, PhysicalEntityBase):
 
         self._smoke_particles = self.load_particles ('data/part/smoke.ptf')
         self._fire_particles  = self.load_particles ('data/part/fireish.ptf')
-        
+        self.death_sounds = map (self.load_sound, self.kill_death_sounds)
         self.is_dead = False
+
+    def do_update (self, timer):
+        super (KillableEntity, self).do_update (timer)
+        # HACK!
+        if not self.is_dead and self.position.getZ () < -1000.0:
+            self.fuck_me ()
 
     @weak_slot
     def on_kill_collision (self, ev, me, other):
         if not self.is_dead and isinstance (other, Field):
             pos = ev.getContactPoint (0)
+            self.fuck_me (pos)
+
+    def fuck_me (self, pos = None):
+        if not pos:
+            pos = self.position
+
+        self._model.detachNode ()
             
-            self._model.detachNode ()
+        node = self.entities.render
+        self._smoke_particles.start (node)
+        self._smoke_particles.setPos (pos + Vec3 (0, 0, 2))
+        self._fire_particles.start (node)
+        self._fire_particles.setPos (pos)
             
-            node = self.entities.render
-            self._smoke_particles.start (node)
-            self._smoke_particles.setPos (pos + Vec3 (0, 0, 2))
-            self._fire_particles.start (node)
-            self._fire_particles.setPos (pos)
+        self.entities.tasks.add (task.sequence (
+            task.wait (2.),
+            task.run (self._fire_particles.softStop),
+            task.wait (2.),
+            task.run (self._smoke_particles.softStop),
+            task.wait (2.),
+            task.run (self.dispose)))
+
+        self.disable_physics ()
+        random.choice (self.death_sounds).play ()
             
-            self.entities.tasks.add (task.sequence (
-                task.wait (2.),
-                task.run (self._fire_particles.softStop),
-                task.wait (2.),
-                task.run (self._smoke_particles.softStop),
-                task.wait (2.),
-                task.run (self.dispose)))
-            
-            self.on_death ()
-            self.is_dead = True
+        self.on_death ()
+        self.is_dead = True
     
     def load_particles (self, name):
         p = ParticleEffect ()
