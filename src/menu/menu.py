@@ -38,7 +38,8 @@ class Menu (State):
     def __del__ (self):
         _log.debug ("Releasing the menu from memory.")
 
-    def do_setup (self, data):
+    def do_setup (self, data, type = 'main'):
+        self.type = type
         self.root = render.attachNewNode (PandaNode ('menu'))
         self.events.event ('panda-escape').connect (self.kill)
         self.manager.panda.absolute_mouse ()
@@ -50,7 +51,7 @@ class Menu (State):
         self.load_buttons ()
         self.load_fonts ()
         
-        self.main_menu = MainMenu (state = self)
+        self.main_menu = MainMenu (state = self, type = self.type)
         self.main_menu.do_paint ()
         self.main_menu.do_connect ()
 

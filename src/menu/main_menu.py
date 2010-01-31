@@ -25,19 +25,25 @@ from option_menu import *
 
 class MainMenu (object):
 
-    def __init__ (self, state = None, *a, **k):
+    def __init__ (self, state = None, type = None, *a, **k):
         super (MainMenu, self).__init__ (*a, **k)
+        if type:
+            self.type = type
         if state:
             self.state = state
         self.options_menu = OptionsMenu (state = self.state)
     
     def do_paint (self):
-        
+        if self.type == 'main':
+            variable_txt = "Start"
+        if self.type == 'ingame':
+            variable_txt = "Resume"
+            
         # Main-Buttons inicialitation
         self.start = DirectButton(geom = self.state.bt_red,
             geom_scale = (4.5, 2, 2),
             geom_pos = (.2, 0, 0.3),
-            text = "Start",
+            text = variable_txt,
             text_font = self.state.font,
             text_scale = (0.8, 0.9),
             scale = .1,
@@ -81,13 +87,35 @@ class MainMenu (object):
     
     def do_connect (self):
         # Buttons task assigment
-        self.start["command"] = lambda: self.state.tasks.add( task.sequence(
-            self.options_menu.do_destroy (),
-            self.state.do_smile (5),
-            task.wait (1),
-            task.run (lambda: self.state.manager.leave_state ('game'))
-        ))
-        
+        if self.type == 'main':
+            self.start["command"] = lambda: self.state.tasks.add( task.sequence(
+                self.options_menu.do_destroy (),
+                self.state.do_smile (5),
+                task.wait (1),
+                task.run (lambda: self.state.manager.leave_state ('game'))
+            ))
+            self.exit["command"] = lambda: self.state.tasks.add (task.sequence(
+                task.parallel(
+                    self.options_menu.do_destroy (),
+                    self.state.do_smile (1.5)
+                ),
+                task.run (self.state.manager.leave_state)
+            ))
+        if self.type == 'ingame':
+            self.start["command"] = lambda: self.state.tasks.add( task.sequence(
+                self.options_menu.do_destroy (),
+                self.state.do_smile (5),
+                task.wait (1),
+                task.run (lambda: self.state.manager.leave_state ('game'))
+            ))
+            self.exit["command"] = lambda: self.state.tasks.add (task.sequence(
+                task.parallel(
+                    self.options_menu.do_destroy (),
+                    self.state.do_smile (1.5)
+                ),
+                task.run (self.state.manager.leave_state ('menu'))
+            ))            
+
         self.options["command"] = lambda: self.state.tasks.add (task.sequence (
             task.run (lambda: self.options.setProp ('state', DGG.DISABLED)),
             task.parallel(
@@ -133,3 +161,4 @@ class MainMenu (object):
             self.move_task = self.options_menu.do_destroy ()
             
         return self.move_task
+    

@@ -106,7 +106,7 @@ class Keyboard (object):
         # Deactivate all buttons
         self.state.do_disable ()
         self.keys_lab[key].setText('_')
-        self.info_txt.setText ('Click any key to config')
+        self.info_txt.setText ('Click any action to config')
         self.slot = self.state.events.on_any_event.connect (
             lambda ev, *a, **k: self.get_key (ev, key))
                 
