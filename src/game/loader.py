@@ -18,12 +18,14 @@
 #
 
 from base.log import get_log
+from base.util import linear
 from error import GameError
 from core import task
 from core.state import State
 from ent.game import LightGameState
+from ent import panda
 
-from pandac.PandaModules import FontPool
+from pandac.PandaModules import *
 
 import ui
 import gc
@@ -93,12 +95,14 @@ class LoaderInterState (State):
 
 class LoaderData (object):
 
-    load_models   = []
-    load_textures = []
-    load_fonts    = []
-    load_sounds   = []
-    load_phase    = loader_loading    
+    load_models     = []
+    load_textures   = []
+    load_fonts      = []
+    load_sounds     = []
+    load_phase      = loader_loading    
 
+    load_increasing   = False
+    
     def __init__ (self,
                   models   = None,
                   textures = None,
@@ -116,16 +120,38 @@ class LoaderData (object):
 
 
 class LoaderState (LightGameState):
+
+    _prg_min_pos      = Vec3 (-2, 0, 0)
+    _prg_max_pos      = Vec3 (0.7,  0, 0)
+    _red_min_pos      = Vec3 (-3, 0, 0)
+    _red_max_pos      = Vec3 (0,  0, 0)
+    _blood_color      = Vec3 (227, 30, 38)
     
     def do_setup (self, data):
-        self.manager.panda.set_background_color (0, 0, 0)
+        self.manager.panda.set_background_color (1, 1, 1)
 
-        self._data = data
-        self._text = ui.TextEntity (entities = self.entities,
-                                    font = 'font/gilles.ttf',
-                                    text = "Loading ... 0%",
-                                    fg   = (1, 1, 1, 1))
+        self._data  = data
 
+        # TODO: We should cleanup the ui code to avoid this kind of shit.
+        camera.setPosHpr (Vec3 (0.0, -22.0, 0.0), Vec3 (0.0, 0.0, 0))
+        self._pic_boy = panda.ModelEntity (entities = self.entities,
+                                           model = 'hud/boy-smile.egg')
+        self._pic_boy.model.setTransparency (TransparencyAttrib.MAlpha)
+        self._pic_boy.position = Vec3 (-4.33, 1, -0.89)
+        self._pic_boy.scale    = Vec3 (1748./2480. *10, 9, 10)
+        
+        self._pic_red = ui.ImageEntity (entities = self.entities,
+                                        image = 'hud/red-bg.png')
+    
+        self._pic_red.position = Vec3 (-3., 0, 0)
+        self._pic_prg = ui.ImageEntity (entities = self.entities,
+                                        image = 'hud/blood-bg.png')
+        self._pic_prg.position = Vec3 (-2, 0, 0)
+        
+        self._txt_prg = ui.TextEntity (entities = self.entities,
+                                       font = 'font/gilles.ttf',
+                                       text = "Loading ... 0%")
+        
         self._num_things = len (data.load_models)   + \
                            len (data.load_textures) + \
                            len (data.load_fonts)    + \
@@ -146,8 +172,17 @@ class LoaderState (LightGameState):
                 
         self._init = False
 
-        self._text.alpha = 1.0
+        self._txt_prg.alpha = 1.0
         self.tasks.add (self.loader_task)
+
+    def update_progress (self, progress):
+        self._txt_prg.text = "Loading ... %i%%" % (int (progress * 100.))
+        if not self._data.load_increasing:
+            progress = 1. - progress    
+        self._pic_prg.position = linear (self._prg_min_pos, self._prg_max_pos,
+                                         progress)
+        self._pic_red.position = linear (self._red_min_pos, self._red_max_pos,
+                                         progress)
         
     def loader_task (self, timer):
         if not self._init:
@@ -159,15 +194,17 @@ class LoaderState (LightGameState):
                 self._data.load_results [self._curr_thing].append (res)
                 
             self._done_things += 1
-            self._text.text = "Loading ... %i%%" % (
-                100 * self._done_things / self._num_things)
+            self.update_progress (float (self._done_things) / self._num_things)
             
         except StopIteration, e:
             self._curr_thing += 1
             if self._curr_thing < len (self._loaders):
                 self._curr_iter = iter (self._things [self._curr_thing])
             else:
-                self._text.fade_out ().add_next (task.run (self.kill))
+                self._txt_prg.fade_out ().add_next (task.run (self.kill))
+                self.manager.panda.set_background_color (
+                    * (self._blood_color if self._data.load_increasing else
+                       Vec3 (1, 1, 1)))
                 return task.killed
         
         return task.running

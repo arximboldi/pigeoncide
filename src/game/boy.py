@@ -34,7 +34,11 @@ from weapon import WeaponOwner, DelegateWeaponOwner
 
 
 class BoyBase (Entity):
-
+    """
+    Sweep the collision cylinder vertically (like we do more or less
+    with the pigeon) to avoid getting stuck on the floor.
+    """
+    
     boy_model = 'char/boy-anims.egg'
     boy_anims = { 'run'  : 'char/boy-run.egg',
                   'walk' : 'char/boy-walk.egg',

@@ -93,6 +93,7 @@ class Level (LoaderData):
     load_fonts  = [ 'font/gilles.ttf',
                     'font/three-hours.ttf',
                     'font/alte-bold.ttf' ]
+    load_increasing = True
     
     music       = 'snd/houmdrak.mp3'
     model       = 'lvl/world.egg'

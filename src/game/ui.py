@@ -23,7 +23,7 @@ TODO: Move this and hud.py to the ent module?
 
 from core import task
 
-from pandac.PandaModules import TransparencyAttrib
+from pandac.PandaModules import TransparencyAttrib, Texture
 from direct.gui.OnscreenText import OnscreenText
 from direct.gui.OnscreenImage import OnscreenImage
 from ent.panda import Panda2dEntity
@@ -38,6 +38,10 @@ class UiEntity (Panda2dEntity):
         self._ui    = self.panda_ui_cls (parent = self.node, *a, **k)
         self._alpha = 0.0
 
+    @property
+    def ui (self):
+        return self._ui
+    
     def get_alpha (self):
         return self._alpha
     
@@ -64,7 +68,10 @@ class ImageEntity (UiEntity):
     def __init__ (self, *a, **k):
         super (ImageEntity, self).__init__ (*a, **k)
         self._ui.setTransparency (TransparencyAttrib.MAlpha)
-
+        tex = self._ui.getTexture ()
+        tex.setWrapU (Texture.WMClamp)
+        tex.setWrapV (Texture.WMClamp)
+        
 
 class TextEntity (UiEntity):
 

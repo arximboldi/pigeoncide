@@ -71,7 +71,7 @@ class GameIntro (LightGameState):
 
     def do_setup (self):
         self.black = ui.ImageEntity (entities = self.entities,
-                                     image    = 'obj/black.png')
+                                     image    = 'hud/red-bg.png')
         self.black.alpha = 1.0
         self.black.fade_out ()
         
