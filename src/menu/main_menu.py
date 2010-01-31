@@ -22,6 +22,7 @@ from direct.gui.DirectGui import *
 from core import task
 
 from option_menu import *
+from credits import *
 
 class MainMenu (object):
 
@@ -32,6 +33,10 @@ class MainMenu (object):
         if state:
             self.state = state
         self.options_menu = OptionsMenu (state = self.state)
+        self.credits_menu = Credits (state = self.state)
+        self.sub_menus = {  'options' : self.options_menu,
+                            'credits' : self.credits_menu
+                        }
     
     def do_paint (self):
         if self.type == 'main':
@@ -117,12 +122,15 @@ class MainMenu (object):
                 ),
                 task.run (lambda: self.state.manager.leave_state ('quit'))
             ))
+        
+        self.credits["command"] = lambda: self.state.tasks.add (
+            self.do_show_credits ())
 
         self.options["command"] = lambda: self.state.tasks.add (task.sequence (
             task.run (lambda: self.options.setProp ('state', DGG.DISABLED)),
             task.parallel(
                 self.state.do_smile (),
-                self.show_options ()
+                self.do_show_options ()
             ),
             task.run (lambda: self.options.setProp ('state', DGG.NORMAL))
             ))
@@ -147,12 +155,23 @@ class MainMenu (object):
         self.credits.destroy()
         self.exit.destroy()
 
-    def show_options (self):
+    def do_show_options (self):
+        if self.credits_menu.active:
+            self.credits_menu.do_destroy ()
         if not self.options_menu.active:
-            self.move_task = self.options_menu.do_paint ()
-            self.options_menu.do_connect ()
+            self.move_task = self.options_menu.do_paint()
         else:
-            self.move_task = self.options_menu.do_destroy ()
-            
+            self.move_task = self.options_menu.do_destroy()
+
         return self.move_task
     
+    def do_show_credits (self):
+        if self.options_menu.active:
+            self.move_task = self.options_menu.do_destroy ()
+        else:
+            self.move_task = task.wait (0)
+        if not self.credits_menu.active:
+            self.credits_menu.do_paint()
+        else:
+            self.credits_menu.do_destroy()
+        return self.move_task

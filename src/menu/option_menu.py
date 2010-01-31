@@ -118,6 +118,8 @@ class OptionsMenu (object):
             task.run (lambda: self.do_enable ())
             )
         
+        self.do_connect ()
+        
         #The option_menu is set as active
         self.active = True
         
@@ -163,45 +165,42 @@ class OptionsMenu (object):
         self.sub_keyboard.do_disable ()
     
     def do_destroy (self):
-        if self.active:
-            #Buttons destroy
-            self.do_disable ()
+        #Buttons destroy
+        self.do_disable ()
 
-            #Movement task creation
-            self.move_task = task.sequence (
-                task.parallel(
-                    task.sinusoid (lambda x: 
-                        self.sound.setPos (0.45-(x*0.55), 0, .8-(x*0.25))),
-                    task.sinusoid (lambda x: self.sound.setAlphaScale (1-x)),
+        #Movement task creation
+        self.move_task = task.sequence (
+            task.parallel(
+                task.sinusoid (lambda x: 
+                    self.sound.setPos (0.45-(x*0.55), 0, .8-(x*0.25))),
+                task.sinusoid (lambda x: self.sound.setAlphaScale (1-x)),
                     
-                    task.sinusoid (lambda x: 
-                        self.keyboard.setPos (0.6-(x*0.7), 0, 0.55)),
-                    task.sinusoid (lambda x: self.keyboard.setAlphaScale (1-x)),
+                task.sinusoid (lambda x: 
+                    self.keyboard.setPos (0.6-(x*0.7), 0, 0.55)),
+                task.sinusoid (lambda x: self.keyboard.setAlphaScale (1-x)),
 
-                    task.sinusoid (lambda x: 
-                        self.screen.setPos (0.55-(x*0.65), 0, 0.3+(x*0.25))),
-                    task.sinusoid (lambda x: self.screen.setAlphaScale (1-x)),
+                task.sinusoid (lambda x: 
+                    self.screen.setPos (0.55-(x*0.65), 0, 0.3+(x*0.25))),
+                task.sinusoid (lambda x: self.screen.setAlphaScale (1-x)),
                     
-                    task.sinusoid (lambda x: 
-                        self.back.setPos (0.55-(x*0.65), 0, 0.05+(x*0.5))),
-                    task.sinusoid (lambda x: self.back.setAlphaScale (1-x))
-                ),
-                task.run (self.sound.destroy),
-                task.run (self.back.destroy),
-                task.run (self.keyboard.destroy),
-                task.run (self.screen.destroy)
-                )
+                task.sinusoid (lambda x: 
+                    self.back.setPos (0.55-(x*0.65), 0, 0.05+(x*0.5))),
+                task.sinusoid (lambda x: self.back.setAlphaScale (1-x))
+            ),
+            task.run (self.sound.destroy),
+            task.run (self.back.destroy),
+            task.run (self.keyboard.destroy),
+            task.run (self.screen.destroy)
+            )
             
-            for n in self.sub_menus.keys():
-                if self.sub_menus[n].active:
-                    self.sub_menus[n].do_destroy ()
+        for n in self.sub_menus.keys():
+            if self.sub_menus[n].active:
+                self.sub_menus[n].do_destroy ()
                 
-            #The option_menu is set as inactive 
-            self.active = False
+        #The option_menu is set as inactive 
+        self.active = False
 
-            return self.move_task
-        else:
-            return task.wait(0)
+        return self.move_task
 
     def do_show (self, submenu):
         for n in self.sub_menus.keys():
