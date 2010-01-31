@@ -102,7 +102,7 @@ class Level (LoaderData):
     sky         = 'sky/green-sky.egg'
     sky_scale   = 1000.
     spawn_spots = [ (Vec3 (0, 0, 30), 0) ]
-    flocks_def  = [ 20 ]
+    flocks_def  = [ 1 ]
     max_time    = 120.
     max_sticks  = 4
     

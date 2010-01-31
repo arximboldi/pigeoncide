@@ -20,23 +20,24 @@
 from base.conf import GlobalConf
 
     
-DEFAULT_PLAYER0_KEYS = [    ('on_move_forward'  , 'panda-w'),
-                            ('on_move_backward' , 'panda-s'),
-                            ('on_strafe_left'   , 'panda-a'),
-                            ('on_strafe_right'  , 'panda-d'),
-                            ('on_steer_left'    , 'panda-k'),
-                            ('on_steer_right'   , 'panda-l'),
-                            ('on_throw_weapon'  , 'panda-r'),
-                            ('on_place_stick'   , 'panda-q'),
-                            ('on_feed'          , 'panda-f'),
-                            ('on_jump'          , 'panda-space'),
-                            ('on_run'           , 'panda-c'),
-                            ('on_hit'           , 'panda-e')
-                        ]
-         
+DEFAULT_PLAYER0_KEYS = [
+    ('on_move_forward'  , 'panda-w'),
+    ('on_move_backward' , 'panda-s'),
+    ('on_strafe_left'   , 'panda-a'),
+    ('on_strafe_right'  , 'panda-d'),
+    ('on_steer_left'    , 'panda-k'),
+    ('on_steer_right'   , 'panda-l'),
+    ('on_throw_weapon'  , 'panda-r'),
+    ('on_place_stick'   , 'panda-q'),
+    ('on_feed'          , 'panda-f'),
+    ('on_jump'          , 'panda-space'),
+    ('on_run'           , 'panda-c'),
+    ('on_hit'           , 'panda-e')
+    ]
+
 def load_game_defaults ():
     cfg = GlobalConf ().path('game.player0.keys')
-    for act,key in DEFAULT_PLAYER0_KEYS:
+    for act, key in DEFAULT_PLAYER0_KEYS:
         cfg.child (act).default (key)
         
     GlobalConf ().path ('game.shader').default (True)

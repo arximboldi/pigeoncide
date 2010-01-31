@@ -53,6 +53,11 @@ class EventMap (Receiver):
     def unassoc (self, key):
         del self._map [key]
 
+    def unassoc_action (self, action):
+        for k, a in dict (self._map).iteritems ():
+            if a == action:
+                del self._map [k]
+    
     def receive (self, ev, *a, **k):
         if ev in self._map:
             getattr (self, self._map [ev]) (

@@ -38,24 +38,12 @@ from player import PlayerEntityDecorator
 from pigeon import Pigeon
 from flock import FlockEntity, make_random_flock
 from hud import Hud
+from defaults import load_game_defaults
+
 import ui
+import random
 
-PLAYER_INPUT_MAP = {
-    'on_move_forward'  : 'panda-w',
-    'on_move_backward' : 'panda-s',
-    'on_strafe_left'   : 'panda-a',
-    'on_strafe_right'  : 'panda-d',
-    'on_steer_left'    : 'panda-k',
-    'on_steer_right'   : 'panda-l',
-    'on_jump'          : 'panda-space',
-    'on_run'           : 'panda-c',
-    'on_hit'           : 'panda-e',
-    'on_feed'          : 'panda-f',
-    'on_throw_weapon'  : 'panda-r',
-    'on_place_stick'   : 'panda-q',
-    'on_steer'         : 'panda-mouse-move',
-}
-
+""" TODO: Make configurable """
 CAMERA_INPUT_MAP = {
     'on_zoom_in'       : 'panda-wheel_up',
     'on_zoom_out'      : 'panda-wheel_down',
@@ -104,18 +92,6 @@ class GameMessage (LightGameState):
         self.parent_state.camera_ctl.restore_angle ()
 
 
-class GameFail (LightGameState):
-    pass
-
-
-class GameWin (LightGameState):
-    pass
-
-
-class GameQuit (LightGameState):
-    pass
-
-
 class Game (GameState):
 
     def do_setup (self, level):
@@ -145,13 +121,12 @@ class Game (GameState):
         self._transition_bg.alpha = 1.0
         self._transition_bg.fade_out ()
 
-    def leave_transition (self):
+    def leave_transition (self, next_st = 'menu'):
         self._transition_bg.fade_in ().add_next (task.run (lambda:
-            self.manager.leave_state (last_state = 'menu')))
+            self.manager.leave_state (last_state = next_st)))
 
     def enter_menu (self):
-        self.manager.enter_state ('menu-noload', None, 'ingame')
-        
+        self.manager.enter_state ('menu-noload', None, 'ingame')        
         
     @weak_slot
     def on_kill_pigeon (self):
@@ -162,12 +137,29 @@ class Game (GameState):
 
     @weak_slot
     def on_kill_boy (self):
-        self.fail_game ("kill-boy")
+        self.fail_game (random.choose (['You are dead!',
+                                        'Was it that hard to stay alive?',
+                                        "Your soul is burning in hell..."]))
 
     @weak_slot
     def on_finish_time (self):
-        self.fail_game ("finish-time")
+        self.fail_game (ramdom.choose (['No more time for you!',
+                                        'Too slow man...',
+                                        'Hurry up the next time!']))
+        
+    def win_game (self):
+        self.manager.enter_state (
+            GameMessage,
+            'YOU WON!\n'
+            'This was a show-case level of an in-development game,\n'
+            'there is more to come in the future.',
+            'quit')
 
+    def fail_game (self, reason):
+        msg = random.choice (['LOOOOOOOOSER', 'You lost!', 'What a pity!',
+                              'Hey, no luck today!'])
+        self.manager.enter_state (GameMessage, reason + '\n' + msg, 'retry')
+    
     @weak_slot
     def on_place_stick (self):
         if self.player_ctl.can_place_stick:
@@ -188,15 +180,16 @@ class Game (GameState):
                     best.highlight ()
         return task.running
     
-    def win_game (self):
-        print "win-game"
-
-    def fail_game (self, reason):
-        print "fail-game: ", reason
-        
     def do_update (self, timer):
         super (Game, self).do_update (timer)
 
+    @weak_slot
+    def on_control_change (self, cfg):
+        if cfg.value:
+            self.player_input.assoc (cfg.name, cfg.value)
+        else:
+            self.player_input.unassoc_action (cfg.name)
+    
     def setup_panda (self):
         panda = self.manager.panda
         shader.enable_glow (panda)        
@@ -204,12 +197,18 @@ class Game (GameState):
         panda.loop_music (self.level.music)
 
     def setup_input (self):
-        self.player_input = GameInput (PLAYER_INPUT_MAP)
+        self.player_input = GameInput ()
         self.camera_input = GameInput (CAMERA_INPUT_MAP)
         self.events.connect (self.player_input)
         self.events.connect (self.camera_input)
         self.tasks.add (self.player_input)
         self.tasks.add (self.camera_input)        
+
+        self.player_input.assoc ('on_steer', 'panda-mouse-move')
+        cfg = GlobalConf ().path ('game.player0.keys')
+        for c in cfg.childs ():
+            self.player_input.assoc (c.name, c.value)
+            c.on_conf_change += self.on_control_change
 
     def setup_controllers (self):
         self.camera_ctl = CameraController (
@@ -221,7 +220,7 @@ class Game (GameState):
         self.level.boy.connect (self.camera_ctl)
         self.camera_input.connect (self.camera_ctl)
         self.player_input.connect (self.player_ctl)
-
+    
     def setup_hud (self):
         self.hud = Hud (entities = self.entities)
         self.hud.add_counter ('clock',   'hud/clock.png')
@@ -273,7 +272,9 @@ class Game (GameState):
             self.timer.resume ()
         elif action == 'quit':
             self.leave_transition ()
-    
+        elif action == 'retry':
+            self.leave_transition ('game')
+        
     def do_release (self):
         self.level.dispose () # TODO: To entity!
         shader.disable_glow (self.manager.panda)
