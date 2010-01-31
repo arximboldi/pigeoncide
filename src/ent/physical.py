@@ -366,20 +366,23 @@ class OnFloorEntity (PhysicalEntityBase, TaskEntity):
         return self._is_on_floor
 
     def do_update (self, timer):
-        self.is_on_floor_timer -= timer.delta
-        if self.is_on_floor_timer < 0.0:
-            self.is_on_floor_timer = 0.0
-            self._is_on_floor = False
-            self.on_is_on_floor_change (self, False)
         super (OnFloorEntity, self).do_update (timer)
-
+        if self._is_on_floor:
+            self.is_on_floor_timer -= timer.delta
+            if self.is_on_floor_timer <= 0.0:
+                self.is_on_floor_timer = 0.0
+                self._is_on_floor = False
+                self.on_is_on_floor_change (self, False)
+    
     @weak_slot
     def on_standing_collide (self, ev, me, other):
         pos = ev.getContactPoint (0)
-        if pos.getZ () < self.position.getZ ():
-            self._is_on_floor = True
-            self.on_is_on_floor_change (self, True)
+        if pos.getZ () < self.position.getZ () and \
+            me.__class__ != other.__class__: # Horrible HACK!
             self.is_on_floor_timer = self.on_floor_delay
+            if not self._is_on_floor:
+                self.on_is_on_floor_change (self, True)
+                self._is_on_floor = True
 
 
 class DelegateOnFloorEntity (DelegateEntity):

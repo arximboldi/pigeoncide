@@ -52,8 +52,6 @@ import math
 
 class FlockEntity (TaskEntity):
 
-    flock_bounds = ((-300, -300, 0), (300, 300, 200))
-
     def __init__ (self, *a, **k):
         super (FlockEntity, self).__init__(*a, **k)
         self.boids = []
@@ -84,6 +82,7 @@ class FlockEntity (TaskEntity):
             self.leader = boid
 
     def do_update (self, timer):
+        super (FlockEntity, self).do_update (timer)
         self.boids_cache = \
             [ (x, x.position, x.linear_velocity) for x in self.boids ]
 
@@ -108,8 +107,9 @@ class BoidParams (object):
     # Constraints
     boid_speed        = 150
     boid_max_far      = 600
+    boid_center       = Vec3 (0, 0, 0)
     boid_mindist      = 5
-    boid_maxdist      = 20
+    boid_maxdist      = 20.
     boid_height       = 50.0    
     boid_target       = None
 
@@ -123,9 +123,6 @@ class BoidEntityBase (TaskEntity):
         super (BoidEntityBase, self).__init__ (*a, **k)
         self.flock = weakref.proxy (flock)
         self.flock.add_boid (self)
-
-        self._debug_line = LineNodePath (self.entities.render,
-                                         'caca', 2, Vec4 (1, 0, 0, 0))
 
         self.change_params (self.params)
 
@@ -188,6 +185,8 @@ class BoidEntityBase (TaskEntity):
                  for (x, p, v)
                  in self.flock.boids_cache
                  if (mypos - p).lengthSquared () < self.params.boid_maxdist ** 2
+                 # HACK to check same state !
+                 and x.params.__class__ == self.params.__class__
                  and x != self ]
 
     def rule_avoidance (self):
@@ -222,12 +221,11 @@ class BoidEntityBase (TaskEntity):
     
     def rule_bounds (self):
         bounds = Vec3 (0, 0, 0)
-        if self._curr_position.lengthSquared () > self.params.boid_max_far ** 2:
+        if distance_sq (self._curr_position, self.params.boid_center) > \
+               self.params.boid_max_far ** 2:
             bounds = bounds - self._curr_position
-        if self._curr_position.getZ () < 20:
-            bounds += Vec3 (0, 0, 20 - self._curr_position.getZ ())
         return bounds
-
+    
     def rule_alignment (self):
         velocity = Vec3 (0, 0, 0)
         if self.neighbours:
@@ -270,7 +268,7 @@ class BoidEntityDecorator (
 
 def make_random_flock (entities,
                        num_boids,
-                       bounds    = FlockEntity.flock_bounds,
+                       bounds    = ((-300, -300, 30), (300, 300, 200)),
                        boid_cls  = BoidEntity,
                        flock_cls = FlockEntity):
 

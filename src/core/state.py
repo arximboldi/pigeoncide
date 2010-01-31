@@ -86,7 +86,8 @@ class StateManager (task.Task):
         self._events = EventManager ()
         self._state_factory = {}
         self._state_stack = []
-
+        self._empty_count = 1
+        
     @property
     def current (self):
         if self._state_stack:

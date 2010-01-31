@@ -18,7 +18,8 @@
 #
 
 from base.signal import weak_slot
-from base.util import nop
+
+from base.util import *
 
 from ent.observer import ObservableSpatialEntity
 from ent.panda import ActorEntity, ModelEntity
@@ -96,6 +97,8 @@ class Pigeon (BoidEntity,
                             'snd/electrocute-short.wav' ]
 
     pigeon_sweeping = True
+    pigeon_min_eat_distance = 300.
+    pigeon_z_limit = -50.
     
     def __init__ (self,
                   model = pigeon_model,
@@ -131,13 +134,15 @@ class Pigeon (BoidEntity,
         self.add_state ('fear',   FearState)
         self.add_state ('eat',    EatState)
         self.add_state ('hit',    HitState)
-        
-        self.start ('walk')
+        self.add_state ('land',   LandState)
+        self.add_state ('return', ReturnState)
         
         self.model.loop ('fly')
         self.curr_animation = 'fly'
         self.anim_speed = 50
         
+        self.start ('land')
+                
     def do_update (self, timer):
         """
         Hack to avoid the tunneling effect. We manually sweep the
@@ -148,14 +153,20 @@ class Pigeon (BoidEntity,
         if self.pigeon_sweeping:
             self.geom.setParams (2., vlen * timer.delta)
         self.model.setPlayRate (vlen / self.anim_speed, self.curr_animation)
+        self.check_limits ()
 
     @weak_slot
     def on_pigeon_is_on_floor (self, who, val):
-        if val:
+        if val and self.current and self.current.state_name == 'land':
+            self.change_state ('walk')
+            
+        if val and self.curr_animation != 'walk':
             self.model.loop ('walk')
-        else:
+            self.curr_animation = 'walk'
+        elif not val and self.curr_animation != 'fly':
             self.model.loop ('fly')
-
+            self.curr_animation = 'fly'
+    
     @weak_slot
     def on_pigeon_hit (self, x):
         self.enter_state ('hit')
@@ -181,7 +192,7 @@ class Pigeon (BoidEntity,
         pos = self.position
         for f in food:
             dist = distance_sq (f.position, pos)
-            if dist < bestdist:
+            if dist < self.pigeon_min_eat_distance ** 2 and dist < bestdist:
                 bestdist = dist
                 best = f
         return best
@@ -190,7 +201,13 @@ class Pigeon (BoidEntity,
         best = self.find_food ()
         if best:
             self.enter_state ('eat', best)
-
+    
+    def check_limits (self):
+        pos = self.position
+        if pos.getZ () < self.pigeon_z_limit:
+            print "WARNING! WARNING!", self, pos
+            if self.current.state_name != 'return':
+                self.enter_state ('return')
 
 class PigeonState (State, BoidParams):
 
@@ -231,18 +248,17 @@ class FollowState (PigeonState):
         target.on_entity_set_position += self.on_target_set_position
         self.boid_target = target.position
 
-        
+
 class FearState (FollowState, task.WaitTask):
 
-    anim_speed = 50
+    anim_speed = 50.
     duration = 2.
-    
     boid_f_target = - 0.002
     boid_speed = 200
 
 
 class EatState (FollowState):
-    
+
     boid_flying   = False
     boid_speed    = 20
     boid_f_target   = 0.1
@@ -274,9 +290,19 @@ class EatState (FollowState):
 
 class PatrolState (PigeonState):
 
+    def do_pigeon_setup (self):
+        super (PatrolState, self).do_pigeon_setup ()
+        self.tasks.add (task.sequence (
+            task.wait (random.uniform (5., 30)),
+            task.run (self.next_state)))
+
     def do_update (self, timer):
         super (PatrolState, self).do_update (timer)
         self.manager.check_food ()
+
+    def next_state (self):
+        self.manager.change_state (
+            'land' if self.state_name == 'fly' else 'fly')
 
 
 class WalkState (PatrolState):
@@ -285,16 +311,39 @@ class WalkState (PatrolState):
 
     boid_flying   = False
     boid_speed    = 10
-    boid_max_far  = 300
-    boid_f_bounds = 0.01
+    boid_max_far  = 500
+    boid_f_bounds = 0.001
     boid_power    = 100.
     boid_f_randomness = 0.
 
 
+class ReturnState (PigeonState):
+
+    anim_speed    = 50
+    
+    boid_max_far  = 100
+    boid_f_bounds = 0.1
+    boid_center   = Vec3 (0, 0, 200)
+    
+    def do_update (self, timer):
+        super (ReturnState, self).do_update (timer)
+        if distance_sq (self.manager.position, self.boid_center) < \
+               self.boid_max_far ** 2:
+            self.manager.leave_state ()
+
+
+class LandState (PigeonState):
+    
+    anim_speed = 50
+    boid_speed = 60    
+    boid_max_far  = 500
+    boid_f_bounds = 0.001
+    boid_flying   = False
+
 class FlyState (PatrolState):
 
-    anim_speed = 50.
-    boid_speed  = 100.
+    anim_speed  = 50.
+    boid_speed  = 80.
 
 
 class HitState (PigeonState):
