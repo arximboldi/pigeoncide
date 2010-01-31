@@ -1,8 +1,9 @@
 <Comment> {
-  "egg-texture-cards -o bg_smile.egg -p 1748,2480 bg_smile.png"
+  "egg-texture-cards -wm clamp -o data/menu/bg_smile.egg data/menu/bg_smile.png"
 }
 <Texture> bg_smile {
-  bg_smile.png
+  "data/menu/bg_smile.png"
+  <Scalar> wrap { clamp }
 }
 <Group> {
   <VertexPool> vpool {

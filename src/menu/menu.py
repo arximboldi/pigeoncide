@@ -17,7 +17,11 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from pandac.PandaModules import (Vec3, PandaNode, WindowProperties, FontPool)
+from pandac.PandaModules import (Vec3, 
+    PandaNode, 
+    WindowProperties, 
+    FontPool,
+    Texture)
 
 from base.log import get_log
 from core.state import State
@@ -69,9 +73,9 @@ class Menu (State):
         self.bg_smile.reparentTo (self.root)
         self.bg_smile.setPosHprScale (Vec3 (-4.33, 1, -0.89), 
             Vec3 (0, 0, 0), 
-            Vec3 (1748./2480 *10, 9, 10) 
+            Vec3 (1748./2480 *10, 1, 10) 
             )
-
+        
     def load_sound (self):
         self.manager.panda.loop_music ('snd/melancolik-drone.ogg')
     

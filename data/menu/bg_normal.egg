@@ -1,8 +1,9 @@
 <Comment> {
-  "egg-texture-cards -o bg_normal.egg -p 1748,2480 bg_normal.png"
+  "egg-texture-cards -wm clamp -o data/menu/bg_normal.egg data/menu/bg_normal.png"
 }
 <Texture> bg_normal {
-  bg_normal.png
+  "data/menu/bg_normal.png"
+  <Scalar> wrap { clamp }
 }
 <Group> {
   <VertexPool> vpool {

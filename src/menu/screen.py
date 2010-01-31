@@ -63,7 +63,6 @@ class Screen (object):
         #
         # TO DO: place buttons in correct positions
         #
-        # cfg.child ('frame-meter').default (self.DEFAULT_FRAME_METER)
             
         # Create a frame
         tx_scale = (0.7, 0.7)
@@ -118,9 +117,6 @@ class Screen (object):
         
     def change_res (self, arg):
         i = self.sizes_tx.index(arg)
-        #self.cfg.child ('fullscreen').set_value (False)
         self.cfg.child ('width').set_value (self.sizes[i][0])
         self.cfg.child ('height').set_value (self.sizes[i][1])
-
-        #self.full_screen["indicatorValue"] = False
         self.cfg.nudge ()

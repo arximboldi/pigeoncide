@@ -50,7 +50,7 @@ class Keyboard (object):
         
     def do_paint (self):
         tx_scale = (0.6, 0.6)
-        init = -0.2
+        init = -0.15
         dif = -0.06
 
         self.keys_btn = []
@@ -62,6 +62,7 @@ class Keyboard (object):
                 text = bt_text,
                 text_font = self.state.font,
                 text_scale = tx_scale,
+                text_align = TextNode.ARight,
                 scale = .1,
                 pos = (0.3, 0, init+dif*i),
                 relief = None,
@@ -70,11 +71,17 @@ class Keyboard (object):
             self.keys_lab.append (
                 OnscreenText(text = self.cfg.child (func).value[6:],
                 font = self.state.font,
+                align = TextNode.ALeft,
                 pos = (0.7, init+dif*i),
                 scale = 0.07
             ))
             i += 1
         
+        self.info_txt = OnscreenText (text = 'Select button',
+                font = self.state.font,
+                pos = (0.4, init+dif*i-0.02),
+                scale = 0.04
+            )
         self.active = True
 
     def do_enable (self):
@@ -92,12 +99,14 @@ class Keyboard (object):
             n.destroy ()
         for n in self.keys_lab:
             n.destroy ()
-            
+        self.info_txt.destroy()
         self.active = False
         
     def det_key (self, key):
         # Deactivate all buttons
         self.state.do_disable ()
+        self.keys_lab[key].setText('_')
+        self.info_txt.setText ('Click any key to config')
         self.slot = self.state.events.on_any_event.connect (
             lambda ev, *a, **k: self.get_key (ev, key))
                 
@@ -107,4 +116,4 @@ class Keyboard (object):
             self.state.events.on_any_event -= self.slot
             self.cfg.child (self.keys_txt[key][1]).set_value(ev)
             self.keys_lab[key].setText(ev[6:])
-        
+            self.info_txt.setText ('Select button')

@@ -102,7 +102,7 @@ class MainMenu (object):
                 self.options_menu.do_destroy (),
                 self.state.do_smile (1.5)
             ),
-            task.run (self.state.kill)
+            task.run (self.state.manager.leave_state)
         ))
         
     def do_enable (self):
