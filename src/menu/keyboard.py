@@ -35,7 +35,6 @@ class Keyboard (object):
         if state:
             self.state = state
         self.active = False
-        load_game_defaults ()
         self.cfg = GlobalConf().path ('game.player0.keys')
 
         

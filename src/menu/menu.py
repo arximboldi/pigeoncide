@@ -51,6 +51,10 @@ class Menu (State):
         self.load_buttons ()
         self.load_fonts ()
         
+        #Load game defaults
+        load_game_defaults ()
+        
+        #Load and show main menu
         self.main_menu = MainMenu (state = self, type = self.type)
         self.main_menu.do_paint ()
         self.main_menu.do_connect ()
