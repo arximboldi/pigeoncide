@@ -45,11 +45,11 @@ class KillableEntity (ModelEntityBase, PhysicalEntityBase):
         self._smoke_particles = self.load_particles ('data/part/smoke.ptf')
         self._fire_particles  = self.load_particles ('data/part/fireish.ptf')
         
-        self.dead = False
+        self.is_dead = False
 
     @weak_slot
     def on_kill_collision (self, ev, me, other):
-        if not self.dead and isinstance (other, Field):
+        if not self.is_dead and isinstance (other, Field):
             pos = ev.getContactPoint (0)
             
             self._model.detachNode ()
@@ -69,7 +69,7 @@ class KillableEntity (ModelEntityBase, PhysicalEntityBase):
                 task.run (self.dispose)))
             
             self.on_death ()
-            self.dead = True
+            self.is_dead = True
     
     def load_particles (self, name):
         p = ParticleEffect ()

@@ -47,11 +47,11 @@ action_jump           = 1 << 8
 action_hit            = 1 << 9
 action_feed           = 1 << 10
 
-noise_hit   = 0.
+noise_hit   = 10.
 noise_jump  = 200.
 noise_run   = 50.
-noise_stick = 30
-noise_throw = 30
+noise_stick = 30.
+noise_throw = 10.
 noise_walk  = 0.
 noise_feed  = 0.
 

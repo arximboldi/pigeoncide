@@ -183,7 +183,7 @@ class TaskGroup (Task):
 
 class WaitTask (Task):
 
-    duration = 0.
+    duration = 1.
     
     def __init__ (self, duration = None, *a, **k):
         super (WaitTask, self).__init__ (*a, **k)
@@ -201,6 +201,27 @@ class WaitTask (Task):
             self.kill ()
             self.remaining = 0
 
+
+class DelayTask (Task):
+
+    duration = 1
+    
+    def __init__ (self, duration = None, *a, **k):
+        super (DelayTask, self).__init__ (*a, **k)
+        if duration is not None:
+            self.duration = duration
+        self.remaining = self.duration
+
+    def restart_wait (self):
+        self.remaining = self.duration
+                
+    def do_update (self, timer):
+        super (DelayTask, self).do_update (timer)
+        self.remaining -= 1
+        if self.remaining < 0:
+            self.kill ()
+            self.remaining = 0
+            
 
 class TimerTask (WaitTask):
 
@@ -263,6 +284,8 @@ parallel = TaskGroup
 wait = WaitTask
 
 fade = FadeTask
+
+delay = DelayTask
 
 def invfade (f, *a, **k):
     return fade (lambda x: f (1.0 - x), *a, **k)

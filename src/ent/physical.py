@@ -307,36 +307,14 @@ class StandingPhysicalEntityBase (TaskEntity):
         super (StandingPhysicalEntityBase, self).__init__ (*a, **k)
         self.angle = 0
         self.enable_collision ()
-        self.on_collide += self.on_standing_collide
-        self._is_on_floor = False
-        self.is_on_floor_timer = 0.
-        
-    @property
-    def is_on_floor (self):
-        return self._is_on_floor
-    
-    @weak_slot
-    def on_standing_collide (self, ev, me, other):
-        pos = ev.getContactPoint (0)
-        if pos.getZ () < self.position.getZ ():
-            self._is_on_floor = True
-            self.is_on_floor_timer = 0.3
-    
+            
     def do_update (self, timer):
         self.update_standing ()
-
-        self.is_on_floor_timer -= timer.delta
-        if self.is_on_floor_timer < 0.0:
-            self.is_on_floor_timer = 0.0
-            self._is_on_floor = False
-            
         super (StandingPhysicalEntityBase, self).do_update (timer)
-
+    
     def update_standing (self):
         body = self.body
-        
         hpr = body.getQuaternion ()
-
         # http://www.euclideanspace.com/maths/geometry/rotations/
         # conversions/angleToQuaternion/index.htm      
         body.setQuaternion (Quat (math.sin (self.angle / 2), 0, 0,
@@ -356,17 +334,59 @@ class StandingPhysicalEntityDecorator (
     StandingPhysicalEntityBase):
     pass
 
-class DelegateStandingPhysicalEntity (DelegateDynamicPhysicalEntity):
 
-    @property
-    def is_on_floor (self):
-        return self.delegate.is_on_floor
+class DelegateStandingPhysicalEntity (DelegateDynamicPhysicalEntity):
 
     def _set_angle (self, angle):
         self.delegate.angle = angle
 
     def _get_angle (self):
         return self.delegate.angle
+
+    angle = property (_get_angle, _set_angle)
+
+
+class OnFloorEntity (PhysicalEntityBase, TaskEntity):
+    """
+    TODO: Move to a different module.
+    """
+
+    on_floor_delay = 0.3
+    
+    def __init__ (self, *a, **k):
+        super (OnFloorEntity, self).__init__ (*a, **k)
+        self.enable_collision ()
+        self.on_collide += self.on_standing_collide
+        self._is_on_floor = False
+        self.is_on_floor_timer = 0.
+        self.on_is_on_floor_change = Signal ()
+        
+    @property
+    def is_on_floor (self):
+        return self._is_on_floor
+
+    def do_update (self, timer):
+        self.is_on_floor_timer -= timer.delta
+        if self.is_on_floor_timer < 0.0:
+            self.is_on_floor_timer = 0.0
+            self._is_on_floor = False
+            self.on_is_on_floor_change (self, False)
+        super (OnFloorEntity, self).do_update (timer)
+
+    @weak_slot
+    def on_standing_collide (self, ev, me, other):
+        pos = ev.getContactPoint (0)
+        if pos.getZ () < self.position.getZ ():
+            self._is_on_floor = True
+            self.on_is_on_floor_change (self, True)
+            self.is_on_floor_timer = self.on_floor_delay
+
+
+class DelegateOnFloorEntity (DelegateEntity):
+    
+    @property
+    def is_on_floor (self):
+        return self.delegate.is_on_floor
 
     def _set_is_on_floor_timer (self, is_on_floor_timer):
         self.delegate.is_on_floor_timer = is_on_floor_timer
@@ -376,5 +396,3 @@ class DelegateStandingPhysicalEntity (DelegateDynamicPhysicalEntity):
 
     is_on_floor_timer = property (_get_is_on_floor_timer,
                                   _set_is_on_floor_timer)
-    angle = property (_get_angle, _set_angle)
-

@@ -22,7 +22,8 @@ from base.util import nop
 
 from ent.observer import ObservableSpatialEntity
 from ent.panda import ActorEntity, ModelEntity
-from ent.physical import DynamicPhysicalEntity, StandingPhysicalEntity
+from ent.physical import (DynamicPhysicalEntity, StandingPhysicalEntity,
+                          OnFloorEntity)
 
 from core.state import StateManager, State
 from core.util import *
@@ -76,6 +77,7 @@ class Pigeon (BoidEntity,
               ActorEntity,
               KillableEntity,
               StateManager,
+              OnFloorEntity,
               Hittable):
     """
     TODO: Actually a StateManager has too much innecesary overhead. We
@@ -92,6 +94,8 @@ class Pigeon (BoidEntity,
 
     pigeon_death_sounds = [ 'snd/electrocute-medium.wav',
                             'snd/electrocute-short.wav' ]
+
+    pigeon_sweeping = True
     
     def __init__ (self,
                   model = pigeon_model,
@@ -100,12 +104,13 @@ class Pigeon (BoidEntity,
                   *a, **k):
         super (Pigeon, self).__init__ (
             geometry = geom.capsule (2, 1),
-            mass     = mass.sphere (1, 2),
+            #mass     = mass.sphere (1, 2),
             model    = model,
             anims    = anims,
             category = pigeon_category,
             *a, **k)
 
+        self.on_is_on_floor_change += self.on_pigeon_is_on_floor
         self.on_hit   += self.on_pigeon_hit
         self.on_death += self.on_pigeon_death
         for boy in boys:
@@ -128,7 +133,11 @@ class Pigeon (BoidEntity,
         self.add_state ('hit',    HitState)
         
         self.start ('walk')
-
+        
+        self.model.loop ('fly')
+        self.curr_animation = 'fly'
+        self.anim_speed = 50
+        
     def do_update (self, timer):
         """
         Hack to avoid the tunneling effect. We manually sweep the
@@ -136,7 +145,16 @@ class Pigeon (BoidEntity,
         """
         super (Pigeon, self).do_update (timer)
         vlen = self.linear_velocity.length ()
-        self.geom.setParams (2., vlen * timer.delta)
+        if self.pigeon_sweeping:
+            self.geom.setParams (2., vlen * timer.delta)
+        self.model.setPlayRate (vlen / self.anim_speed, self.curr_animation)
+
+    @weak_slot
+    def on_pigeon_is_on_floor (self, who, val):
+        if val:
+            self.model.loop ('walk')
+        else:
+            self.model.loop ('fly')
 
     @weak_slot
     def on_pigeon_hit (self, x):
@@ -149,7 +167,7 @@ class Pigeon (BoidEntity,
                 self.enter_state ('fear', boy)
             else:
                 self.current.restart_wait ()
-
+    
     @weak_slot
     def on_pigeon_death (self):
         self.force_finish ()
@@ -174,59 +192,71 @@ class Pigeon (BoidEntity,
             self.enter_state ('eat', best)
 
 
-class PigeonState (State):    
-    params = BoidParams
-    animation = 'idle'
+class PigeonState (State, BoidParams):
+
     anim_speed = 50.
+
     def do_setup (self, *a, **k):
-        self.params = self.params ()
-        self.manager.change_params (self.params)
-        self.manager.model.loop (self.animation)
+        self.manager.change_params (self)
+        self.manager.anim_speed = self.anim_speed
         self.do_pigeon_setup (*a, **k)
+        
     def do_sink (self):
         self.pause ()
+
     def do_unsink (self, *a, **k):
-        self.manager.change_params (self.params)
+        self.manager.change_params (self)
+        self.manager.anim_speed = self.anim_speed
         self.resume ()
+        self.do_pigeon_unsink (self)
+        
     def do_update (self, timer):
         super (PigeonState, self).do_update (timer)
-        self.manager.model.setPlayRate (self.manager.linear_velocity.length () /
-                                        self.anim_speed,
-                                        self.animation)
-    do_pigeon_setup = nop
-    do_pigeon_unsink = nop
+
+    def do_release (self):
+        self.do_pigeon_release ()
+        
+    do_pigeon_release = nop
+    do_pigeon_setup   = nop
+    do_pigeon_unsink  = nop
+
 
 class FollowState (PigeonState):    
+
     @weak_slot
     def on_target_set_position (self, target, pos):
-        self.params.boid_target = pos
+        self.boid_target = pos
+
     def do_pigeon_setup (self, target):
         target.on_entity_set_position += self.on_target_set_position
-        self.params.boid_target = target.position
+        self.boid_target = target.position
+
         
 class FearState (FollowState, task.WaitTask):
-    animation  = 'fly'
+
     anim_speed = 50
-    class params (BoidParams):
-        boid_f_target = - 0.002
-        boid_speed = 200
-    duration = 10.
+    duration = 2.
+    
+    boid_f_target = - 0.002
+    boid_speed = 200
+
 
 class EatState (FollowState):
-    class params (BoidParams):
-        boid_flying   = False
-        boid_speed    = 20
-        boid_f_target   = 0.1
-        boid_f_randomness = 0.
-        boid_power = 100.
+    
+    boid_flying   = False
+    boid_speed    = 20
+    boid_f_target   = 0.1
+    boid_f_randomness = 0.
+    boid_power = 100.
         
     glutony      = 0.3
     eat_distance = 5
-    animation    = 'walk'
     anim_speed   = 10.
+
     def do_pigeon_setup (self, target):
         super (EatState, self).do_pigeon_setup (target)
         self.happy_meal = target
+
     def do_update (self, timer):
         super (EatState, self).do_update (self)
         best = self.manager.find_food ()
@@ -235,37 +265,47 @@ class EatState (FollowState):
         elif self.happy_meal:
             if distance_sq (self.happy_meal.position, self.manager.position) < \
                self.eat_distance ** 2:
-                self.params.boid_speed = 0.001
-                self.params.boid_power = 0.001
+                self.boid_speed = 0.001
+                self.boid_power = 0.001
                 self.happy_meal.eat (timer.delta * self.glutony)
         else:
             self.manager.leave_state ()
 
+
 class PatrolState (PigeonState):
+
     def do_update (self, timer):
         super (PatrolState, self).do_update (timer)
         self.manager.check_food ()
 
+
 class WalkState (PatrolState):
-    animation     = 'walk'
-    anim_speed    = 7
-    class params (BoidParams):
-        boid_flying   = False
-        boid_speed    = 10
-        boid_max_far  = 300
-        boid_f_bounds = 0.1
-        boid_power    = 100.
-        boid_f_randomness = 0.
-        
+
+    anim_speed    = 7.
+
+    boid_flying   = False
+    boid_speed    = 10
+    boid_max_far  = 300
+    boid_f_bounds = 0.01
+    boid_power    = 100.
+    boid_f_randomness = 0.
+
+
 class FlyState (PatrolState):
-    animation  = 'fly'
+
     anim_speed = 50.
-    class params (BoidParams):
-        boid_speed  = 100.
+    boid_speed  = 100.
 
-class HitState (PigeonState, task.WaitTask):
-    class params (BoidParams):
-        boid_flocking = False
-        boid_speed    = 1000
-    duration = 5.
 
+class HitState (PigeonState):
+
+    boid_flocking = False
+    boid_flying   = False
+    boid_speed    = 1000
+
+    def do_pigeon_setup (self):
+        self.tasks.add (task.sequence (task.wait (2.), task.run (self.kill)))
+        self.manager.pigeon_sweeping = False
+
+    def do_pigeon_release (self):
+        self.manager.pigeon_sweeping = True

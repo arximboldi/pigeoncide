@@ -26,6 +26,7 @@ from ent.panda import RelativeModelEntity, ModelEntity
 from ent.task import TaskEntity
 from base.signal import weak_slot
 
+from core import task
 from core.util import to_rad, normalize
 from phys import geom
 import physics
@@ -84,8 +85,8 @@ class WeaponEntity (SpatialEntity, TaskEntity):
 
     weapon_hit_delay   = 1.0
     
-    weapon_hit_force   = 10000.
-    weapon_throw_force = 500.
+    weapon_hit_speed   = 100.
+    weapon_throw_speed = 100.
     
     weapon_position = Vec3 (0, 0, 0)
     weapon_hpr      = Vec3 (0, 0, 0)
@@ -116,7 +117,7 @@ class WeaponEntity (SpatialEntity, TaskEntity):
         g = self.weapon_geom_free if self.weapon_geom_free \
             else geom.mesh (self.weapon_model, scale = self.weapon_scale)
         self._make_child_entity (FreeWeaponEntity,
-                                 #geometry = g,
+                                 # geometry = g, TODO: Segfaults? :s
                                  category = physics.weapon_category,
                                  *a, **k)
         self._child_entity.on_collide += self.on_touch
@@ -155,9 +156,13 @@ class WeaponEntity (SpatialEntity, TaskEntity):
         _log.debug ("A weapon %s hitted a %s." % (str (me), str (other)))
         if self._timer.elapsed - other.hit_time > self.weapon_hit_delay:
             direction = normalize (other.position - self._owner.position)
-            direction.setZ (0.5)
-            other.add_force (
-                direction * self.weapon_hit_force * self._timer.delta)
+            direction.setZ (math.sin (math.pi / 4.))
+            other.hit_time = self._timer.elapsed
+            self.entities.tasks.add (task.sequence (
+                task.delay (),
+                task.run (
+                    lambda: other.set_linear_velocity (normalize (direction) *
+                                                       self.weapon_hit_speed))))
             other.on_hit (self)
     
     def do_update (self, timer):
@@ -195,14 +200,13 @@ class WeaponEntity (SpatialEntity, TaskEntity):
             if self._owner:
                 h, p, r = self._owner.hpr
                 h = to_rad (h - 90)
+                
                 direction = Vec3 (math.cos (h), math.sin (h), 0)
                 self._make_free_entity ()
                 self._child_entity.position = old_position
                 self._child_entity.hpr      = old_hpr
-                # TODO: This is not affecting!
-                self._child_entity.add_force (direction *
-                                              self.weapon_throw_force /
-                                              self._timer.delta)
+                self._child_entity.set_linear_velocity (direction *
+                                                        self.weapon_throw_speed)
                 self._owner.del_weapon (self)
                 self._owner.last_weapon_time = self._timer.elapsed
                 

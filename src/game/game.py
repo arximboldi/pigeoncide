@@ -234,7 +234,7 @@ class Game (GameState):
         self.hud.set_counter ('sticks', self.num_sticks)
         
         self.timer = self.tasks.add (
-            task.TimerTask (time = self.level.max_time))
+            task.TimerTask (duration = self.level.max_time))
         self.timer.on_tick = lambda: self.hud.set_counter (
             'clock', int (self.timer.remaining))
         self.timer.on_finish = self.on_finish_time

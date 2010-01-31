@@ -22,7 +22,8 @@ from base.signal import signal
 from ent.entity import Entity
 from ent.observer import ObservableSpatialEntity
 from ent.panda import DelegateActorEntity, ActorEntity
-from ent.physical import DelegateStandingPhysicalEntity, StandingPhysicalEntity
+from ent.physical import (DelegateStandingPhysicalEntity, OnFloorEntity,
+                          StandingPhysicalEntity, DelegateOnFloorEntity)
 from pandac.PandaModules import Vec3
 
 from phys import geom
@@ -62,6 +63,7 @@ class Boy (BoyBase,
            ObservableSpatialEntity,
            ActorEntity,
            StandingPhysicalEntity,
+           OnFloorEntity,
            KillableEntity,
            WeaponOwner):
     pass
@@ -69,13 +71,12 @@ class Boy (BoyBase,
 
 class DelegateBoy (
     BoyBase,
-    #DelegateObservableSpatialEntity,
     DelegateActorEntity,
     DelegateStandingPhysicalEntity,
-    #DelegateKillableEntity,
+    DelegateOnFloorEntity,
     DelegateWeaponOwner):
     """
-    TODO: Add missing delegates. Read TODO note in entity.py.
+    TODO: Add missing delegates. Btw, read TODO note in entity.py before ;)
     """
 
     @property
