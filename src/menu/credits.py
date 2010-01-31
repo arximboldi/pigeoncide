@@ -105,17 +105,18 @@ class Credits (object):
         return task.wait(0)
     
     def do_destroy (self):
-        for n in self.prog_lab:
-            n.destroy ()
-        for n in self.arts_lab:
-            n.destroy ()
-        for n in self.mus_lab:
-            n.destroy ()
-        self.prog_tab.destroy ()
-        self.arts_tab.destroy ()
-        self.mus_tab.destroy ()
+        if self.active:
+            for n in self.prog_lab:
+                n.destroy ()
+            for n in self.arts_lab:
+                n.destroy ()
+            for n in self.mus_lab:
+                n.destroy ()
+            self.prog_tab.destroy ()
+            self.arts_tab.destroy ()
+            self.mus_tab.destroy ()
         
-        self.active = False
+            self.active = False
 
         return task.wait(0)
         

@@ -96,6 +96,7 @@ class MainMenu (object):
             self.start["command"] = lambda: self.state.tasks.add( task.sequence(
                 task.parallel (
                     self.options_menu.do_destroy (),
+                    self.credits_menu.do_destroy (),
                     task.run (self.state.to_smile),
                 ),
                 task.run (lambda: self.state.manager.leave_state ('game'))
@@ -103,6 +104,7 @@ class MainMenu (object):
             self.exit["command"] = lambda: self.state.tasks.add (task.sequence(
                 task.parallel(
                     self.options_menu.do_destroy (),
+                    self.credits_menu.do_destroy (),
                     task.run (self.state.to_smile),
                 ),
                 task.run (self.state.manager.leave_state)
@@ -111,6 +113,7 @@ class MainMenu (object):
             self.start["command"] = lambda: self.state.tasks.add( task.sequence(
                 task.parallel (
                     self.options_menu.do_destroy (),
+                    self.credits_menu.do_destroy (),
                     task.run (self.state.to_smile),
                 ),
                 task.run (lambda: self.state.manager.leave_state ('continue'))
@@ -118,6 +121,7 @@ class MainMenu (object):
             self.exit["command"] = lambda: self.state.tasks.add (task.sequence(
                 task.parallel(
                     self.options_menu.do_destroy (),
+                    self.credits_menu.do_destroy (),
                     task.run (self.state.to_smile),
                 ),
                 task.run (lambda: self.state.manager.leave_state ('quit'))
@@ -130,7 +134,7 @@ class MainMenu (object):
             task.run (lambda: self.options.setProp ('state', DGG.DISABLED)),
             task.parallel(
                 self.state.do_smile (),
-                self.do_show_options ()
+                self.do_show_options (),
             ),
             task.run (lambda: self.options.setProp ('state', DGG.NORMAL))
             ))
