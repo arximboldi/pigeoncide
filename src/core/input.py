@@ -153,7 +153,7 @@ panda_special_keys = set ([
     "shift", "lshift", "rshift",
     "control", "alt", "lcontrol",
     "lalt", "space", "ralt", "rcontrol",
-    "mouse-1", "mouse-2", "mouse-3"
+    "mouse1", "mouse2", "mouse3"
     ])
 
 def is_key_event (ev):

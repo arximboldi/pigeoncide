@@ -34,39 +34,46 @@ class Keyboard (object):
             self.state = state
         self.active = False
         self.cfg = GlobalConf().child ('game')
+        self.keys_txt = [   ("Forward",     'on_move_forward'),
+                            ("Backward",    'on_move_backward'),
+                            ("Strafe left", 'on_strafe_left'),
+                            ("Strafe right",'on_strafe_right'),
+                            ("Steer left",  'on_steer_left'),
+                            ("Steer right", 'on_steer_right'),
+                            ("Throw weapon",'on_throw_weapon'),
+                            ("Place stick", 'on_place_stick'),
+                            ("Feed",        'on_feed'),
+                            ("Jump",        'on_jump'),
+                            ("Run",         'on_run'),
+                            ("Hit",         'on_hit')
+                        ]
         
     def do_paint (self):
-        #cfg.child ('music-volume').default (self.DEFAULT_MUSIC_VOLUME)
         tx_scale = (0.6, 0.6)
         init = -0.2
         dif = -0.06
-        self.keys_txt = [   "Forward",
-                            "Backward",
-                            "Strafe left",
-                            "Strafe right",
-                            "Run",
-                            "Hit",
-                            "Throw weapon",
-                            "Place stick"
-                    ]
+
         self.keys_btn = []
+        self.keys_lab = []
         
-        for n in self.keys_txt:
-            i = self.keys_txt.index (n)
+        i = 0
+        for bt_text, func in self.keys_txt:
             self.keys_btn.append( DirectButton(
-                text = n,
+                text = bt_text,
                 text_font = self.state.font,
                 text_scale = tx_scale,
                 scale = .1,
                 pos = (0.3, 0, init+dif*i),
                 relief = None,
-                command = lambda: self.det_key (i)
+                command = lambda i=i: self.det_key (i)
             ))
-        self.box = OnscreenText(text = 'gs',
-            font = self.state.font,
-            pos = (0.7, -0.2),
-            scale = 0.07,
-            )
+            self.keys_lab.append (
+                OnscreenText(text = self.cfg.child (func).value[6:],
+                font = self.state.font,
+                pos = (0.7, init+dif*i),
+                scale = 0.07
+            ))
+            i += 1
         
         self.active = True
 
@@ -83,7 +90,8 @@ class Keyboard (object):
     def do_destroy (self):
         for n in self.keys_btn:
             n.destroy ()
-        self.box.destroy ()
+        for n in self.keys_lab:
+            n.destroy ()
             
         self.active = False
         
@@ -97,20 +105,6 @@ class Keyboard (object):
         if is_key_event (ev):
             self.state.do_enable ()
             self.state.events.on_any_event -= self.slot
-            #self.cfg.child ('').value
-            self.box.setText('YEAH')
+            self.cfg.child (self.keys_txt[key][1]).set_value(ev)
+            self.keys_lab[key].setText(ev[6:])
         
-#PLAYER_INPUT_MAP = {
-#    'on_move_forward'  : 'panda-w',
-#    'on_move_backward' : 'panda-s',
-#    'on_strafe_left'   : 'panda-a',
-#    'on_strafe_right'  : 'panda-d',
-#    'on_steer_left'    : 'panda-k',
-#    'on_steer_right'   : 'panda-l',
-#    'on_jump'          : 'panda-space',
-#    'on_run'           : 'panda-c',
-#    'on_hit'           : 'panda-e',
-#    'on_throw_weapon'  : 'panda-r',
-#    'on_place_stick'   : 'panda-q',
-#    'on_steer'         : 'panda-mouse-move',
-#}

@@ -83,7 +83,7 @@ class MainMenu (object):
         # Buttons task assigment
         self.start["command"] = lambda: self.state.tasks.add( task.sequence(
             self.options_menu.do_destroy (),
-            task.run (lambda: self.state.do_smile (1)),
+            self.state.do_smile (5),
             task.wait (1),
             task.run (lambda: self.state.manager.leave_state ('game'))
         ))
@@ -91,7 +91,7 @@ class MainMenu (object):
         self.options["command"] = lambda: self.state.tasks.add (task.sequence (
             task.run (lambda: self.options.setProp ('state', DGG.DISABLED)),
             task.parallel(
-                task.run (self.state.do_smile),
+                self.state.do_smile (),
                 self.show_options ()
             ),
             task.run (lambda: self.options.setProp ('state', DGG.NORMAL))
@@ -100,7 +100,7 @@ class MainMenu (object):
         self.exit["command"] = lambda: self.state.tasks.add (task.sequence(
             task.parallel(
                 self.options_menu.do_destroy (),
-                task.run (lambda: self.state.do_smile (1.5))
+                self.state.do_smile (1.5)
             ),
             task.run (self.state.kill)
         ))

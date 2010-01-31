@@ -37,6 +37,10 @@ class OptionsMenu (object):
         self.sub_screen = Screen(state)
         self.sub_sound = Sound (state)
         self.sub_keyboard = Keyboard (state)
+        self.sub_menus = {  'screen'    : self.sub_screen,
+                            'sound'     : self.sub_sound,
+                            'keyboard'  : self.sub_keyboard
+                         }
 
     def do_paint (self):
         # Option-Buttons inicialitation
@@ -111,10 +115,7 @@ class OptionsMenu (object):
                     self.back.setPos ((x*0.65)-0.1, 0, 0.55-(x*0.5))),
                 task.sinusoid (lambda x: self.back.setAlphaScale (x))
             ),
-            task.run (lambda: self.sound.setProp('state',DGG.NORMAL)),
-            task.run (lambda: self.keyboard.setProp('state',DGG.NORMAL)),
-            task.run (lambda: self.screen.setProp('state',DGG.NORMAL)),
-            task.run (lambda: self.back.setProp('state',DGG.NORMAL))
+            task.run (lambda: self.do_enable ())
             )
         
         #The option_menu is set as active
@@ -124,10 +125,22 @@ class OptionsMenu (object):
         
     def do_connect (self):
         # Buttons task assigment
-        self.sound ["command"] = self.show_sound
-        self.keyboard ["command"] = self.show_keyboard
-        self.screen ["command"] = self.show_screen
-        self.back ["command"] = lambda: self.state.tasks.add (self.do_destroy())
+        self.sound ["command"] = lambda: self.state.tasks.add (task.parallel (
+            self.state.do_smile (),
+            task.run (lambda: self.do_show ('sound'))
+            ))
+        self.keyboard ["command"] = lambda: self.state.tasks.add (task.parallel (
+            self.state.do_smile (),
+            task.run (lambda: self.do_show ('keyboard'))
+            ))
+        self.screen ["command"] = lambda: self.state.tasks.add (task.parallel (
+            self.state.do_smile (),
+            task.run (lambda: self.do_show ('screen'))
+            ))
+        self.back ["command"] = lambda: self.state.tasks.add (task.parallel (
+            self.state.do_smile(),
+            self.do_destroy()
+            ))
         
     def do_enable (self):
         self.sound.setProp ('state',DGG.NORMAL)
@@ -135,8 +148,8 @@ class OptionsMenu (object):
         self.screen.setProp ('state',DGG.NORMAL)
         self.back.setProp ('state',DGG.NORMAL)
         
-        #self.sub_screen.do_enable ()
-        #self.sub_sound.do_enable ()
+        self.sub_screen.do_enable ()
+        self.sub_sound.do_enable ()
         self.sub_keyboard.do_enable ()
     
     def do_disable (self):
@@ -145,17 +158,14 @@ class OptionsMenu (object):
         self.screen.setProp ('state',DGG.DISABLED)
         self.back.setProp ('state',DGG.DISABLED)
         
-        #self.sub_screen.do_disable ()
-        #self.sub_sound.do_disable ()
+        self.sub_screen.do_disable ()
+        self.sub_sound.do_disable ()
         self.sub_keyboard.do_disable ()
     
     def do_destroy (self):
         if self.active:
             #Buttons destroy
-            self.sound.setProp ('state',DGG.DISABLED)
-            self.keyboard.setProp ('state',DGG.DISABLED)
-            self.screen.setProp ('state',DGG.DISABLED)
-            self.back.setProp ('state',DGG.DISABLED)
+            self.do_disable ()
 
             #Movement task creation
             self.move_task = task.sequence (
@@ -181,38 +191,26 @@ class OptionsMenu (object):
                 task.run (self.keyboard.destroy),
                 task.run (self.screen.destroy)
                 )
-                            
-            if self.sub_screen.active:
-                self.sub_screen.do_destroy ()
-                            
-            if self.sub_sound.active:
-                self.sub_sound.do_destroy ()
-                
-            if self.sub_keyboard.active:
-                self.sub_keyboard.do_destroy ()
+            
+            for n in self.sub_menus.keys():
+                if self.sub_menus[n].active:
+                    self.sub_menus[n].do_destroy ()
                 
             #The option_menu is set as inactive 
             self.active = False
 
             return self.move_task
+        else:
+            return task.wait(0)
 
-    def show_sound (self):
-        if not self.sub_sound.active:
-            self.sub_sound.do_paint ()
-        else:
-            self.sub_sound.do_destroy ()
-    
-    def show_screen (self):
-        if not self.sub_screen.active:
-            self.sub_screen.do_paint ()
-        else:
-            self.sub_screen.do_destroy ()
-            
-        pass
-        
-    def show_keyboard (self):
-        if not self.sub_keyboard.active:
-            self.sub_keyboard.do_paint ()
-        else:
-            self.sub_keyboard.do_destroy ()
-
+    def do_show (self, submenu):
+        for n in self.sub_menus.keys():
+            if n == submenu:
+                if not self.sub_menus[n].active:
+                    self.sub_menus[n].do_paint ()
+                else:
+                    self.sub_menus[n].do_destroy ()
+            else:
+                if self.sub_menus[n].active:
+                    self.sub_menus[n].do_destroy ()
+                    

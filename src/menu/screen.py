@@ -19,14 +19,9 @@
 
 from direct.gui.DirectGui import *
 from direct.gui.OnscreenText import OnscreenText 
-from pandac.PandaModules import *
 
-from core import (patch_messenger, task)
-#from core import task
-from core.panda_controller import PandaController
 from base.conf import GlobalConf
 from core.input import *
-#from base.xml_conf import *
 
 class Screen (object):
 
@@ -50,48 +45,56 @@ class Screen (object):
         actual_height = self.cfg.child ('height').value
         self.active = True
         
-        self.sizes = [  [640, 480],
-                        [800, 600],
-                        [1024, 768],
-                        [1280, 800],
-                        [1280, 1024],
-                        [1440, 900]
+        self.sizes = [  (640, 480),
+                        (800, 600),
+                        (1024, 768),
+                        (1280, 800),
+                        (1280, 1024),
+                        (1440, 900)
                         ]
 
         self.sizes_tx = []
-        for a in self.sizes:
-            self.sizes_tx += [str (a[0])+"x"+str (a[1])]
+        for h, w in self.sizes:
+            self.sizes_tx += [str (h)+"x"+str (w)]
         
         # Gets the position of the actual config from self.sizes
-        init_item = self.sizes.index ([actual_width, actual_height])
+        init_item = self.sizes.index ((actual_width, actual_height))
 
         #
-        # TO DO: place buttons in correct positions and FPS button
+        # TO DO: place buttons in correct positions
         #
-        # cfg.child ('fps').default (self.DEFAULT_FPS)
         # cfg.child ('frame-meter').default (self.DEFAULT_FRAME_METER)
             
         # Create a frame
-        self.res_menu = DirectOptionMenu (text="Resolution", 
+        tx_scale = (0.7, 0.7)
+        self.res_menu = DirectOptionMenu (text = "Resolution",
+            text_font = self.state.font, 
+            text_scale = tx_scale,
+            popupMarker_text_font = self.state.font, 
             scale = 0.1,
             items = self.sizes_tx,
             initialitem = init_item,
             highlightColor = (0.65,0.65,0.65,1),
-            command = self.change_res
+            command = self.change_res,
+            pos = (0.6, 0, -0.4)
             )
         
         self.full_screen = DirectCheckButton (text = "Full screen",
-            indicatorValue = self.cfg.child ('fullscreen').get_value(),
-            pos = (.4, 0, -.5),
-            scale = .05,
-            command = self.change_full
+            text_font = self.state.font,     
+            text_scale = tx_scale,
+            indicatorValue = self.cfg.child ('fullscreen').value,
+            scale = .08,
+            command = self.change_full,
+            pos = (0.6, 0, -0.6)
             )
             
         self.fps_display = DirectCheckButton (text = "FPS display",
-            indicatorValue = self.cfg.child ('frame-metter').get_value(),
-            pos = (.4, 0, -.7),
-            scale = .05,
-            command = self.change_fps
+            text_font = self.state.font,
+            text_scale = tx_scale,
+            indicatorValue = self.cfg.child ('frame-meter').value,
+            scale = .08,
+            command = self.change_fps,
+            pos = (0.6, 0, -0.8)
             )
 
     def do_enable (self):
@@ -102,12 +105,12 @@ class Screen (object):
         
     def do_destroy (self):
         self.res_menu.destroy ()
-        self.fps_display ()
+        self.fps_display.destroy ()
         self.full_screen.destroy ()
         self.active = False
         
     def change_fps (self, status):
-        self.cfg.child ('frame-metter').set_value (status)
+        self.cfg.child ('frame-meter').set_value (status)
         
     def change_full (self, status):
         self.cfg.child ('fullscreen').set_value (status)
@@ -115,9 +118,9 @@ class Screen (object):
         
     def change_res (self, arg):
         i = self.sizes_tx.index(arg)
-        self.cfg.child ('fullscreen').set_value (False)
+        #self.cfg.child ('fullscreen').set_value (False)
         self.cfg.child ('width').set_value (self.sizes[i][0])
         self.cfg.child ('height').set_value (self.sizes[i][1])
 
-        self.full_screen["indicatorValue"] = False
+        #self.full_screen["indicatorValue"] = False
         self.cfg.nudge ()

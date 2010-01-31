@@ -128,7 +128,7 @@ class FuncTask (Task):
 def totask (task):
     if not isinstance (task, Task):
         if not callable (task):
-            raise TaskError ('You can add either tasks or callables.')
+            raise TaskError ('You can add either tasks or callables. ' + str(task))
         task = FuncTask (func = task)    
     return task
 

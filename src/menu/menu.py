@@ -57,10 +57,6 @@ class Menu (State):
     def do_release (self):
         self.main_menu.do_destroy ()
         self.root.removeNode ()
-    
-    def do_update (self, timer):
-        super (Menu, self).do_update (timer)
-        self.events.send ('garrapata')
         
     def setup_camera(self):
         camera.setPosHpr( Vec3( 0.0, -22.0, 0.0), Vec3( 0.0, 0.0, 0 ) )
@@ -68,16 +64,16 @@ class Menu (State):
     def load_background(self):
         self.bg_normal = loader.loadModel( 'menu/bg_normal.egg' )
         self.bg_normal.reparentTo ( self.root )
-        self.bg_normal.setPosHprScale( Vec3( -4.33, 0, -0.89 ), 
-            Vec3( 0, 0, 0 ), 
-            Vec3( 1748./2480 *10, 9, 10) 
+        self.bg_normal.setPosHprScale (Vec3 (-4.33, 0, -0.89), 
+            Vec3 (0, 0, 0), 
+            Vec3 (1748./2480 *10, 1, 10) 
             )
             
-        self.bg_smile = loader.loadModel( 'menu/bg_smile.egg' )
-        self.bg_smile.reparentTo( self.root )
-        self.bg_smile.setPosHprScale( Vec3( -4.33, 1, -0.89 ), 
-            Vec3( 0, 0, 0 ), 
-            Vec3( 1748./2480 *10, 9, 10) 
+        self.bg_smile = loader.loadModel ('menu/bg_smile.egg')
+        self.bg_smile.reparentTo (self.root)
+        self.bg_smile.setPosHprScale (Vec3 (-4.33, 1, -0.89), 
+            Vec3 (0, 0, 0), 
+            Vec3 (1748./2480 *10, 9, 10) 
             )
 
     def load_sound (self):
@@ -91,13 +87,13 @@ class Menu (State):
         self.font = loader.loadFont ('font/three-hours2.ttf')
         
     def do_smile (self, time = 0.2):
-        self.tasks.add ( task.sequence(
+        return task.sequence(
             task.run (lambda: self.bg_smile.setPos (-4.33, 0 , -0.89)),
             task.run (lambda: self.bg_normal.setPos (-4.33, 1 , -0.89)),
             task.wait (time),
             task.run (lambda: self.bg_normal.setPos (-4.33, 0 , -0.89)),
             task.run (lambda: self.bg_smile.setPos (-4.33, 1 , -0.89))
-            ))
+            )
     
     def do_enable (self):
         self.main_menu.do_enable ()

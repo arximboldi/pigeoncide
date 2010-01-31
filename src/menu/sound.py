@@ -19,7 +19,7 @@
 
 from direct.gui.DirectGui import *
 from direct.gui.OnscreenText import OnscreenText 
-from pandac.PandaModules import *
+
 
 from base.conf import GlobalConf
 from core.input import *
@@ -40,31 +40,37 @@ class Sound (object):
         #
         
         self.active = True
+        scale = 0.4
+        y = -0.4
         
         # Creates volume label and slider
         self.vol_lab = OnscreenText(text = 'SFX',
             font = self.state.font,
-            pos = (-0.5, 0.02),
+            pos = (0, y-0.02),
             scale = 0.07,
             )
         self.vol_slider = DirectSlider(range=(0, 1),
             value = self.cfg.child ('sound-volume').value,
             pageSize = 0.03,
             command = self.change_snd,
-            pos = (-0.1, 0, 0.55),
+            scale = scale,
+            pos = (0.6, 0, y)
             )
 
         # Creates music label and slider
         self.mus_lab = OnscreenText(text = 'Music',
             font = self.state.font,
-            pos = (-0.5, 0.02),
+            pos = (0, y-0.22),
             scale = 0.07
             )
         self.mus_slider = DirectSlider(range=(0, 1),
             value = self.cfg.child ('music-volume').value,
             pageSize = 0.03,
-            command = self.change_snd
+            command = self.change_snd,
+            scale = scale,
+            pos = (0.6, 0, y-0.2)
             )
+        #self.mus_slider.setPos (0.3, 0, -0.4)
 
     def do_enable (self):
         pass
