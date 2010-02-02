@@ -137,13 +137,13 @@ class Game (GameState):
 
     @weak_slot
     def on_kill_boy (self):
-        self.fail_game (random.choose (['You are dead!',
+        self.fail_game (random.choice (['You are dead!',
                                         'Was it that hard to stay alive?',
                                         "Your soul is burning in hell..."]))
 
     @weak_slot
     def on_finish_time (self):
-        self.fail_game (ramdom.choose (['No more time for you!',
+        self.fail_game (random.choice (['No more time for you!',
                                         'Too slow man...',
                                         'Hurry up the next time!']))
         
@@ -191,6 +191,7 @@ class Game (GameState):
     
     def setup_panda (self):
         panda = self.manager.panda
+        """ TODO: Make an option. """
         shader.enable_glow (panda)        
         panda.relative_mouse ()
         panda.loop_music (self.level.music)

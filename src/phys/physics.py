@@ -39,7 +39,13 @@ class Physics (Task):
     code (sysprof, for example) to try to investigate more...
     """
 
-    __metaclass__ = Singleton
+    # __metaclass__ = Singleton
+
+    """
+    Response to the previous to-do note. This is no longer a
+    singleton, at it solved the segmentation fault bug. Because we no
+    longer need a second world anyway...
+    """
 
     time_step = .1 / 60.
 
