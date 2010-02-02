@@ -54,7 +54,7 @@ class TestTask (unittest.TestCase):
         t = Task ()
         p = DummyParent ()
         t._set_parent (p)
-        self.assertEqual (t.parent, p)
+        self.assertEqual (t.parent_task, p)
         
         l = [Task (), Task (), Task ()]
         for n in l:

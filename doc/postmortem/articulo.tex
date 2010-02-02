@@ -456,10 +456,10 @@ reasons:
   when the frame-rate drops, tunneling happens a lot, specially for
   fast entities. This was specially a problem for the pigeons, but we
   partially solved the problem by manually sweeping its collision
-  volume. The collision geometry of a pigeon was initially a sphere,
-  but we changed it to be a cylinder that we use as a swept sphere
-  whose length depends on the distance that the entity has moved in
-  this frame.
+  volume\cite{sweeping}. The collision geometry of a pigeon was
+  initially a sphere, but we changed it to be a cylinder that we use
+  as a swept sphere whose length depends on the distance that the
+  entity has moved in this frame.
 
   Still, the problem sometimes persists for other entities at low
   frame-rate and fast movement conditions. One solution is to try to
@@ -531,26 +531,72 @@ architecture for gluing up almost all the application logic.
 A consequence of the event based game logic is that we can easily come
 up with a MVC game architecture. However, when we introduce the
 \emph{mixin} based entities it might seem non-obvious how our
-architecture is MVC. More exactly, how can be the views of an entity
-decoupled from its state if they are combined via inheritance?
+architecture is MVC. More exactly, how can be the views and
+controllers of an entity decoupled from its state if they are combined
+via inheritance?
 
 There are three ways in which this is achieved, and the best one
-depends on the concrete requirements. First, there is the incomplete
-\emph{delegate} and \emph{decorators} system. If an entity mixin
-provides a delegate version of it, its controller can be dynamically
-changed using decorators. The decorator implementation is shared with
-the non-decorator version of the entity mixin, the only difference is
-that the decorator one controls communicates with its dependencies via
-a delegate --this is made in a transparent way, thanks to Python's
-magic. In a second way, as we said before, some entities provide an
-events interface to listen to them, which allow unrelated entities
---by unrelated we mean outside of its inheritance graph-- to
-communicate with it. The last way in which the views and model can be
-connected at runtime is by doing the inheritance at runtime, in any
-point of the program. For this, we provide the utility function
-\texttt{mixin} that creates a new class from a set of bases. For
-example, this code could be valid\footnote{We do not implement
-  networked game, so some of the classes described are ficticious.}:
+depends on the concrete requirements:
+
+\begin{enumerate}
+\item First, there is the use of \emph{delegates} and \emph{decorators}
+  system. If an entity mixin provides a delegate version of it, its
+  controller can be dynamically changed using decorators. The
+  decorator implementation is shared with the non-decorator version of
+  the entity mixin, the only difference is that the decorator one
+  controls communicates with its dependencies via a delegate --this is
+  made in a transparent way, thanks to Python's magic. 
+
+  The decorator can be seen as a controller that adds behaviour to a
+  ``static'' model entity on runtime. For example, this code could be
+  possible:
+
+{\footnotesize
+\begin{verbatim}
+pigeon_model = mixin (PhysicalEntity) (entities = ...)
+pigeon_controller = mixin (BoidEntityDecorator) (
+    entities = ..., delegate = pigeon_model)
+\end{verbatim}
+}
+
+One can think that this produces code duplication, because we need to
+have two different versions of the \texttt{BoidEntity} and an
+alternative controller version. However, the implementation can be
+shared, and the following pattern arises when developing a controller
+that can be used embedded with the model or as a separate object:
+
+{\footnotesize
+\begin{verbatim}
+class BoidEntityBase (Entity):
+   """
+    Implementation of the flocking algorithm, asuming that all the
+needed data is embedded into self.
+   """
+   ...
+
+class BoidEntity (DynamicPhysicalEntity, BoidEntityBase): pass
+class BoidEntityDecorator (DelegatePhysicalEntity, BoidEntityBase): pass
+\end{verbatim}
+}
+
+The delegate is in charge of using \emph{properties} and functions to
+forward all the functionality that a \texttt{DynamicPhysicalEntity}
+would provide through another object. These delegates by now generate
+a bit of boilerplate because the forwarding is encoded by hand, by we
+are planning to adapt the functionality of \texttt{base.proxy} to
+generate it automatically using Python's metaprogramming magic :)
+
+\item Note that the previous code works only for wiring controllers
+  with the model, because there is no way by which the decorator would
+  be notified when the delegate changes, and, as such, we cannot
+  connect a view to the model in such a way.
+
+  But, as the previous code shows, one can build the desired class on
+  runtime mixing the needed entity components. For this, we provide
+  the utility function \texttt{mixin} that creates a new class from a
+  set of bases. For example, this code could be valid\footnote{We do
+    not implement networked game, so some of the classes described are
+    ficticious.}:
 
 {\footnotesize
 \begin{verbatim}
@@ -564,6 +610,55 @@ pigeon.set_position (100, 100, 100)
 \end{verbatim}
 }
 
+In that way, the \emph{call-next-method} mechanism would make sure
+that when a manipulation method is called on this model+view mixin
+object it propagates correctly through all the hierarchy notifying the
+views.
+
+\item However, there is still a problem there. In the original MVC,
+  one should be able to connect the model should be able to notify
+  many views. Also, in the previous example one can not change the
+  connections of the model with the views after the object is built.
+
+  For this purpose, we can fall-back to the events mechanism. This
+  example code shows how this can be made, for example, connecting a
+  follower camera to a pigeon.
+
+{\footnotesize
+\begin{verbatim}
+class FollowCameraEntity (Entity, Trackable, SpatialEntityListener):
+    ...
+
+boy    = mixin (Boy,    ObservableSpatialEntity) (...)
+pigeon = mixin (Pigeon, ObservableSpatialEntity) (...)
+camera = FollowCameraEntity (...)
+...
+pigeon.connect (camera)
+...
+camera.disconnect_sources () # Method added by Trackable
+boy.connect (camera)
+...
+# If it was not a trackable we have to remember who it was connected to.
+boy.disconnect (camera) 
+\end{verbatim}
+}
+
+As we can see, we provide a nice way to separate algorithms from the
+needs of the object topology. They should specify their requirements
+inheriting from interfaces that are implemented in different ways, and
+then later combined in runtime.
+
+Note that because abstracting all needed Panda3D features in our
+system is a lot of work, and because we sometimes took shortcuts in
+our code for faster development --like skipping separating interface
+and implementation...-- our system might not always be as flexible as
+previously shown if taken just outside the box. The architecture not
+only is MVC, but it can be more or less MVC depending on the concrete
+needs of our system as previously shown, and only polishing a pair of
+corners in the code remain.
+
+\end{enumerate}
+
 \subsection{Artificial Intelligence}
 
 The pigeons movement is modelled using Craig Reynold's flocking
@@ -575,30 +670,34 @@ using our MVC architecture.
 
 Also, that is not enough to model the complex behaviour of the
 pigeons. A state machine is used for this, with many states: fly,
-walk, follow, fear, eat, hit, land, return, attack. Most of the states
-just changes the parameters of the flocking algorithm, but some of
-them do few extra things. The fact that they are implemented using the
-state manager and our generic flocking algorithm makes the code small
-and simple.
+walk, follow, fear, eat, hit, land, return, attack... Most of the
+states just changes the parameters of the flocking algorithm, but some
+of them do few extra things. The fact that they are implemented using
+the state manager and our generic flocking algorithm makes the code
+small and simple.
 
 Sadly, our flocking implementation has an $O(n^2)$ time complexity,
 being the biggest performance bottleneck of the application, and
 making the application not very responsive when having a high number
-of pigeons in the scene --more than 30 pigeons drops the framerate to
-20-30 FPS in our computer and the tunneling problem of ODE becomes
+of pigeons in the scene --more than 40 pigeons drops the framerate to
+30 FPS in our computer and the tunneling problem of ODE becomes
 significant. We are planning to improve this in the future by using
-proper space partitioning, or even moving the core of the flocking
-algorithm implementation to C or C++ code.
+proper space partitioning to reduce the time complexity of the
+algorithm\cite{partitioning}, and even moving the core of the flocking
+algorithm implementation to C or C++ code if needed.
 
 \subsection{Lights and shaders}
 
-We do not use many lights in the scene --we don not really need them--
-but still some to have a nicely illuminated scene.
+We do not use many lights in the scene because we really do not needed
+them much --or where very busy discovering the concepts behind our
+experimental multi-paradigm architecture. Still, there are is a light
+on the top that provides some sunlight and a ambient light to avoid
+excessively dark non-illuminated areas.
 
-But we use \emph{glow mapping} to get nicely shaded laser fields and
-highlighted sticks. We would use them in more places if it were not
-because of the few problems that we had with the graphics --see the
-later section.
+However, we still wanted to have nicer visuals, so we used \emph{glow
+  mapping} to get nicely shaded laser fields and highlighted
+sticks. We would use them in more places if it were not because of the
+few problems that we had with the graphics --see the later section.
 
 We implemented the glow mapping using a fragment shader
 pipeline. First the whole scene is rendered to an off-screen buffer
@@ -608,6 +707,57 @@ blurred using two shaders, one that blurs the texture vertically and
 another one that blurs it horizontally. Then, this buffer is merged on
 top of the normally rendered scene, resulting in a very nice glow
 effect.
+
+
+\section{Extra features}
+
+Here we comment some extra things that, while not included in the
+feature list of the course project, are worth mentioning.
+
+\subsection{Unit testing}
+
+Unit testing has been used, specially in early stages of the
+development. 1319k lines of unit tests have been produced, covering
+most of the \texttt{base} module and part of the \texttt{core}
+module. However, at later stages of the development we stopped doing
+it, for the following reasons:
+
+\begin{enumerate}
+\item While our of code is globals-free, Panda3D code is not, and this
+  makes unit testing quite hard. Because we could not build mockups
+  for some essential Panda3D components, it was cumbersome to continue
+  building unit tests for everything.
+
+\item The entity system, core of game-logic part of our program, has
+  been very experimental and was, in a way, a research effort. As
+  such, the interfaces have been evolving all the time, and are still
+  evolving, as new concepts and patterns where discovered and
+  polished.
+\end{enumerate}
+
+We include a \texttt{unittests} script to run the unit tests.
+
+\subsection{Profiling}
+
+We agree  with Donald Knuth's  statement: ``early optimisation  is the
+root of much evil''\cite{optimisation}. However, specially when
+abusing dynamism and when building complex object topologies, it can
+become non-evident where the source of inefficiency is when the
+program does not run as fast as we desire.
+
+At few points we found that the program had a slower behaviour than
+expected, and profiling was the tool to find those performance bugs
+and solve them. We include a \texttt{profile} script that runs the
+program and then outputs different profiling measures
+using Python \texttt{cProfile} module.
+
+
+\subsection{Free Software development method}
+
+We believe in the freedom of users of software, and that an open
+development process can improve software quality both technically and
+ethically.
+
 
 
 
