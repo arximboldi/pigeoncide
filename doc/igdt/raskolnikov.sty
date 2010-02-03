@@ -1,0 +1,98 @@
+%
+% Código reutilizable para documentos en LaTeX
+%
+
+\usepackage{ucs}
+\usepackage[utf8x]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+%\usepackage[spanish]{babel}
+\usepackage{url}
+\usepackage{graphicx}
+\usepackage[usenames]{color}
+\usepackage{theorem}
+\usepackage{alltt}
+\usepackage{fancyhdr}
+\usepackage{multirow}
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{float}
+\usepackage{appendix}
+%\usepackage{palatino}
+\usepackage{hyperref}
+
+\parskip = 7 pt
+
+\newfloat{listing}{!h}{lol}
+\floatname{listing}{Listado}
+\floatstyle{ruled}
+
+\lstset{numbers=left, language=C}
+
+\renewcommand{\appendixname}{Apéndice}
+\renewcommand{\appendixpagename}{Apéndices}
+\renewcommand{\appendixtocname}{Apéndices}
+
+\newtheorem{prob}{Problema}
+
+\newcommand{\theHalgorithm}{algoritmo}
+\renewcommand{\algorithmicif}{\textbf{si}}
+\renewcommand{\algorithmicelse}{\textbf{si no}}
+\renewcommand{\algorithmicthen}{\textbf{entonces}}
+\renewcommand{\algorithmicendif}{\textbf{fin si}}
+\renewcommand{\algorithmicwhile}{\textbf{mientras}}
+\renewcommand{\algorithmicdo}{\textbf{hacer}}
+\renewcommand{\algorithmicendwhile}{\textbf{fin mientras}}
+\renewcommand{\algorithmicforall}{\textbf{para todo}}
+\renewcommand{\algorithmicendfor}{\textbf{fin para}}
+\renewcommand{\algorithmicrequire}{\textbf{Entrada:}}
+\renewcommand{\algorithmicensure}{\textbf{Salida:}}
+\renewcommand{\lstlistingname}{Listado}
+\floatname{algorithm}{Algoritmo}
+\floatname{listings}{Listado}
+
+\def\location#1 {
+  \def\@location{#1}
+}
+\def\subtitle#1 {
+  \def\@subtitle{#1}
+}
+
+\location{}
+\subtitle{}
+\def\thickhrulefill {
+  \leavevmode \leaders \hrule height 2pt\hfill \kern \z@
+}
+
+\def\raskolnikovmaketitle {
+%  \begin{titlepage}
+    \parskip = 0pt
+%    \null\vfil
+    \begin{center}
+      \huge \textbf{\@title}\\
+      \large \textit{\@subtitle}
+    \end{center}
+    \hrule height 4pt
+    \begin{center}
+      \large 
+      \@author \par \vskip 20pt
+      \@date
+      \@location
+    \end{center}
+%    \vskip 60\p@
+%    \vfil\null
+ % \end{titlepage}%
+    \parskip = 7pt
+  \setcounter{footnote}{0}
+}
+
+\def\startappendix {
+  \appendix
+  \appendixpage
+  \addappheadtotoc
+}
+
+    \makeindex
+
