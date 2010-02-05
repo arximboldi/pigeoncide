@@ -155,6 +155,8 @@ class OptionsMenu (object):
         self.sub_keyboard.do_enable ()
     
     def do_disable (self):
+        # HACK, ay albertico....
+        if not hasattr (self, 'sound'): return
         self.sound.setProp ('state',DGG.DISABLED)
         self.keyboard.setProp ('state',DGG.DISABLED)
         self.screen.setProp ('state',DGG.DISABLED)

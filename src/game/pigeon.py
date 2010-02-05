@@ -42,6 +42,7 @@ from physics import pigeon_category
 import random
 import weakref
 from pandac.PandaModules import Vec3
+from functools import partial
 
 _log = get_log (__name__)
 
@@ -96,7 +97,7 @@ class Pigeon (BoidEntity,
                      'idle'    : 'char/pigeon-idle.egg' }
 
     pigeon_sweeping = True
-    pigeon_min_eat_distance = 300.
+    pigeon_min_eat_distance = 100.
     pigeon_z_limit = -50.
     
     def __init__ (self,
@@ -117,6 +118,7 @@ class Pigeon (BoidEntity,
         self.on_death += self.on_pigeon_death
         for boy in boys:
             boy.on_boy_noise += self.on_boy_noise
+            boy.on_entity_set_position  += self.on_boy_move
         
         self.physical_hpr = Vec3 (90, 0, 0)
         self.params = BoidParams ()
@@ -133,12 +135,47 @@ class Pigeon (BoidEntity,
         self.add_state ('hit',    HitState)
         self.add_state ('land',   LandState)
         self.add_state ('return', ReturnState)
+        self.add_state ('attack', AttackState)
         
         self.model.loop ('fly')
         self.curr_animation = 'fly'
         self.anim_speed = 50
+
+        # Hack: 3D audio seems very slow, so only some pigeons emit
+        # some kinds of sounds.
         
+        if random.uniform (0, 10) < 2.:
+            self._coo_sounds = map (self.load_sound,
+                                    map (lambda x: "snd/pigeon-coo-%i.wav" % x,
+                                         range (1, 5)))
+            self.tasks.add (task.sequence (
+                task.wait (random.uniform (0, 20)),
+                task.loop (
+                    task.func_wait (partial (random.uniform, 10, 30)),
+                    task.run (lambda: random.choice (self._coo_sounds).play ()
+                              ))))
+
+        else:
+            self._coo_sounds = []
+
+        if random.uniform (0, 10) < 2.:
+            self._fly_sound = self.load_sound ('snd/pigeon-start.wav')
+        else:
+            self._fly_sound = None
+            
+        if random.uniform (0, 10) < 2.:
+            self._fear_sound = self.load_sound ('snd/pigeon-flap.wav')  
+        else:
+            self._fear_sound = None
+            
         self.start ('land')
+
+    def play_sound (self, sound):
+        #x, y, z = self.position
+        #u, v, w = self.linear_velocity
+        #sound.set3dAttributes (x, y, z, u, v, w)
+        if sound:
+            sound.play ()
                 
     def do_update (self, timer):
         """
@@ -171,15 +208,24 @@ class Pigeon (BoidEntity,
     @weak_slot
     def on_boy_noise (self, boy, rad):
         if distance_sq (boy.position, self.position) < rad ** 2:
-            if self.current and self.current.state_name != 'fear':
+            if self.depth == 1:
                 self.enter_state ('fear', boy)
-            else:
-                self.current.restart_wait ()
+            elif self.current and self.current.state_name == 'fear':
+                self.current.restart ()
     
     @weak_slot
     def on_pigeon_death (self):
         self.force_finish ()
 
+    @weak_slot
+    def on_boy_move (self, boy, pos):
+        if distance_sq (pos, self.params.boid_center) > 500. ** 2:
+            if self.current and self.current.state_name != 'attack':
+                self.enter_state ('attack', boy)
+            elif self.current and self.current.state_name == 'attack':
+                self.current.restart ()
+                
+    
     def find_food (self):
         food = self.entities.game.pigeon_food
         best = None
@@ -202,7 +248,7 @@ class Pigeon (BoidEntity,
         if pos.getZ () < self.pigeon_z_limit:
             _log.debug ("Pigeon needs repositioning. %s, %s" %
                         (str (pos), str (self)))
-            if self.current.state_name != 'return':
+            if self.depth == 1:
                 self.enter_state ('return')
 
 
@@ -249,21 +295,48 @@ class FollowState (PigeonState):
 class FearState (FollowState, task.WaitTask):
 
     anim_speed = 50.
-    duration = 2.
-    boid_f_target = - 0.002
+    duration = 3.
+    boid_f_target = 1.
+    boid_target_inv = True
+    boid_speed = 150
+    boid_power = 1000
+    
+    def do_pigeon_setup (self, *a, **k):
+        super (FearState, self).do_pigeon_setup (*a, **k)
+        self.manager.play_sound (self.manager._fear_sound)
+
+    def do_pigeon_release (self):
+        super (FearState, self).do_pigeon_release ()
+        self.manager.change_state ('fly')
+
+
+class AttackState (FollowState, task.WaitTask):
+
+    anim_speed = 50.
+    duration = 5.
+    boid_f_target = 1.
     boid_speed = 200
+    boid_power = 100
+    
+    def do_pigeon_setup (self, *a, **k):
+        super (AttackState, self).do_pigeon_setup (*a, **k)
+        self.manager.play_sound (self.manager._fear_sound)
+
+    def do_pigeon_release (self):
+        super (AttackState, self).do_pigeon_release ()
+        self.manager.change_state ('fly')
 
 
 class EatState (FollowState):
 
-    boid_flying   = False
-    boid_speed    = 20
+    boid_flying     = False
+    boid_speed      = 20
     boid_f_target   = 0.1
     boid_f_randomness = 0.
     boid_power = 100.
         
     glutony      = 0.3
-    eat_distance = 5
+    eat_distance = 7
     anim_speed   = 10.
 
     def do_pigeon_setup (self, target):
@@ -290,7 +363,7 @@ class PatrolState (PigeonState):
     def do_pigeon_setup (self):
         super (PatrolState, self).do_pigeon_setup ()
         self.tasks.add (task.sequence (
-            task.wait (random.uniform (5., 30)),
+            task.wait (random.uniform (15, 30)),
             task.run (self.next_state)))
 
     def do_update (self, timer):
@@ -337,10 +410,16 @@ class LandState (PigeonState):
     boid_f_bounds = 0.001
     boid_flying   = False
 
+
 class FlyState (PatrolState):
 
     anim_speed  = 50.
     boid_speed  = 80.
+    boif_f_flight = 0.01
+    
+    def do_pigeon_setup (self, *a, **k):
+        super (FlyState, self).do_pigeon_setup (*a, **k)
+        self.manager.play_sound (self.manager._fly_sound)
 
 
 class HitState (PigeonState):

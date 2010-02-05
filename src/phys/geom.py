@@ -18,18 +18,18 @@
 #
 
 from pandac.PandaModules import *
-from base.util import delayed, selflast
+from base.util import delayed2, selflast
 
-ray     = delayed (selflast (OdeRayGeom))
-sphere  = delayed (selflast (OdeSphereGeom))
-box     = delayed (selflast (OdeBoxGeom))
-capsule = delayed (selflast (OdeCappedCylinderGeom))
+ray     = delayed2 (selflast (OdeRayGeom))
+sphere  = delayed2 (selflast (OdeSphereGeom))
+box     = delayed2 (selflast (OdeBoxGeom))
+capsule = delayed2 (selflast (OdeCappedCylinderGeom))
 
-@delayed
+@delayed2
 def node (model, space):
     return OdeTriMeshGeom (space, OdeTriMeshData (model, False))
 
-@delayed
+@delayed2
 def mesh (model, space, scale = Vec3 (1, 1, 1)):
     cg_model = loader.loadModel (model)
     cg_model.setScale (scale)

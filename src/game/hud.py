@@ -41,6 +41,8 @@ class Hud (Panda2dEntity):
         self._next_position = Vec3 (0, 0, -.12)
         self.position = self.hud_position
         self._counter_nodes = []
+
+        self._move_task = None
         
     def dec_counter (self, attr, dec = -1):
         try:
@@ -96,13 +98,19 @@ class Hud (Panda2dEntity):
         return self._soft_move (self.hide_position)
         
     def _soft_move (self, dst):
+        if self._move_task:
+            self._move_task.kill ()
+        
         next_time = 0
         group = task.parallel ()
+
         for n in self._counter_nodes:
             group.add (task.sequence (
                 task.wait (next_time),
                 task.linear (n.setPos, n.getPos (), dst, init = True)))
             next_time += .5
-        return self.entities.tasks.add (group)
 
+        self.entities.tasks.add (group)
+        self._move_task = group
+        return group
     

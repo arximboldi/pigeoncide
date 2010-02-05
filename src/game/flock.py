@@ -102,17 +102,18 @@ class BoidParams (object):
     boid_f_bounds     = 0.001
     boid_f_randomness = .2
     boid_f_flight     = 0
-    boid_f_target     = 0.001
+    boid_f_target     = 0.01
 
     # Constraints
     boid_speed        = 150
     boid_max_far      = 600
     boid_center       = Vec3 (0, 0, 20)
     boid_mindist      = 5
-    boid_maxdist      = 30.
+    boid_maxdist      = 60.
     boid_height       = 50.0    
     boid_target       = None
-
+    boid_target_inv   = False
+    
 
 class BoidEntityBase (TaskEntity):
 
@@ -249,11 +250,17 @@ class BoidEntityBase (TaskEntity):
         return Vec3 (0, 0, 0)
 
     def rule_target (self):
-        factor = 10.
+        factor = 1.
         if self.neighbours:
-            factor = 1.
+            factor = .5
         if self.params.boid_target:
-            return (self.params.boid_target - self._curr_position) * factor
+            ret = (self.params.boid_target - self._curr_position) * factor
+            if self.params.boid_target_inv:
+                ret = - Vec3 (1. / ret.getX (),
+                              1. / ret.getY (),
+                              1. / ret.getZ ()) 
+            return ret
+        
         return Vec3 ()
 
 

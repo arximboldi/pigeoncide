@@ -148,17 +148,19 @@ class Game (GameState):
                                         'Hurry up the next time!']))
         
     def win_game (self):
-        self.manager.enter_state (
-            GameMessage,
-            'YOU WON!\n'
-            'This was a show-case level of an in-development game,\n'
-            'there is more to come in the future.',
-            'quit')
-
+        if self.manager.current == self:
+            self.manager.enter_state (
+                GameMessage,
+                'YOU WON!\n'
+                'This was a show-case level of an in-development game,\n'
+                'there is more to come in the future.',
+                'quit')
+            
     def fail_game (self, reason):
-        msg = random.choice (['LOOOOOOOOSER', 'You lost!', 'What a pity!',
-                              'Hey, no luck today!'])
-        self.manager.enter_state (GameMessage, reason + '\n' + msg, 'retry')
+        if self.manager.current == self:
+            msg = random.choice (['LOOOOOOOOSER', 'You lost!', 'What a pity!',
+                                  'Hey, no luck today!'])
+            self.manager.enter_state (GameMessage, reason + '\n' + msg, 'retry')
     
     @weak_slot
     def on_place_stick (self):
@@ -184,15 +186,24 @@ class Game (GameState):
         super (Game, self).do_update (timer)
 
     @weak_slot
+    def on_shader_change (self, cfg):
+        if cfg.value:
+            self.glow_filter.enable (self.manager.panda)
+        else:
+            self.glow_filter.disable ()
+    
+    @weak_slot
     def on_control_change (self, cfg):
         self.player_input.unassoc_action (cfg.name)
         if cfg.value:
             self.player_input.assoc (cfg.name, cfg.value)
     
     def setup_panda (self):
+        self.glow_filter = shader.GlowFilter ()
+        
         panda = self.manager.panda
-        """ TODO: Make an option. """
-        shader.enable_glow (panda)        
+        if GlobalConf ().path ('game.shader').value:
+            self.glow_filter.enable (panda)        
         panda.relative_mouse ()
         panda.loop_music (self.level.music)
 
@@ -205,11 +216,14 @@ class Game (GameState):
         self.tasks.add (self.camera_input)        
 
         self.player_input.assoc ('on_steer', 'panda-mouse-move')
+
         cfg = GlobalConf ().path ('game.player0.keys')
         for c in cfg.childs ():
             if c.value:
                 self.player_input.assoc (c.name, c.value)
             c.on_conf_change += self.on_control_change
+        GlobalConf ().path ('game.shader').on_conf_change += \
+            self.on_shader_change
 
     def setup_controllers (self):
         self.camera_ctl = CameraController (
@@ -257,8 +271,10 @@ class Game (GameState):
         
     def do_sink (self):
         super (Game, self).do_sink ()
-        # if self.manager.current.state_name == 'menu-noload':
-        #     self.tasks.pause ()
+        if self.manager.current.state_name == 'menu-noload':
+            for x in self.entities.entities:
+                if isinstance (x, task.Task):
+                    x.pause ()        
         self.events.quiet = True
         self.hud.soft_hide ()
         self.timer.pause ()
@@ -267,6 +283,9 @@ class Game (GameState):
         super (Game, self).do_unsink ()
         self.manager.panda.relative_mouse ()
         self.tasks.resume ()
+        for x in self.entities.entities:
+            if isinstance (x, task.Task):
+                x.resume ()
         if action == 'continue':
             self.events.quiet = False
             self.hud.soft_show ()
@@ -278,7 +297,7 @@ class Game (GameState):
         
     def do_release (self):
         self.level.dispose () # TODO: To entity!
-        shader.disable_glow (self.manager.panda)
+        self.glow_filter.disable ()
         super (Game, self).do_release ()
 
 

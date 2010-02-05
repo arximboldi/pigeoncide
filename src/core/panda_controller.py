@@ -72,12 +72,14 @@ class PandaController (object):
         self.audio = self.base.sfxManagerList [0]
         self.audio3d = Audio3DManager (self.audio, camera)
         self.audio3d.setListenerVelocityAuto ()
+        self.audio3d.setDropOffFactor (0.1) # HACK
         
         self.create_properties (title)
         self.update_properties (cfg)
         self.listen_conf (cfg)
 
         loadPrcFileData ("", "interpolate-frames 1")
+        loadPrcFileData ("", "support-threads #f")
         path = getModelPath ()
         path.prependPath ('./data')
                 

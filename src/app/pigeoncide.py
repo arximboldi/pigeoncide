@@ -27,7 +27,7 @@ from game.game import LoadGame
 class PigeoncideApp (PandaApp):
 
     NAME        = "pigeoncide"
-    VERSION     = "0.0.0"
+    VERSION     = "0.0.1"
     AUTHOR      = "Pigeoncide development team"
     COPYRIGHT   = "(c) 2009 Pigeoncide development team"
     DESCRIPTION = \

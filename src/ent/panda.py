@@ -110,6 +110,8 @@ class PandaEntityBase (SpatialEntity):
     def dispose (self):
         audio3d = self.entities.audio3d
         map (audio3d.detachSound, self._panda_sounds)
+        for x in self._panda_sounds:
+            x.stop ()
         self._node.removeNode ()
         super (PandaEntityBase, self).dispose ()
         
@@ -201,6 +203,9 @@ class DelegatePandaEntity (DelegateSpatialEntity):
     @property
     def node (self):
         return self.delegate.node
+
+    def load_sound (self, sfx):
+        return self.delegate.load_sound (sfx)
 
 
 class ModelEntityBase (PandaEntityBase):

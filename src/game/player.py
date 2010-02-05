@@ -17,13 +17,11 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import math
-
 from direct.interval.IntervalGlobal import *
 
 from base.signal import signal
-
 from base.sender import AutoReceiver
+from base.util import printfn
 from core.util import *
 from core import task
 
@@ -34,8 +32,12 @@ from pandac.PandaModules import Vec3
 from boy import Boy, DelegateBoy
 from pigeon import PigeonFood
 
+from functools import partial
+from operator import add
+
 import laser
 import math
+import random
 
 action_running        = 1
 action_forward        = 1 << 2
@@ -89,6 +91,19 @@ class PlayerEntityBase (TaskEntity):
         
         self._anim_interval = None
         self._curr_anim     = 'idle'
+        self._move_sounds   = map (self.load_sound,
+                                   map (lambda x: "snd/movement-%i.wav" % x,
+                                        range (1, 6)))
+        self._run_snd_task  = self.entities.tasks.add (task.loop (
+            task.run (lambda: random.choice (self._move_sounds).play ()),
+            task.wait (.5)))
+        self._walk_snd_task  = self.entities.tasks.add (task.loop (
+            task.run (lambda: random.choice (self._move_sounds).play ()),
+            task.wait (1.)))
+        
+        self._run_snd_task.pause ()
+        self._walk_snd_task.pause ()
+        
         self.update_animation ()
         
     def update_animation (self, loop = True):
@@ -110,6 +125,17 @@ class PlayerEntityBase (TaskEntity):
             self._anim_interval = interv
             self._curr_anim = anim
 
+            # hack
+            if self._curr_anim == 'walk':
+                self._walk_snd_task.resume ()
+                self._run_snd_task.pause ()
+            elif self._curr_anim == 'run':
+                self._walk_snd_task.pause ()
+                self._run_snd_task.resume ()
+            else:
+                self._walk_snd_task.pause ()
+                self._run_snd_task.pause ()
+    
     def start_action (self, action, loop = True):
         self.actions |= action
         self.update_animation (loop)

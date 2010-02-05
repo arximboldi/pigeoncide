@@ -21,7 +21,7 @@ from direct.gui.DirectGui import *
 from direct.gui.OnscreenText import OnscreenText 
 from pandac.PandaModules import *
 
-from base.signal import weak_slot
+from base.signal import slot
 from core import (patch_messenger, task)
 from core.panda_controller import PandaController
 from core.input import *
@@ -36,25 +36,25 @@ class Keyboard (object):
         if state:
             self.state = state
         self.active = False
-        self.cfg = GlobalConf().path ('game.player0.keys')
+        self.cfg = GlobalConf ().path ('game.player0.keys')
         
         self.keys_txt = {
-            'on_move_forward' : "Forward",
-            'on_move_backward' : "Backward",
-            'on_strafe_left': "Strafe left",
-            'on_strafe_right' : "Strafe right",
-            'on_steer_left' : "Steer left",
-            'on_steer_right' : "Steer right",
-            'on_throw_weapon' : "Throw weapon",
-            'on_place_stick' : "Place stick",
-            'on_feed' : "Feed",
-            'on_jump' :  "Jump",
-            'on_run'  : "Run",
-            'on_hit' : "Hit"
+            'on_move_forward'   : (1, "Forward"),
+            'on_move_backward'  : (2, "Backward"),
+            'on_strafe_left'    : (3, "Strafe left"),
+            'on_strafe_right'   : (4, "Strafe right"),
+            'on_steer_left'     : (5, "Steer left"),
+            'on_steer_right'    : (6, "Steer right"),
+            'on_throw_weapon'   : (7, "Throw weapon"),
+            'on_place_stick'    : (8, "Place stick"),
+            'on_feed'           : (9, "Feed"),
+            'on_jump'           : (10, "Jump"),
+            'on_run'            : (11, "Run"),
+            'on_hit'            : (12, "Hit")
             }
 
     def get_key_name (self, event):
-        if event is None:
+        if event is None or event == 'no-event':
             return "?"
         else:
             return event [6:]
@@ -67,8 +67,7 @@ class Keyboard (object):
         self.keys_btn = {}
         self.keys_lab = {}
         
-        i = 0
-        for func, bt_text in self.keys_txt.iteritems ():
+        for func, (i, bt_text) in self.keys_txt.iteritems ():
             self.keys_btn [func] = DirectButton(
                 text = bt_text,
                 text_font = self.state.font,
@@ -87,11 +86,10 @@ class Keyboard (object):
                 scale = 0.07
             )
             self.cfg.child (func).on_conf_change += (self.on_key_change)
-            i += 1
-        
+                
         self.info_txt = OnscreenText (text = 'Select action',
                 font = self.state.font,
-                pos = (0.4, init+dif*i-0.02),
+                pos = (0.4, init+dif*13-0.02),
                 scale = 0.04
             )
         self.active = True
@@ -113,6 +111,7 @@ class Keyboard (object):
             n.destroy ()
         self.info_txt.destroy()
         self.active = False
+        self.on_key_change.disconnect_sources ()
         
     def det_key (self, key):
         # Deactivate all buttons
@@ -128,11 +127,12 @@ class Keyboard (object):
             self.state.events.on_any_event -= self.slot
             for c in self.cfg.childs ():
                 if c.value == ev:
-                    c.set_value (None)        
+                    c.set_value ('no-event')        
             self.cfg.child (key).set_value (ev)
 
-    @weak_slot
+    @slot
     def on_key_change (self, cfg):
-        self.keys_lab [cfg.name].setText (self.get_key_name (cfg.value))
-        self.info_txt.setText ('Select button')
+        if self.keys_lab [cfg.name]:
+            self.keys_lab [cfg.name].setText (self.get_key_name (cfg.value))
+            self.info_txt.setText ('Select button')
 

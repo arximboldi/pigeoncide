@@ -23,7 +23,7 @@ from error import *
 from base.log import *
 from base import util
 import math
-
+from functools import partial
 
 _log = get_log (__name__)
 
@@ -47,6 +47,9 @@ class Task (object):
     def do_update (self, timer):
         pass
 
+    def do_restart (self):
+        pass
+    
     def add_next (self, task):
         self._next.append (task)
         return task
@@ -69,6 +72,7 @@ class Task (object):
             self._state = running if self._state == paused else paused
     
     def restart (self):
+        self.do_restart ()
         self._state = running
 
     def kill  (self):
@@ -128,17 +132,33 @@ class FuncTask (Task):
 def totask (task):
     if not isinstance (task, Task):
         if not callable (task):
-            raise TaskError ('You can add either tasks or callables. ' + str(task))
+            raise TaskError ('You can add either tasks or callables. ' +
+                             str(task))
         task = FuncTask (func = task)    
     return task
 
 
 class TaskGroup (Task):
 
-    auto_kill = True
+    auto_kill   = True
+    auto_remove = True
+    loop        = False
     
-    def __init__ (self, *tasks, **k):
-        super (TaskGroup, self).__init__ (**k)
+    def __init__ (self,
+                  tasks = [],
+                  auto_kill = None,
+                  auto_remove = None,
+                  loop = None,
+                  *a, **k):
+        super (TaskGroup, self).__init__ (*a, **k)
+
+        if auto_kill is not None:
+            self.auto_kill = auto_kill
+        if auto_remove is not None:
+            self.auto_remove = auto_remove
+        if loop is not None:
+            self.loop = loop
+        
         self._tasks = []
         for task in tasks:
             self.add (task)
@@ -155,10 +175,14 @@ class TaskGroup (Task):
         super (TaskGroup, self).do_update (timer)
         for task in self._tasks:
             task.update (timer)
-        self._tasks = remove_if (Task.is_killed, self._tasks)
+        if self.auto_remove:
+            self._tasks = remove_if (Task.is_killed, self._tasks)
 
-        if self.auto_kill and not self._tasks:
+        all_killed = len (filter (Task.is_killed, self._tasks)) == self.count
+        if self.auto_kill and all_killed:               
             self.kill ()
+        elif self.loop and all_killed:
+            self.restart ()
     
     def add (self, task):
         task = totask (task)
@@ -176,6 +200,11 @@ class TaskGroup (Task):
                task.func == func:
                 return task
 
+    def restart (self):
+        super (TaskGroup, self).restart ()
+        for x in self._tasks:
+            x.restart ()
+
     @property
     def count (self):
         return len (self._tasks)
@@ -191,9 +220,6 @@ class WaitTask (Task):
             self.duration = duration
         self.remaining = self.duration
 
-    def restart_wait (self):
-        self.remaining = self.duration
-                
     def do_update (self, timer):
         super (WaitTask, self).do_update (timer)
         self.remaining -= timer.delta
@@ -201,6 +227,8 @@ class WaitTask (Task):
             self.kill ()
             self.remaining = 0
 
+    def do_restart (self):
+        self.remaining = self.duration
 
 class DelayTask (Task):
 
@@ -279,7 +307,26 @@ def sequence (fst, *tasks):
 
     return fst
 
-parallel = TaskGroup
+def parallel (*tasks):
+    return TaskGroup (tasks = tasks,
+                      auto_remove = False)
+
+def loop (*tasks):
+    return TaskGroup (tasks = tasks,
+                      auto_remove = False,
+                      auto_kill = False,
+                      loop = True)
+
+class FuncWaitTask (WaitTask):
+    def __init__ (self, wait_func, *a, **k):
+        super (FuncWaitTask, self).__init__ (duration = wait_func (), *a, **k)
+        self.wait_func = wait_func
+
+    def do_restart (self):
+        self.duration = self.wait_func ()
+        self.remaining = self.duration
+
+func_wait = FuncWaitTask
 
 wait = WaitTask
 

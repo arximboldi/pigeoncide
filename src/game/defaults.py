@@ -38,13 +38,13 @@ DEFAULT_PLAYER0_KEYS = [
 def check_duplicate_key (cfg, act, key):
     for c in cfg.childs ():
         if c.name != act and c.value == key:
-            return True
-    return False
+            return False
+    return True
 
 def load_game_defaults ():
     cfg = GlobalConf ().path('game.player0.keys')
     for act, key in DEFAULT_PLAYER0_KEYS:
-        if not check_duplicate_key (cfg, act, key):
+        if check_duplicate_key (cfg, act, key):
             cfg.child (act).default (key)
     
     GlobalConf ().path ('game.shader').default (True)

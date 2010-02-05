@@ -46,8 +46,9 @@ class EventMap (Receiver):
             self._map = flip_dict (eventmap)
 
     def assoc (self, action, key):
-        if key in self._map:
-            raise AlreadyMappedError (self._map [key])
+        #HACK
+        #if key in self._map:
+        #    raise AlreadyMappedError (self._map [key])
         self._map [key] = action
 
     def unassoc (self, key):

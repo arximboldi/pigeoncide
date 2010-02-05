@@ -17,6 +17,8 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import functools
+
 near0 = 0.0001
 
 class Selfable (object):
@@ -51,6 +53,9 @@ def selflast (func):
 def delayed (func):
     return lambda *a1, **k1: lambda *a2, **k2: \
         func (* (a1 + a2), ** union (k1, k2))
+
+def delayed2 (func):
+    return lambda *a, **k: functools.partial (func, *a, **k)
 
 _multimethod_registry = {}
 

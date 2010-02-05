@@ -94,6 +94,7 @@ class MainMenu (object):
         # Buttons task assigment
         if self.type == 'main':
             self.start["command"] = lambda: self.state.tasks.add( task.sequence(
+                task.run (self.do_disable_this),
                 task.parallel (
                     self.options_menu.do_destroy (),
                     self.credits_menu.do_destroy (),
@@ -102,6 +103,7 @@ class MainMenu (object):
                 task.run (lambda: self.state.manager.leave_state ('game'))
             ))
             self.exit["command"] = lambda: self.state.tasks.add (task.sequence(
+                task.run (self.do_disable_this),
                 task.parallel(
                     self.options_menu.do_destroy (),
                     self.credits_menu.do_destroy (),
@@ -109,8 +111,14 @@ class MainMenu (object):
                 ),
                 task.run (self.state.manager.leave_state)
             ))
+            self.state.events.event ('panda-escape').connect (lambda:
+                self.state.tasks.add (task.sequence (
+                    task.delay (),
+                    task.run (self.exit["command"]))))
+
         if self.type == 'ingame':
             self.start["command"] = lambda: self.state.tasks.add( task.sequence(
+                task.run (self.do_disable_this),
                 task.parallel (
                     self.options_menu.do_destroy (),
                     self.credits_menu.do_destroy (),
@@ -119,14 +127,19 @@ class MainMenu (object):
                 task.run (lambda: self.state.manager.leave_state ('continue'))
             ))
             self.exit["command"] = lambda: self.state.tasks.add (task.sequence(
-                task.parallel(
+                task.run (self.do_disable_this),
+                task.parallel (
                     self.options_menu.do_destroy (),
                     self.credits_menu.do_destroy (),
                     task.run (self.state.to_smile),
                 ),
                 task.run (lambda: self.state.manager.leave_state ('quit'))
             ))
-        
+            self.state.events.event ('panda-escape').connect (lambda:
+                self.state.tasks.add (task.sequence (
+                    task.delay (),
+                    task.run (self.start["command"]))))
+
         self.credits["command"] = lambda: self.state.tasks.add (
             self.do_show_credits ())
 
@@ -145,12 +158,15 @@ class MainMenu (object):
         self.credits.setProp ('state', DGG.NORMAL)
         self.exit.setProp ('state', DGG.NORMAL)
         self.options_menu.do_enable ()
-    
-    def do_disable (self):
+
+    def do_disable_this (self):
         self.start.setProp ('state', DGG.DISABLED)
         self.options.setProp ('state', DGG.DISABLED)
         self.credits.setProp ('state', DGG.DISABLED)
         self.exit.setProp ('state', DGG.DISABLED)
+    
+    def do_disable (self):
+        self.do_disable_this ()
         self.options_menu.do_disable ()
         
     def do_destroy (self):

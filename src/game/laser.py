@@ -85,7 +85,7 @@ class Field (PandaEntity, StaticPhysicalEntity):
         
         self.enable_collision ()
 
-        sound = self.load_sound ('snd/electrocute_very_long.wav')
+        sound = self.load_sound ('snd/electrocute-long.wav')
         sound.setLoop (True)
         sound.play ()
         sound.setVolume (0.1)

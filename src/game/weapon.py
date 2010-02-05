@@ -33,7 +33,7 @@ import physics
 import weakref
 from pandac.PandaModules import Vec3
 import math
-
+import random
 
 _log = get_log (__name__)
 
@@ -81,6 +81,15 @@ class DelegateWeaponOwner (DelegateSpatialEntity):
 
 class WeaponEntity (SpatialEntity, TaskEntity):
 
+    weapon_sounds = [ 'snd/weapon-hit-wood.wav',
+                      'snd/weapon-hit-metal.wav',
+                      'snd/weapon-hit-lolly.wav',
+                      'snd/weapon-hit-slightly-metallic.wav' ]
+    weapon_swing  = [ 'snd/weapon-swing-1.wav',
+                      'snd/weapon-swing-2.wav',
+                      'snd/weapon-swing-3.wav',
+                      'snd/weapon-swing-4.wav' ]
+    
     weapon_model = ''
 
     weapon_hit_delay   = 1.0
@@ -90,7 +99,7 @@ class WeaponEntity (SpatialEntity, TaskEntity):
     
     weapon_position = Vec3 (0, 0, 0)
     weapon_hpr      = Vec3 (0, 0, 0)
-    weapon_scale    = Vec3 (0, 0, 0)
+    weapon_scale    = Vec3 (1, 1, 1)
 
     weapon_geom_owned = None
     weapon_geom_free  = None
@@ -102,8 +111,18 @@ class WeaponEntity (SpatialEntity, TaskEntity):
         self._timer = None
         self._owner        = None
         self._child_entity = None
-        self._make_free_entity ()
-        
+        self._make_free_entity ()        
+        self._hit_sounds   = map (self.entities.audio3d.loadSfx,
+                                  self.weapon_sounds)
+        self._swing_sounds = map (self.entities.audio3d.loadSfx,
+                                  self.weapon_swing)
+    
+    def play_random_sound (self, sounds):
+        snd = random.choice (sounds)
+        px, py, pz = self._child_entity.position
+        snd.set3dAttributes (px, py, pz, 0, 0, 0)
+        snd.play ()
+    
     def dispose (self):
         if self._child_entity:
             self._child_entity.dispose ()
@@ -114,15 +133,17 @@ class WeaponEntity (SpatialEntity, TaskEntity):
         self._child_entity.position = pos
 
     def _make_free_entity (self, *a, **k):
+        _log.debug ("Creating free entity.")
         g = self.weapon_geom_free if self.weapon_geom_free \
-            else geom.mesh (self.weapon_model, scale = self.weapon_scale)
+            else geom.sphere (self.weapon_hit_radius)
         self._make_child_entity (FreeWeaponEntity,
-                                 # geometry = g, TODO: Segfaults? :s
+                                 geometry = g,
                                  category = physics.weapon_category,
                                  *a, **k)
         self._child_entity.on_collide += self.on_touch
         
     def _make_owned_entity (self, *a, **k):
+        _log.debug ("Creating owned entity")
         g = self.weapon_geom_owned if self.weapon_geom_owned \
             else geom.sphere (self.weapon_hit_radius)
         
@@ -132,19 +153,31 @@ class WeaponEntity (SpatialEntity, TaskEntity):
                                  category = physics.null_category,
                                  *a, **k)
         
-    def _make_child_entity (self, entity_cls, *a, **k):
+    def _make_child_entity (self, entity_cls, scale_factor = None, *a, **k):
+        scale = self.weapon_scale
+        if scale_factor:
+            cx, cy, cz = self.weapon_scale
+            sx, sy, sz = scale_factor
+            scale = Vec3 (cx/sx, cy/sy, cz/sz)
+                
         entity = entity_cls (entities = self.entities,
                              model = self.weapon_model,
                              *a, **k)
+
+        px, py, pz = self.weapon_position
+        sx, sy, sz = scale
+        position   = Vec3 (px*sx, py*sy, pz*sz) 
+        
         entity.model_hpr = self.weapon_hpr
-        entity.model_scale = self.weapon_scale
-        entity.model_position = self.weapon_position
+        entity.model_scale = scale
+        entity.model_position = position
         entity.physics_hpr =  self.weapon_hpr
-        entity.physics_position = self.weapon_position
+        entity.physics_position = position
 
         entity.enable_collision ()
         self._child_entity = entity
-
+        _log.debug ("Done creating entity")
+        
     @weak_slot
     def on_touch (self, ev, me, other):
         if isinstance (other, WeaponOwner):
@@ -155,6 +188,7 @@ class WeaponEntity (SpatialEntity, TaskEntity):
         """ Make sure that this gets executed on hittable only... """
         _log.debug ("A weapon %s hitted a %s." % (str (me), str (other)))
         if self._timer.elapsed - other.hit_time > self.weapon_hit_delay:
+            self.play_random_sound (self._hit_sounds)
             direction = normalize (other.position - self._owner.position)
             direction.setZ (math.sin (math.pi / 4.))
             other.hit_time = self._timer.elapsed
@@ -172,7 +206,8 @@ class WeaponEntity (SpatialEntity, TaskEntity):
     def start_hitting (self):
         if self._owner:
             self._child_entity.on_collide += self.on_hit
-
+            self.play_random_sound (self._swing_sounds)
+            
     def finish_hitting (self):
         if self._owner:
             self._child_entity.on_collide -= self.on_hit
@@ -192,10 +227,8 @@ class WeaponEntity (SpatialEntity, TaskEntity):
             if owner:
                 joint = owner.model.exposeJoint (None, 'modelRoot',
                                                  'Bip01_R_Finger0')
-                self._make_owned_entity (parent_node = joint)
-                cx, cy, cz = self._child_entity.model_scale
-                sx, sy, sz = owner.model_scale
-                self._child_entity.model_scale = Vec3 (cx/sx, cy/sy, cz/sz) 
+                self._make_owned_entity (parent_node = joint,
+                                         scale_factor = owner.model_scale)
                 
             if self._owner:
                 h, p, r = self._owner.hpr
@@ -203,7 +236,7 @@ class WeaponEntity (SpatialEntity, TaskEntity):
                 
                 direction = Vec3 (math.cos (h), math.sin (h), 0)
                 self._make_free_entity ()
-                self._child_entity.position = old_position
+                self._child_entity.position = old_position + direction * 5
                 self._child_entity.hpr      = old_hpr
                 self._child_entity.set_linear_velocity (direction *
                                                         self.weapon_throw_speed)
@@ -222,7 +255,27 @@ class BaseballBat (WeaponEntity):
 
     weapon_model    = 'obj/baseball-bat.egg'
 
-    weapon_free_geom = geom.capsule (5, 20)
-    weapon_scale    = Vec3 (.3, .3, .3)
-    weapon_position = Vec3 (-2, -5, 1)
-    weapon_hpr      = Vec3 (0, -90, 0)
+    weapon_geom_free = geom.box (5, 5, 1)
+    weapon_scale     = Vec3 (.3, .3, .3)
+    weapon_position  = Vec3 (-2*.3, -5*.3, 1*.3)
+    weapon_hpr       = Vec3 (0, -90, 0)
+
+
+class Lollypop (WeaponEntity):
+
+    weapon_model    = 'obj/lollypop.egg'
+
+    weapon_geom_free = geom.box (5, 5, 1)
+    weapon_scale     = Vec3 (.3, .3, .3)
+    weapon_position  = Vec3 (-2*.3, -5*.3, 1*.3)
+    weapon_hpr       = Vec3 (0, -90, 0)
+
+
+class RollingPin (WeaponEntity):
+
+    weapon_model    = 'obj/rolling-pin.egg'
+
+    weapon_geom_free = geom.box (5, 5, 1)
+    weapon_scale     = Vec3 (.3, .3, .3)
+    weapon_position  = Vec3 (-2*.3, -5*.3, 1*.3)
+    weapon_hpr       = Vec3 (0, -90, 0)

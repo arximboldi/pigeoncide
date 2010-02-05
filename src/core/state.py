@@ -87,7 +87,11 @@ class StateManager (task.Task):
         self._state_factory = {}
         self._state_stack = []
         self._empty_count = 1
-        
+
+    @property
+    def depth (self):
+        return len (self._state_stack)
+    
     @property
     def current (self):
         if self._state_stack:

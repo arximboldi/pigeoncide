@@ -41,7 +41,6 @@ class Menu (State):
     def do_setup (self, data, type = 'main'):
         self.type = type
         self.root = base.cam.attachNewNode (PandaNode ('menu'))
-        self.events.event ('panda-escape').connect (self.manager.leave_state)
         self.manager.panda.absolute_mouse ()
         
         #Menu setup
