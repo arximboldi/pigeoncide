@@ -101,6 +101,11 @@ class Task (object):
         self._task_manager = manager
 
 
+class WrapperTask (Task):
+    def _set_parent (self, manager):
+        super (WrapperTask, self)._set_parent (self, manager)
+        self.wrapped_task.set_parent (manager)
+
 class FuncTask (Task):
 
     def __init__ (self, func = None, *a, **k):
@@ -318,7 +323,7 @@ def loop (*tasks):
                       loop = True)
 
 class FuncWaitTask (WaitTask):
-    def __init__ (self, wait_func, *a, **k):
+    def __init__ (self, wait_func = None, *a, **k):
         super (FuncWaitTask, self).__init__ (duration = wait_func (), *a, **k)
         self.wait_func = wait_func
 
@@ -346,3 +351,10 @@ def sinusoid (f, min = 0.0, max = 1.0, *a, **k):
 
 def run (func):
     return FuncTask (lambda t: None if func () else None)
+
+func = run  # TODO: change all ocurrences of task.run
+
+def repeat (task):
+    task = totask (task)
+    task.kill = func_or_task.restart
+    return task

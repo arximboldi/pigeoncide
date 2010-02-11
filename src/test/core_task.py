@@ -113,7 +113,7 @@ class TestTask (unittest.TestCase):
 
         t1 = Task ()
         t2 = lambda: running
-        g = TaskGroup (t1, t2)
+        g = TaskGroup ([t1, t2])
         self.assertEqual (g.count, 2)
         self.assertTrue (isinstance (g.find (t2), FuncTask))
 

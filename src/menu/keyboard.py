@@ -27,7 +27,7 @@ from core.panda_controller import PandaController
 from core.input import *
 from base.conf import GlobalConf
 
-from game.input import *
+from game.defaults import *
 
 class Keyboard (object):
 
