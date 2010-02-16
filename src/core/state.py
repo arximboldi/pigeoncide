@@ -186,4 +186,4 @@ class StateManager (task.Task):
         try:
             return self._state_factory [name_or_cls], name_or_cls
         except Exception:
-            raise StateError ("Unknown state " + name)
+            raise StateError ("Unknown state " + name_or_cls)

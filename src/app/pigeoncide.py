@@ -58,6 +58,5 @@ Extra options:
         
     def do_execute (self, freeargs):
         if self._arg_state.value:
-            self.root_state = self._arg_state.value
-                
+            self.root_state = self._arg_state.value                
         super (PigeoncideApp, self).do_execute (freeargs)

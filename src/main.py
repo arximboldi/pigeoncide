@@ -19,10 +19,14 @@
 
 from app.pigeoncide import PigeoncideApp
 
-def pigeoncide_main ():
+def pigeoncide_main ():    
     app = PigeoncideApp ()
     app.run_and_exit ()
 
 if __name__ == '__main__':
+    try:
+        import psyco
+        psyco.full()
+    except ImportError:
+        pass
     pigeoncide_main ()
-

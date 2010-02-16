@@ -102,9 +102,19 @@ class Task (object):
 
 
 class WrapperTask (Task):
+    
+    def __init__ (self, wrapped_task = None, *a, **k):
+        super (WrapperTask, self).__init__ (*a, **k)
+        self.wrapped_task = wrapped_task
+
+    def update (self, timer):
+        super (WrapperTask, self).update (timer)
+        self.wrapped_task.update (timer)
+        
     def _set_parent (self, manager):
-        super (WrapperTask, self)._set_parent (self, manager)
-        self.wrapped_task.set_parent (manager)
+        super (WrapperTask, self)._set_parent (manager)
+        self.wrapped_task._set_parent (manager)
+
 
 class FuncTask (Task):
 
@@ -303,6 +313,16 @@ class FadeTask (Task):
                 self.func (self.curr)
 
 
+class FuncWaitTask (WaitTask):
+    def __init__ (self, wait_func = None, *a, **k):
+        super (FuncWaitTask, self).__init__ (duration = wait_func (), *a, **k)
+        self.wait_func = wait_func
+
+    def do_restart (self):
+        self.duration = self.wait_func ()
+        self.remaining = self.duration
+
+
 def sequence (fst, *tasks):
     task  = totask (fst)
     tasks = map (totask, tasks)
@@ -321,15 +341,6 @@ def loop (*tasks):
                       auto_remove = False,
                       auto_kill = False,
                       loop = True)
-
-class FuncWaitTask (WaitTask):
-    def __init__ (self, wait_func = None, *a, **k):
-        super (FuncWaitTask, self).__init__ (duration = wait_func (), *a, **k)
-        self.wait_func = wait_func
-
-    def do_restart (self):
-        self.duration = self.wait_func ()
-        self.remaining = self.duration
 
 func_wait = FuncWaitTask
 
@@ -352,9 +363,7 @@ def sinusoid (f, min = 0.0, max = 1.0, *a, **k):
 def run (func):
     return FuncTask (lambda t: None if func () else None)
 
-func = run  # TODO: change all ocurrences of task.run
-
 def repeat (task):
     task = totask (task)
-    task.kill = func_or_task.restart
-    return task
+    task.kill = task.restart    
+    return WrapperTask (task)

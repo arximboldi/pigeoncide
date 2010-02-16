@@ -59,5 +59,5 @@ class InstChanger (Changer):
                   value_ = None,
                   *a, **k):
         super (InstChanger, self).__init__ (
-            func  = lambda obj, val: getattr (name, obj) (obj, val),
+            func  = lambda obj, val: getattr (obj, name) (obj, val),
             value = value_)
