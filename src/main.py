@@ -17,6 +17,18 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import __builtin__
+import weakref
+
+# old_object = object
+# class NewObject (old_object):
+#     def __init__ (self, *a, **k):
+#         print "Received args: ", a, k
+#         super (NewObject, self).__init__ (*a, **k)
+
+# object = NewObject
+# __builtin__.object = object
+
 from app.pigeoncide import PigeoncideApp
 
 def pigeoncide_main ():    

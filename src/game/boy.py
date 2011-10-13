@@ -39,17 +39,26 @@ class BoyBase (Entity):
     with the pigeon) to avoid getting stuck on the floor.
     """
     
+    on_boy_noise = signal ()
+
+    def emit_noise (self, rad):
+        self.on_boy_noise (self, rad)    
+
+
+class Boy (BoyBase,
+           ObservableSpatialEntity,
+           ActorEntity,
+           StandingPhysicalEntity,
+           OnFloorEntity,
+           KillableEntity,
+           WeaponOwner):
+
     boy_model = 'char/boy-anims.egg'
     boy_anims = { 'run'  : 'char/boy-run.egg',
                   'walk' : 'char/boy-walk.egg',
                   'idle' : 'char/boy-idle.egg',
                   'feed' : 'char/boy-feed.egg',
                   'hit'  : 'char/boy-hit.egg' }
-
-    on_boy_noise = signal ()
-
-    def emit_noise (self, rad):
-        self.on_boy_noise (self, rad)
     
     def __init__ (self, model = boy_model, anims = boy_anims, *a, **k):
         super (BoyBase, self).__init__ (
@@ -61,16 +70,6 @@ class BoyBase (Entity):
         self.model_position = Vec3 (.0, .0, -4.0)
         self.model_scale = Vec3 (.1, .1, .1)
         self.enable_collision ()
-    
-
-class Boy (BoyBase,
-           ObservableSpatialEntity,
-           ActorEntity,
-           StandingPhysicalEntity,
-           OnFloorEntity,
-           KillableEntity,
-           WeaponOwner):
-    pass
 
 
 class DelegateBoy (

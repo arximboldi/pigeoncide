@@ -85,6 +85,7 @@ class PlayerEntityBase (TaskEntity):
     
     def __init__ (self, *a, **k):
         super (PlayerEntityBase, self).__init__ (*a, **k)
+
         self.angle    = 0
         self.actions  = 0x0
         self.laser    = laser.Group (self.entities)
