@@ -137,7 +137,7 @@ Options:
 
     def setup_folders (self):
         self._config_folder = os.path.join (os.environ ['HOME'], '.' + self.NAME)
-        self._data_folder = os.path.join (['data'])
+        self._data_folder = os.path.join ('data')
 
         if not os.path.isdir (self._config_folder):
             os.makedirs (self._config_folder)
