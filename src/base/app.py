@@ -99,7 +99,7 @@ Options:
             ret_val = self.do_execute (args.free_args)
             self.save_config ()
         except AppSuccess, e:
-            ret_val = os.EX_OK
+            ret_val = getattr(os, 'EX_OK', 0)  # Only available on Unix
         except LoggableError, e:
             e.log ()
             _log.debug (traceback.format_exc ())
@@ -107,8 +107,8 @@ Options:
         except Exception, e:
             _log.fatal ("Unexpected error:\n" + e.message)
             _log.debug (traceback.format_exc ())
-            ret_val = os.EX_SOFTWARE
-        
+            ret_val = getattr(os, 'EX_SOFTWARE', 70)  # Only available on Unix
+
         self.do_release ()
         self.close_log ()
         
@@ -137,7 +137,7 @@ Options:
 
     def setup_folders (self):
         self._config_folder = os.path.join (os.environ ['HOME'], '.' + self.NAME)
-        self._data_folder = os.path.join (['data'])
+        self._data_folder = os.path.join ('data')
 
         if not os.path.isdir (self._config_folder):
             os.makedirs (self._config_folder)
