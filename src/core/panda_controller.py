@@ -21,17 +21,25 @@
 Import this or patch_messenger before any other module usin Panda base.
 """
 
-import patch_messenger
+from . import patch_messenger
+
+import traceback
 
 from base.conf import GlobalConf
-from timer import Timer
-from input import MouseTask
-import task
+from base.log import get_log
+from base.util import IN_BROWSER
+from .paths import DATA_DIR
+from .shader import load_shader
+from .timer import Timer
+from .input import MouseTask
+from . import task
 
 from direct.showbase.ShowBase import ShowBase
 from direct.showbase.Audio3DManager import Audio3DManager
 from direct.filter.CommonFilters import CommonFilters
 from pandac.PandaModules import *
+
+_log = get_log (__name__)
 
 class PandaController (object):
 
@@ -50,10 +58,10 @@ class PandaController (object):
         self._timer = Timer ()
         self._timer.max_delta = self.DEFAULT_MAX_DELTA
         self._tasks = task.TaskGroup ()
-        self._tasks.add (self._panda_task)
         self._music = None
         self._mouse_task = None
         self._relative_mouse = False
+        self._pointer_locked = False
         
     @property
     def timer (self):
@@ -69,6 +77,15 @@ class PandaController (object):
         self.set_defaults (cfg)
         self.base = ShowBase ()
         self.base.disableMouse ()
+        if IN_BROWSER:
+            # WebGL has no fixed-function lighting, so the main camera
+            # renders with an equivalent shader. It goes in the camera's
+            # initial state rather than on the scene so that other cameras
+            # (the glow pass) and nodes with their own shader settings
+            # still take precedence.
+            lit = NodePath ('lit')
+            lit.setShader (load_shader ('lit.vert', 'lit.frag'))
+            self.base.cam.node ().setInitialState (lit.getState ())
         self.audio = self.base.sfxManagerList [0]
         self.audio3d = Audio3DManager (self.audio, camera)
         self.audio3d.setListenerVelocityAuto ()
@@ -78,19 +95,60 @@ class PandaController (object):
         self.update_properties (cfg)
         self.listen_conf (cfg)
 
+        # Models are named without an extension. The desktop game loads the
+        # .egg sources; the web build ships them converted to .bam.
+        loadPrcFileData ("", "default-model-extension " +
+                         (".bam" if IN_BROWSER else ".egg"))
         loadPrcFileData ("", "interpolate-frames 1")
         loadPrcFileData ("", "support-threads #f")
+        if IN_BROWSER:
+            # Dual transparency (the laser fields) draws the opaque parts
+            # first, picked out with an alpha test. WebGL has no alpha test
+            # and our shaders do not do one, so whole surfaces came out
+            # opaque. Plain alpha blending does not need one.
+            loadPrcFileData ("", "m-dual #f")
         path = getModelPath ()
-        path.prependPath ('./data')
+        path.prependDirectory (Filename.fromOsSpecific (DATA_DIR))
                 
         self.base.enableParticles ()
+
+        if IN_BROWSER:
+            self.base.accept ('mouse1', self._capture_pointer)
         
-    def loop (self):        
+    def loop (self):
+        """
+        Runs the game until its last task finishes. Panda's task manager
+        drives the frames: the game update runs after input is processed
+        and before the frame is rendered. In a browser run() returns at
+        once and the page calls the task manager every frame.
+        """
         self._timer.reset ()
-        self._timer.loop (self._loop_fn)
+        self._timer.tick ()
+        self.base.taskMgr.add (self._frame_task, 'pigeoncide-frame')
+        self.base.run ()
+
+    def _frame_task (self, ptask):
+        try:
+            if IN_BROWSER:
+                self._check_pointer_lock ()
+            running = self._loop_fn (self._timer)
+        except Exception as e:
+            if not IN_BROWSER:
+                raise
+            # On the desktop the error ends ShowBase.run and reaches
+            # AppBase.run. In a browser nothing would report it and the
+            # task would fail again every frame, so report it and stop.
+            _log.fatal ("Unexpected error: %s: %s\n%s" % (
+                type (e).__name__, e, traceback.format_exc ()))
+            running = False
+        if running:
+            self._timer.tick ()
+            return ptask.cont
+        self.base.taskMgr.stop ()
+        return ptask.done
 
     def _loop_fn (self, timer):
-        task_count = 1               # _panda_task
+        task_count = 0
         if self._relative_mouse:
             task_count += 1          # _mouse_task
         if self._tasks.count > task_count:
@@ -130,6 +188,29 @@ class PandaController (object):
                 messenger.send ('mouse-move', [(x, y)])
             self._relative_mouse = True
         
+    def _check_pointer_lock (self):
+        """
+        In a browser relative mouse mode is pointer lock, which only
+        starts on a click or key press, and which the browser ends by
+        itself when the player presses Escape or leaves the page. The
+        page never sees that Escape, so the end of pointer lock while in
+        relative mode is sent as the 'pointer-unlocked' event instead.
+        """
+        locked = self.base.win.getProperties ().getMouseMode () == \
+            WindowProperties.MRelative
+        if self._pointer_locked and not locked and self._relative_mouse:
+            messenger.send ('pointer-unlocked')
+        self._pointer_locked = locked
+
+    def _capture_pointer (self):
+        """
+        Asks for pointer lock again on a click, in case the request made
+        by relative_mouse was refused: browsers refuse it for a moment
+        after it was released.
+        """
+        if self._relative_mouse and not self._pointer_locked:
+            self.base.win.requestProperties (self._prop)
+
     def absolute_mouse (self):
         if self._relative_mouse:
             self._relative_mouse = False
@@ -143,19 +224,23 @@ class PandaController (object):
         return self.base.win.getGsg().getSupportsBasicShaders() == 0
         
     def update_properties (self, cfg):
-        self._prop.setSize (cfg.child ('width').value,
-                            cfg.child ('height').value)
+        # In a browser the canvas takes its size from the page layout;
+        # setting one here would pin it with an inline style.
+        if not IN_BROWSER:
+            self._prop.setSize (cfg.child ('width').value,
+                                cfg.child ('height').value)
         self._prop.setFullscreen (cfg.child ('fullscreen').value)
         self.base.win.requestProperties (self._prop)
-        
-        self._timer.fps = cfg.child ('fps').value
+
+        self.update_fps (cfg.child ('fps'))
         self.base.setFrameRateMeter (cfg.child ('frame-meter').value)
 
     def update_frame_meter (self, cfg):
         self.base.setFrameRateMeter (cfg.value)
 
     def update_fps (self, cfg):
-        self._timer.fps = cfg.value
+        # Browsers pace frames themselves, and sleeping would block the page.
+        self._timer.fps = -1 if IN_BROWSER else cfg.value
 
     def update_music_volume (self, cfg):
         if self._music:
@@ -164,10 +249,6 @@ class PandaController (object):
     def update_sound_volume (self, cfg):
         if self.audio:
             self.audio.setVolume (cfg.value)
-
-    def _panda_task (self, timer):
-        taskMgr.step ()
-        return task.running
 
     def set_background_color (self, *color):
         base.setBackgroundColor (*color)

@@ -17,7 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from error import BaseError
+from .error import BaseError
 from xml.sax.handler import ContentHandler
 from xml.sax import SAXException
 

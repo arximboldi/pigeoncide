@@ -28,7 +28,7 @@ from core.state import State
 #from core.panda_controller import PandaController
 from core import task
 
-from main_menu import *
+from .main_menu import *
 from game.loader import *
 
 _log = get_log (__name__)
@@ -70,14 +70,14 @@ class Menu (State):
         bp = Vec3( 0.0, -22.0, 0.0)
         pos = Vec3 (-4.33, 0, -0.89) - bp
         
-        self.bg_normal = loader.loadModel( 'menu/bg_normal.egg' )
+        self.bg_normal = loader.loadModel( 'menu/bg_normal' )
         self.bg_normal.reparentTo ( self.root )
         self.bg_normal.setPosHprScale (pos, 
             Vec3 (0, 0, 0), 
             Vec3 (1748./2480 *10, 1, 10) 
             )
             
-        self.bg_smile = loader.loadModel ('menu/bg_smile.egg')
+        self.bg_smile = loader.loadModel ('menu/bg_smile')
         #self.bg_smile.reparentTo (self.root)
         self.bg_smile.setPosHprScale (pos, 
             Vec3 (0, 0, 0), 
@@ -88,8 +88,8 @@ class Menu (State):
         self.manager.panda.loop_music ('snd/melancolik-drone.ogg')
     
     def load_buttons (self):
-        self.bt_yellow = loader.loadModel ('menu/bt_yellow.egg')
-        self.bt_red = loader.loadModel ('menu/bt_red.egg')
+        self.bt_yellow = loader.loadModel ('menu/bt_yellow')
+        self.bt_red = loader.loadModel ('menu/bt_red')
 
     def load_fonts (self):
         self.font = loader.loadFont ('font/three-hours2.ttf')
@@ -115,10 +115,10 @@ class Menu (State):
         self.main_menu.do_disable ()
         
 class MenuData (LoaderData):
-    load_models =   [ 'menu/bg_normal.egg',
-                      'menu/bg_smile.egg',
-                      'menu/bt_red.egg',
-                      'menu/bt_yellow.egg'
+    load_models =   [ 'menu/bg_normal',
+                      'menu/bg_smile',
+                      'menu/bt_red',
+                      'menu/bt_yellow'
                     ]
     load_sound  =   [ 'snd/melancolik-drone.ogg' ]
     load_fonts  =   [ 'font/three-hours2.ttf' ]

@@ -24,13 +24,14 @@ from ent.physical import StaticPhysicalEntity
 from ent.panda import ModelEntity
 from phys import geom
 
-from boy import Boy
-from pigeon import Pigeon
-from flock import make_random_flock
-from loader import LoaderData
-from sky import SkyEntity
-import physics
-import weapon
+from .boy import Boy
+from .pigeon import Pigeon
+from .flock import make_random_flock
+from .loader import LoaderData
+from .sky import SkyEntity
+from core.shader import attach_glow_maps
+from . import physics
+from . import weapon
 
 import random
 
@@ -41,22 +42,22 @@ class LevelEntity (
 
 class Level (LoaderData):
     
-    load_models   = [ 'char/boy-anims.egg',
-                      'char/boy-walk.egg',
-                      'char/boy-feed.egg',
-                      'char/boy-hit.egg',
-                      'char/boy-run.egg',
-                      'char/pigeon-anims.egg',
-                      'char/pigeon-walk.egg',
-                      'char/pigeon-takeoff.egg',
-                      'char/pigeon-land.egg',
-                      'char/pigeon-idle.egg',
-                      'char/pigeon-fly.egg',
-                      'lvl/world.egg',
-                      'obj/stick.egg',
-                      'obj/stick-hl.egg',
-                      'obj/baseball-bat.egg',
-                      'obj/food.egg' ]
+    load_models   = [ 'char/boy-anims',
+                      'char/boy-walk',
+                      'char/boy-feed',
+                      'char/boy-hit',
+                      'char/boy-run',
+                      'char/pigeon-anims',
+                      'char/pigeon-walk',
+                      'char/pigeon-takeoff',
+                      'char/pigeon-land',
+                      'char/pigeon-idle',
+                      'char/pigeon-fly',
+                      'lvl/world',
+                      'obj/stick',
+                      'obj/stick-hl',
+                      'obj/baseball-bat',
+                      'obj/food' ]
     
     load_textures = [ 'char/boy.png',
                       'char/boy-glow.png',
@@ -85,7 +86,7 @@ class Level (LoaderData):
                       'hud/pigeon.png',
                       'hud/clock.png' ]
     
-    load_sounds = [ 'snd/houmdrak.mp3',
+    load_sounds = [ 'snd/houmdrak.ogg',
                     'snd/electrocute-medium.wav',
                     'snd/electrocute-short.wav',
                     'snd/electrocute-long.wav' ]
@@ -95,11 +96,11 @@ class Level (LoaderData):
                     'font/alte-bold.ttf' ]
     load_increasing = True
     
-    music       = 'snd/houmdrak.mp3'
-    model       = 'lvl/world.egg'
-    geometry    = 'lvl/world.egg'
+    music       = 'snd/houmdrak.ogg'
+    model       = 'lvl/world'
+    geometry    = 'lvl/world'
     offset      = Vec3 (0, 0, 0)
-    sky         = 'sky/green-sky.egg'
+    sky         = 'sky/green-sky'
     sky_scale   = 1000.
     spawn_spots = [ (Vec3 (0, 0, 20), 0) ]
     flocks_def  = [ 20 ]
@@ -156,7 +157,14 @@ class Level (LoaderData):
         wep = weapon.RollingPin (entities = entities)
         wep.position = Vec3 (-100, -100, 20)
 
-        self.level.model.setTexture (loader.loadTexture ('lvl/world.png'))
+        # The grass repeats all over the level, so it needs mipmaps not to
+        # shimmer in the distance, and anisotropic filtering not to blur on
+        # slopes seen at a grazing angle.
+        grass = loader.loadTexture ('lvl/world.png')
+        grass.setMinfilter (SamplerState.FT_linear_mipmap_linear)
+        grass.setAnisotropicDegree (8)
+        self.level.model.setTexture (grass)
+        attach_glow_maps (self.level.model)
                 
         plightnode = PointLight ("point light")
         plightnode.setAttenuation (Vec3 (1, 0.0000005, 0.0000001))

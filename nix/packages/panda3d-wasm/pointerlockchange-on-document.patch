@@ -1,0 +1,21 @@
+--- a/panda/src/webgldisplay/webGLGraphicsWindow.cxx
++++ b/panda/src/webgldisplay/webGLGraphicsWindow.cxx
+@@ -279,7 +279,7 @@
+   // Clear the assigned callbacks.
+   const char *target = "#canvas";
+   emscripten_set_fullscreenchange_callback(target, nullptr, false, nullptr);
+-  emscripten_set_pointerlockchange_callback(target, nullptr, false, nullptr);
++  emscripten_set_pointerlockchange_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, nullptr, false, nullptr);
+   emscripten_set_visibilitychange_callback(nullptr, false, nullptr);
+ 
+   emscripten_set_focus_callback(target, nullptr, false, nullptr);
+@@ -386,7 +386,8 @@
+ 
+   // Set callbacks.
+   emscripten_set_fullscreenchange_callback(target, (void *)this, false, &on_fullscreen_event);
+-  emscripten_set_pointerlockchange_callback(target, (void *)this, false, &on_pointerlock_event);
++  // Browsers fire pointerlockchange at the document, not at the element.
++  emscripten_set_pointerlockchange_callback(EMSCRIPTEN_EVENT_TARGET_DOCUMENT, (void *)this, false, &on_pointerlock_event);
+   emscripten_set_visibilitychange_callback((void *)this, false, &on_visibility_event);
+ 
+   emscripten_set_focus_callback(target, (void *)this, false, &on_focus_event);

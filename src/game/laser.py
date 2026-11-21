@@ -28,6 +28,7 @@ from ent.entity import Entity
 from functools import partial
 from operator import lt
 from core import task
+from core.shader import attach_glow_maps
 from phys import geom
 
 import weakref
@@ -93,8 +94,8 @@ class Field (PandaEntity, StaticPhysicalEntity):
         
 class Stick (ModelEntity, StaticPhysicalEntity):
 
-    MODEL = 'obj/stick.egg'
-    HL_MODEL = 'obj/stick-hl.egg'
+    MODEL = 'obj/stick'
+    HL_MODEL = 'obj/stick-hl'
 
     _is_highlight = False
     
@@ -107,7 +108,7 @@ class Stick (ModelEntity, StaticPhysicalEntity):
         self.model_position = Vec3 (0, 0, -5)
         self.model.setTwoSided (True) # HACK
 
-        self.hl_model = loader.loadModel (self.HL_MODEL)
+        self.hl_model = attach_glow_maps (loader.loadModel (self.HL_MODEL))
         self.hl_model.setScale (1.3, 1.3, 1)
         
         self.scale = Vec3 (near0, near0, near0)
@@ -152,14 +153,14 @@ def make_laser_model (fst, snd, height):
     vertex.addData3f (v0)
     
     n = normalize ((v0 - v1).cross (v1 - v2))
-    for x in xrange (4):
+    for x in range (4):
         normal.addData3f (n)
     n = -n
-    for x in xrange (4):
+    for x in range (4):
         normal.addData3f (n)
         
     c = Vec4 (1., 0., 0., .5)
-    for x in xrange (8):
+    for x in range (8):
         color.addData4f (c)
     
     texcoord.addData2f (1, 0)
@@ -207,10 +208,5 @@ def make_laser_model (fst, snd, height):
     ts = TextureStage ('ts')
     laser.setTexture (ts, tex)
     laser.setTransparency (TransparencyAttrib.MDual) 
-    
-    # tex = loader.loadTexture ('./data/tex/laser2-glow.png')
-    # ts = TextureStage ('ts')
-    # ts.setMode (TextureStage.MGlow)
-    # laser.setTexture (ts, tex)
 
-    return laser
+    return attach_glow_maps (laser)

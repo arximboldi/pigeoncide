@@ -17,8 +17,8 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from entity import *
-from task import TaskEntity
+from .entity import *
+from .task import TaskEntity
 
 from core.util import *
 from core.task import TaskError
@@ -53,7 +53,7 @@ class PhysicalEntityManager (EntityManager):
         try:
             # TODO: Make mixin initialization order irrelevant
             self.tasks.add (self.physics)
-        except TaskError, e:
+        except TaskError as e:
             pass
         
     def dispose (self):

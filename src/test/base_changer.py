@@ -17,7 +17,7 @@
 
 import unittest
 
-from util import *
+from .util import *
 from base.changer import Changer
 
 class TestChanger (unittest.TestCase):
@@ -27,15 +27,15 @@ class TestChanger (unittest.TestCase):
             changer = Changer (mock_raiser, 0)
 
         a = Mock ()
-        self.assertEquals (a.changer, 0)
+        self.assertEqual (a.changer, 0)
 
         def setter (x, val):
             x.changer = val
             
         self.assertRaises (MockError, setter, a, 1)
-        self.assertEquals (a.changer, 1)
+        self.assertEqual (a.changer, 1)
 
         b = Mock ()
         self.assertRaises (MockError, setter, b, 2)
-        self.assertEquals (a.changer, 1)
+        self.assertEqual (a.changer, 1)
         

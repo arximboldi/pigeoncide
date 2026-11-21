@@ -19,11 +19,12 @@
 
 from base.log import get_log
 from base.app import *
+from base.util import IN_BROWSER
 
-from state import *
+from .state import *
 import weakref
 
-from panda_controller import PandaController
+from .panda_controller import PandaController
 
 _log = get_log (__name__)
 
@@ -68,6 +69,7 @@ Display options:
         _log.info ("Running main loop...")
         self.start (self.root_state)
         self.panda.loop ()
-        
-        _log.info ("Quiting... Have a nice day ;)")
+
+        if not IN_BROWSER:
+            _log.info ("Quiting... Have a nice day ;)")
 

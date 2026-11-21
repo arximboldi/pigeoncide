@@ -17,11 +17,11 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from tree import AutoTree, AutoTreeTraits
-from observer import make_observer
-from singleton import Singleton
-from arg_parser import OptionBase
-from error import *
+from .tree import AutoTree, AutoTreeTraits
+from .observer import make_observer
+from .singleton import Singleton
+from .arg_parser import OptionBase
+from .error import *
 
 class ConfError (BaseError):
     pass
@@ -96,7 +96,7 @@ class ConfNode (ConfSubject, AutoTree):
             self.fill (content)
 
     def fill (self, dict_):
-        for key, val in dict_.iteritems ():
+        for key, val in dict_.items ():
             if isinstance (val, dict):
                 self.child (key).fill (val)
             else:
@@ -160,9 +160,7 @@ class ConfNode (ConfSubject, AutoTree):
     backend = property (get_backend, set_backend)
     value = property (get_value, set_value)
 
-class GlobalConf (ConfNode):
-
-    __metaclass__ = Singleton
+class GlobalConf (ConfNode, metaclass=Singleton):
 
     class Traits (AutoTreeTraits):
         child_cls = ConfNode

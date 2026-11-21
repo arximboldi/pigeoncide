@@ -2,7 +2,7 @@
   "egg-texture-cards -wm clamp -o data/menu/bg_smile.egg data/menu/bg_smile.png"
 }
 <Texture> bg_smile {
-  "data/menu/bg_smile.png"
+  "bg_smile.png"
   <Scalar> wrap { clamp }
 }
 <Group> {

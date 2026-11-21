@@ -19,7 +19,7 @@
 
 from base.util import *
 from weakref import proxy
-from error import *
+from .error import *
 from base.log import *
 from base import util
 import math
@@ -124,7 +124,7 @@ class FuncTask (Task):
         self._set_func (func)
         
     def _set_func (self, func):
-        if func.func_code.co_argcount < 1:
+        if func.__code__.co_argcount < 1:
             self._orig = func
             self._func = lambda t: func ()
         else:
@@ -193,7 +193,7 @@ class TaskGroup (Task):
         if self.auto_remove:
             self._tasks = remove_if (Task.is_killed, self._tasks)
 
-        all_killed = len (filter (Task.is_killed, self._tasks)) == self.count
+        all_killed = len (list(filter (Task.is_killed, self._tasks))) == self.count
         if self.auto_kill and all_killed:               
             self.kill ()
         elif self.loop and all_killed:
@@ -325,7 +325,7 @@ class FuncWaitTask (WaitTask):
 
 def sequence (fst, *tasks):
     task  = totask (fst)
-    tasks = map (totask, tasks)
+    tasks = list(map (totask, tasks))
 
     for nxt in tasks:
         task = task.add_next (nxt)

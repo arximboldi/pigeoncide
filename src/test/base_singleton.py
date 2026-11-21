@@ -22,9 +22,9 @@ from base.singleton import *
 
 class TestSingleton (unittest.TestCase):
 
-    class SingletonMock:
+    class SingletonMock(metaclass=Singleton):
 
-        __metaclass__ = Singleton
+        pass
 
     def test_singleton (self):
         a = TestSingleton.SingletonMock ()

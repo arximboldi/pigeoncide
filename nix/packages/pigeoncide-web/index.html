@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pigeoncide</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #111; color: #eee;
+               font: 16px/1.4 system-ui, sans-serif; }
+  main { display: grid; place-items: center; height: 100%; }
+  #stage { position: relative; width: min(100vw, 133.33vh); aspect-ratio: 4 / 3; }
+  #canvas { display: block; width: 100%; height: 100%; outline: none; background: #000; }
+  #overlay { position: absolute; inset: 0; display: grid; place-items: center;
+             align-content: center; gap: 1rem; background: rgba(0, 0, 0, .75);
+             text-align: center; padding: 1rem; }
+  #overlay[hidden] { display: none; }
+  button { font: inherit; font-size: 1.25rem; padding: .6em 1.6em; border: 0;
+           border-radius: 999px; background: #b3261e; color: #fff; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: progress; }
+  #status { min-height: 1.4em; opacity: .8; }
+</style>
+</head>
+<body>
+<main>
+  <div id="stage">
+    <canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
+    <div id="overlay">
+      <h1>Pigeoncide</h1>
+      <p>Kill all the pigeons. Move with W A S D, hit with E, look with the mouse.</p>
+      <button id="start">Play</button>
+      <div id="status"></div>
+    </div>
+  </div>
+</main>
+<script>
+  const canvas = document.getElementById('canvas');
+  const overlay = document.getElementById('overlay');
+  const status = document.getElementById('status');
+  const start = document.getElementById('start');
+
+  let failed = false;
+
+  function fail(message) {
+    if (failed) return;   // keep the first error, usually the cause
+    failed = true;
+    overlay.hidden = false;
+    start.hidden = true;
+    status.textContent = message;
+  }
+
+  // The game logs unrecoverable errors as "[module] FATAL: message".
+  function log(text, write) {
+    write(text);
+    const fatal = text.match(/\] FATAL: (.*)/);
+    if (fatal) fail('The game stopped because of an error: ' + fatal[1]);
+  }
+
+  // The game is loaded on the first click: browsers only allow audio and
+  // pointer lock after a user gesture.
+  function launch() {
+    start.disabled = true;
+    if (!document.createElement('canvas').getContext('webgl2')) {
+      fail('Sorry, this browser does not support WebGL 2, which the game needs.');
+      return;
+    }
+    window.Module = {
+      canvas,
+      locateFile: (path) => path + '?build=@build@',
+      print: (text) => log(text, console.log),
+      printErr: (text) => log(text, console.warn),
+      setStatus: (text) => { if (!failed) status.textContent = text; },
+      onRuntimeInitialized: () => {
+        overlay.hidden = true;
+        Module.canvas.focus();
+      },
+      onAbort: (what) => fail('The game crashed: ' + what),
+    };
+    // Failures outside the program, like a missing asset file, surface as
+    // uncaught errors instead of aborts.
+    window.addEventListener('error', (e) => fail('The game crashed: ' + e.message));
+    window.addEventListener('unhandledrejection',
+                            (e) => fail('Could not load the game: ' + e.reason));
+    const script = document.createElement('script');
+    script.src = 'pigeoncide.js?build=@build@';
+    script.onerror = () => fail('Could not load the game. Try reloading the page.');
+    document.body.appendChild(script);
+  }
+
+  // The page layout decides the canvas size. Panda3D's WebGL window can pin
+  // the canvas to its default 800x600 window size with an inline style when
+  // it opens; dropping that style lets Panda follow the layout, which it
+  // tracks with a resize observer.
+  new MutationObserver(() => {
+    if (canvas.style.width || canvas.style.height) {
+      canvas.style.width = '';
+      canvas.style.height = '';
+    }
+  }).observe(canvas, { attributes: true, attributeFilter: ['style'] });
+
+  // Browsers can refuse pointer lock, for example for a moment after the
+  // player released it with Escape, and Chrome reports that as a rejected
+  // promise. It is not an error: the game asks again on the next click.
+  if (HTMLCanvasElement.prototype.requestPointerLock) {
+    canvas.requestPointerLock = function (...args) {
+      const result = HTMLCanvasElement.prototype.requestPointerLock.apply(this, args);
+      if (result && result.catch) {
+        result.catch((e) => console.warn('Pointer lock refused: ' + e.message));
+      }
+      return result;
+    };
+  }
+
+  // Panda uses anisotropic texture filtering when the browser supports it,
+  // but never enables the WebGL extension for it, so the browser would reject
+  // its calls. Enable it as soon as the game creates its context.
+  canvas.getContext = function (type, ...args) {
+    const context = HTMLCanvasElement.prototype.getContext.call(this, type, ...args);
+    if (context && type.startsWith('webgl')) {
+      context.getExtension('EXT_texture_filter_anisotropic');
+    }
+    return context;
+  };
+
+  start.addEventListener('click', launch, { once: true });
+</script>
+</body>
+</html>

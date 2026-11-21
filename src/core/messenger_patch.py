@@ -42,50 +42,52 @@ def _patch_del_forwarder (self, forwarder):
     self._patch_forwarders.remove (forwarder)
 
 
+# Parameter names must match Messenger.send, since monkeypatch_extend passes
+# the caller's keyword arguments to both functions.
 @monkeypatch_extend (Messenger)
-def send (self, orig_event, sent_args=[], task_chain=None):
-    event = 'panda-' + orig_event
+def send (self, event, sentArgs=[], taskChain=None):
+    event = 'panda-' + event
     self.lock.acquire()
     try:
-        if task_chain:
+        if taskChain:
             from direct.task.TaskManagerGlobal import taskMgr
 
-            queue = self._patch_event_queues [task_chain]
-            queue.append ((event, sent_args))
+            queue = self._patch_event_queues.setdefault (taskChain, [])
+            queue.append ((event, sentArgs))
             if len (queue) == 1:
                 taskMgr.add (self._patch_task_chain_forward,
-                             name = '_patch_Messenger-%s' % (task_chain),
-                             extraArgs = [task_chain],
-                             taskChain = task_chain,
+                             name = '_patch_Messenger-%s' % (taskChain),
+                             extraArgs = [taskChain],
+                             taskChain = taskChain,
                              appendTask = True)
         else:
-            self._patch_forward (event, sent_args)
+            self._patch_forward (event, sentArgs)
     finally:
         self.lock.release()
 
 
 @monkeypatch (Messenger)
-def _patch_forward (self, event, sent_args=[]):
+def _patch_forward (self, event, sentArgs=[]):
     # _log.debug ('Forwarding panda event: ' + event)
     for f in self._patch_forwarders:
-        f.receive (event, *sent_args)
+        f.receive (event, *sentArgs)
 
 
 @monkeypatch (Messenger)
-def _patch_task_chain_forward (self, task_chain, task):
+def _patch_task_chain_forward (self, taskChain, task):
+    # Drains the queue in send order, like Messenger.__taskChainDispatch.
     while True:
+        event_tuple = None
         self.lock.acquire ()
         try:
-            queue = self._patch_event_queues.get (task_chain, None)
+            queue = self._patch_event_queues.get (taskChain, None)
             if queue:
                 event_tuple = queue.pop (0)
             if not queue and queue is not None:
-                del self.__patch_event_queues [task_chain]
+                del self._patch_event_queues [taskChain]
             if not event_tuple:
                 return task.done
-                
+
             self._patch_forward (*event_tuple)
         finally:
             self.lock.release ()
-    assert False, 'Should not reach!'
-    return task.done

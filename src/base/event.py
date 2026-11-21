@@ -17,9 +17,9 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from log import get_log
-from signal import Signal, signal
-from sender import Sender, Receiver
+from .log import get_log
+from .signal import Signal, signal
+from .sender import Sender, Receiver
 
 """
 This module defines the EventManager class for managing a dynamic

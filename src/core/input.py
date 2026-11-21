@@ -23,8 +23,8 @@ from base.signal import Signal
 from base.sender import Sender, Receiver
 from base.log import get_log
 from base.util import flip_dict
-from error import CoreError
-from task import Task
+from .error import CoreError
+from .task import Task
 import os
 
 _log = get_log (__name__)
@@ -55,7 +55,7 @@ class EventMap (Receiver):
         del self._map [key]
 
     def unassoc_action (self, action):
-        for k, a in dict (self._map).iteritems ():
+        for k, a in dict (self._map).items ():
             if a == action:
                 del self._map [k]
     
@@ -98,13 +98,22 @@ class KeyboardTask (EventMap, Task):
             
     def do_update (self, timer):
         super (KeyboardTask, self).do_update (timer)
-        for f in self._running.itervalues ():
+        for f in self._running.values ():
             f (timer)
 
 
 need_mouse_hack = os.name == 'posix'
 
 class MouseTask (Task):
+    """
+    Reports how far the pointer moved since the last frame, as the
+    'on_mouse_move' signal. On posix the pointer is put back in the
+    centre of the window every frame, and motion only counts after
+    that worked: otherwise the distance from the centre would be
+    reported again each frame and the view would keep turning. In a
+    browser the pointer can only be moved while it is captured with
+    pointer lock, so there is no motion until the player captures it.
+    """
 
     def __init__ (self, device = 0, *a, **k):
         super (MouseTask, self).__init__ (*a, **k)
@@ -121,13 +130,14 @@ class MouseTask (Task):
         
         window = base.win
         prop = window.getProperties ()
+        self._is_init = False
         if prop.hasSize ():
-            new_x = prop.getXSize () / 2
-            new_y = prop.getYSize () / 2
-            window.movePointer (0, new_x, new_y)
-            self._last_x = new_x 
-            self._last_y = new_y
-            self._is_init = True
+            new_x = prop.getXSize () // 2
+            new_y = prop.getYSize () // 2
+            if window.movePointer (0, new_x, new_y):
+                self._last_x = new_x
+                self._last_y = new_y
+                self._is_init = True
     
     def do_update  (self, timer):
         super (MouseTask, self).do_update (timer)

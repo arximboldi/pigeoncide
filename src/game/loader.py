@@ -19,7 +19,7 @@
 
 from base.log import get_log
 from base.util import linear
-from error import GameError
+from .error import GameError
 from core import task
 from core.state import State
 from ent.game import LightGameState
@@ -27,7 +27,7 @@ from ent import panda
 
 from pandac.PandaModules import *
 
-import ui
+from . import ui
 import gc
 
 _log = get_log (__name__)
@@ -135,7 +135,7 @@ class LoaderState (LightGameState):
         # TODO: We should cleanup the ui code to avoid this kind of shit.
         camera.setPosHpr (Vec3 (0.0, -22.0, 0.0), Vec3 (0.0, 0.0, 0))
         self._pic_boy = panda.ModelEntity (entities = self.entities,
-                                           model = 'menu/bg_smile.egg')
+                                           model = 'menu/bg_smile')
         self._pic_boy.model.setTransparency (TransparencyAttrib.MAlpha)
         self._pic_boy.model_position = Vec3 (-4.33, 0, -0.89)
         self._pic_boy.model_scale    = Vec3 (1748./2480.*10, 1, 10)
@@ -188,7 +188,7 @@ class LoaderState (LightGameState):
         if not self._init:
             self._init = True
         try:
-            item = self._curr_iter.next ()
+            item = next(self._curr_iter)
             res = (item, self._loaders [self._curr_thing] (item))
             if res:
                 self._data.load_results [self._curr_thing].append (res)
@@ -196,7 +196,7 @@ class LoaderState (LightGameState):
             self._done_things += 1
             self.update_progress (float (self._done_things) / self._num_things)
             
-        except StopIteration, e:
+        except StopIteration as e:
             self._curr_thing += 1
             if self._curr_thing < len (self._loaders):
                 self._curr_iter = iter (self._things [self._curr_thing])
@@ -214,10 +214,10 @@ class LoaderState (LightGameState):
 class CleanerState (State):
 
     def do_setup (self, data):
-        self._cleaners = [ lambda (n, r): loader.unloadModel (r),
-                           lambda (n, r): loader.unloadTexture (r),
-                           lambda (n, r): FontPool.releaseFont (n),
-                           lambda (n, r): loader.unloadSfx (r) ]
+        self._cleaners = [ lambda n_r: loader.unloadModel (n_r[1]),
+                           lambda n_r1: loader.unloadTexture (n_r1[1]),
+                           lambda n_r2: FontPool.releaseFont (n_r2[0]),
+                           lambda n_r3: loader.unloadSfx (n_r3[1]) ]
         
         for res, cleaner in zip (data.load_results, self._cleaners):
             for r in res:

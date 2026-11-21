@@ -29,8 +29,8 @@ from pandac.PandaModules import Vec3
 from phys import geom
 from phys import mass
 
-from kill import KillableEntity
-from weapon import WeaponOwner, DelegateWeaponOwner
+from .kill import KillableEntity
+from .weapon import WeaponOwner, DelegateWeaponOwner
 
 
 class BoyBase (Entity):
@@ -53,12 +53,12 @@ class Boy (BoyBase,
            KillableEntity,
            WeaponOwner):
 
-    boy_model = 'char/boy-anims.egg'
-    boy_anims = { 'run'  : 'char/boy-run.egg',
-                  'walk' : 'char/boy-walk.egg',
-                  'idle' : 'char/boy-idle.egg',
-                  'feed' : 'char/boy-feed.egg',
-                  'hit'  : 'char/boy-hit.egg' }
+    boy_model = 'char/boy-anims'
+    boy_anims = { 'run'  : 'char/boy-run',
+                  'walk' : 'char/boy-walk',
+                  'idle' : 'char/boy-idle',
+                  'feed' : 'char/boy-feed',
+                  'hit'  : 'char/boy-hit' }
     
     def __init__ (self, model = boy_model, anims = boy_anims, *a, **k):
         super (BoyBase, self).__init__ (

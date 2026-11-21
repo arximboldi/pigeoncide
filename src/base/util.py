@@ -18,6 +18,7 @@
 #
 
 import functools
+import sys
 
 near0 = 0.0001
 
@@ -35,7 +36,7 @@ def nop (*a, **k):
     pass
 
 def trace (val):
-    print val
+    print(val)
     return val
 
 def clamp (val, vmin, vmax):
@@ -127,7 +128,7 @@ class memoize:
 
 
 def printfn (message):
-    print message
+    print(message)
 
 
 def remove_if (predicate, lst):
@@ -136,7 +137,7 @@ def remove_if (predicate, lst):
 
 def flip_dict (dct):
     new_dct = {}
-    for k, v in dct.items ():
+    for k, v in list(dct.items ()):
         new_dct [v] = k
     return new_dct
 
@@ -146,3 +147,8 @@ def read_file (fname):
     content = fh.read ()
     fh.close ()
     return content
+
+
+# True when running as WebAssembly in a browser, where the page drives the
+# main loop and the program never exits.
+IN_BROWSER = sys.platform == 'emscripten'

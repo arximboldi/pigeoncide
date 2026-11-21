@@ -17,25 +17,119 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os
+
 from base.singleton import Singleton
+from base.util import IN_BROWSER
+from .paths import SHADER_DIR
 
 from direct.showbase.ShowBase import ShowBase
 
-from pandac.PandaModules import Filename,Buffer,Shader
+from pandac.PandaModules import Filename,Buffer,Shader,VirtualFileSystem
+from pandac.PandaModules import Texture,TextureStage,TextureAttrib
+from pandac.PandaModules import GeomNode
 from pandac.PandaModules import PandaNode,NodePath
 from pandac.PandaModules import ColorBlendAttrib
 from pandac.PandaModules import AmbientLight,DirectionalLight
 from pandac.PandaModules import TextNode,Point3,Vec4
 
 
-def make_filter_buffer (srcbuffer, name, sort, prog):
+# The shader sources are written in the common subset of desktop GLSL 1.30
+# and GLSL ES 3.00 (WebGL 2), so only the version header differs. WebGL 2
+# guarantees highp; mediump overflows on the level's light distances.
+GLSL_HEADER = ('#version 300 es\nprecision highp float;\n'
+               if IN_BROWSER else '#version 130\n')
+
+def load_shader (vertex, fragment):
+    vfs = VirtualFileSystem.getGlobalPtr ()
+    def read (name):
+        path = Filename.fromOsSpecific (os.path.join (SHADER_DIR, name))
+        return GLSL_HEADER + vfs.readFile (path, True).decode ()
+    return Shader.make (Shader.SL_GLSL, read (vertex), read (fragment))
+
+
+# Models glow where they have a glow map on this stage, which the glow
+# shader reads as its second texture. As a glow stage, fixed-function
+# rendering leaves it out, so it does not tint the normal render.
+GLOW_STAGE = TextureStage ('glow')
+GLOW_STAGE.setSort (1)
+GLOW_STAGE.setMode (TextureStage.MGlow)
+
+# A texture's glow map is the image file of the same name with this suffix:
+# laser.png glows as laser-glow.png says.
+GLOW_SUFFIX = '-glow'
+
+
+def find_glow_map (texture):
+    """
+    Returns the glow map of a texture, or None if it has none. The original
+    Cg glow shader found it by itself, through its tex_0_glow input; GLSL
+    has no such thing, so the glow maps are attached to the models instead.
+    """
+    path = Filename (texture.getFullpath ())
+    if path.empty ():
+        return None
+    path.setBasenameWoExtension (path.getBasenameWoExtension () + GLOW_SUFFIX)
+    # Not Panda's file system: in a browser it looks for missing files on
+    # the web server, which logs a failed request for each one.
+    if not os.path.exists (path.toOsSpecific ()):
+        return None
+    # Sampled at the same coordinates, so filtered the same way.
+    glow = loader.loadTexture (path)
+    glow.setMinfilter (texture.getMinfilter ())
+    glow.setMagfilter (texture.getMagfilter ())
+    glow.setAnisotropicDegree (texture.getAnisotropicDegree ())
+    return glow
+
+
+_no_glow = None
+
+def _with_glow_map (state):
+    global _no_glow
+    attrib = state.getAttrib (TextureAttrib)
+    if attrib is None or attrib.getNumOnStages () == 0 or \
+       attrib.hasOnStage (GLOW_STAGE):
+        return state
+    stage = attrib.getOnStage (0)
+    glow = find_glow_map (attrib.getOnTexture (stage))
+    if glow is None:
+        # Black, explicitly, so that no glow map is inherited from above.
+        if _no_glow is None:
+            _no_glow = make_black_texture ()
+        glow = _no_glow
+    return state.setAttrib (attrib.addOnStage (GLOW_STAGE, glow))
+
+
+def attach_glow_maps (model):
+    """
+    Puts the glow map of each texture in the model on GLOW_STAGE, next to
+    the texture, wherever the model applies one. Parts whose texture has no
+    glow map get a black one, and do not glow. Call it again after changing
+    a texture. Returns the model.
+    """
+    for path in [model] + list (model.findAllMatches ('**')):
+        path.setState (_with_glow_map (path.getState ()))
+        node = path.node ()
+        if isinstance (node, GeomNode):
+            for i in range (node.getNumGeoms ()):
+                node.setGeomState (i, _with_glow_map (node.getGeomState (i)))
+    return model
+
+
+def make_black_texture ():
+    tex = Texture ('black')
+    tex.setup2dTexture (1, 1, Texture.TUnsignedByte, Texture.FRgba)
+    tex.setRamImage (b'\x00\x00\x00\xff')
+    return tex
+
+
+def make_filter_buffer (srcbuffer, name, sort, shader):
     blur_buffer = base.win.makeTextureBuffer (name, 512, 512)
     blur_buffer.setSort (sort)
     blur_buffer.setClearColor (Vec4 (1, 0, 0, 1))
     blur_camera = base.makeCamera2d (blur_buffer)
     blur_scene = NodePath ("filter_scene")
     blur_camera.node ().setScene (blur_scene)
-    shader = Shader.load (prog)
     card = srcbuffer.getTextureCard ()
     card.reparentTo (blur_scene)
     card.setShader (shader)
@@ -46,12 +140,8 @@ class GlowFilter (object):
 
     is_init = False
     
-    def make_glow (self, data_dir = './src/core/sha'):
-        """
-        TODO: data_dir = current module directory?
-        """
-    
-        glow_shader = Shader.load (data_dir + "/glow_shader.sha")
+    def make_glow (self):
+        glow_shader = load_shader ('glow.vert', 'glow.frag')
         
         # create the glow buffer. This buffer renders like a normal
         # scene, except that only the glowing materials should show up
@@ -67,17 +157,21 @@ class GlowFilter (object):
         glow_camera = base.makeCamera (glow_buffer,
                                        lens = base.cam.node ().getLens ())
 
-        # Tell the glow camera to use the glow shader
+        # Tell the glow camera to use the glow shader. Models without their
+        # own glow map get a black one, since what an unbound sampler reads
+        # depends on the shader language and Panda version: black with the
+        # original Cg shader, not black with GLSL in 1.10, white later on.
         temp_node = NodePath (PandaNode("temp_node"))
         temp_node.setShader (glow_shader)
+        temp_node.setTexture (GLOW_STAGE, make_black_texture ())
         glow_camera.node ().setInitialState (temp_node.getState ())
 
         # set up the pipeline: from glow scene to blur x to blur y to
         # main window.
-        blur_xbuffer = make_filter_buffer (glow_buffer, "blur_x", -2,
-                                           data_dir + "/x_blur_shader.sha")
-        blur_ybuffer = make_filter_buffer (blur_xbuffer, "blur_y", -1,
-                                           data_dir + "/y_blur_shader.sha")
+        blur_xbuffer = make_filter_buffer (
+            glow_buffer, "blur_x", -2, load_shader ('glow.vert', 'x_blur.frag'))
+        blur_ybuffer = make_filter_buffer (
+            blur_xbuffer, "blur_y", -1, load_shader ('glow.vert', 'y_blur.frag'))
 
         final_card = blur_ybuffer.getTextureCard ()
         final_card.setAttrib (ColorBlendAttrib.make (ColorBlendAttrib.MAdd))

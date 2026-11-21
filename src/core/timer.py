@@ -17,11 +17,10 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import sys
 import time
 import base.log
 
-precise_clock = time.clock if sys.platform=='win32' else time.time
+precise_clock = time.perf_counter
 
 _log = base.log.get_log (__name__)
 

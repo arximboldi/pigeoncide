@@ -18,7 +18,7 @@
 #
 
 from core.task import Task, TaskGroup
-from entity import Entity, EntityManager
+from .entity import Entity, EntityManager
 
 
 class TaskEntityManager (EntityManager):

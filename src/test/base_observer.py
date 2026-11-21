@@ -41,8 +41,8 @@ class TestObserver (unittest.TestCase):
         lis = AListener ()
         
         sub.connect (lis)
-        self.assertEquals (sub.count, 1)
+        self.assertEqual (sub.count, 1)
         
         sub.on_test ()
-        self.assertEquals (lis.message, "test")
+        self.assertEqual (lis.message, "test")
 

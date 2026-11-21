@@ -24,10 +24,10 @@ It also defines the following log levels:
  - LOG_FATAL, LOG_ERROR, LOG_WARNING, LOG_INFO and LOG_DEBUG.
 """
 
-from connection import Trackable
-from observer import make_observer
-from tree import AutoTree, AutoTreeTraits
-from singleton import Singleton
+from .connection import Trackable
+from .observer import make_observer
+from .tree import AutoTree, AutoTreeTraits
+from .singleton import Singleton
 import sys
 
 LogSubject, LogListener = \
@@ -139,13 +139,11 @@ class LogNode (AutoTree, LogSubject):
         self.log (LOG_DEBUG, msg)
 
     
-class GlobalLog (LogNode):
+class GlobalLog (LogNode, metaclass=Singleton):
     """
     Global log singleton instance. Note that as this is a Singleton,
     whenever you invoke the constructor the same instance is returned.
     """
-    
-    __metaclass__ = Singleton
 
     class Traits (AutoTreeTraits):
         child_cls = LogNode

@@ -30,17 +30,17 @@ from core import shader
 from core.input import KeyboardTask
 from ent.game import GameState, LightGameState
 
-from loader import LoaderInterState
-from camera import FastEntityFollower, SlowEntityFollower
-from boy import Boy
-from level import Level
-from player import PlayerEntityDecorator
-from pigeon import Pigeon
-from flock import FlockEntity, make_random_flock
-from hud import Hud
-from defaults import load_game_defaults
+from .loader import LoaderInterState
+from .camera import FastEntityFollower, SlowEntityFollower
+from .boy import Boy
+from .level import Level
+from .player import PlayerEntityDecorator
+from .pigeon import Pigeon
+from .flock import FlockEntity, make_random_flock
+from .hud import Hud
+from .defaults import load_game_defaults
 
-import ui
+from . import ui
 import random
 
 """ TODO: Make configurable """
@@ -86,9 +86,11 @@ class GameMessage (LightGameState):
         self.parent_state.camera_ctl.loop_angle (duration = 4.)
         
     def finish_intro (self):
+        # Leave only once, after the text has faded out.
+        self.events.event ('panda-enter').disconnect (self.finish_intro)
         self.help_text.fade_out ()
         self.text.fade_out ().add_next (task.run (
-            self.manager.leave_state (self.action)))
+            lambda: self.manager.leave_state (self.action)))
         self.parent_state.camera_ctl.restore_angle ()
 
 
@@ -108,6 +110,9 @@ class Game (GameState):
         self.enter_transition ()
         
         self.events.event ('panda-escape').connect (self.enter_menu)
+        # In a browser, Escape releases the mouse instead of reaching
+        # the game; so does leaving the page.
+        self.events.event ('panda-pointer-unlocked').connect (self.enter_menu)
         self.events.event ('panda-p').connect (self.toggle_pause)
 
         self.manager.enter_state (

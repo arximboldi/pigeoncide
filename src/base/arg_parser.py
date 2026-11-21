@@ -22,7 +22,8 @@ This module provides facilities to parse the command line arguments in
 a more convenient way than 'getopt'.
 """
 
-from error import BaseError
+from .error import BaseError
+from functools import reduce
 
 class ArgParserError (BaseError):
     """
@@ -228,8 +229,9 @@ class ArgParser (object):
                     else:
                         i = self._parse_short (i)
                 else:
-                    self._free_args.append (arg)
-        except KeyError, e:
+                    self._free_args.append (argv[i])
+                    i += 1
+        except KeyError as e:
             raise UnknownArgError (str (e))
     
     def _parse_long (self, i):
@@ -241,7 +243,7 @@ class ArgParser (object):
         arg = self._argv[i][1:]
 
         return reduce (self._parse_opt,
-                       sum (map (self._short_ops.__getitem__, arg), []),
+                       sum (list(map (self._short_ops.__getitem__, arg)), []),
                        i + 1)
 
     def _parse_opt (self, i, opt):

@@ -19,10 +19,11 @@
 
 from direct.gui.DirectGui import *
 
+from base.util import IN_BROWSER
 from core import task
 
-from option_menu import *
-from credits import *
+from .option_menu import *
+from .credits import *
 
 class MainMenu (object):
 
@@ -102,19 +103,24 @@ class MainMenu (object):
                 ),
                 task.run (lambda: self.state.manager.leave_state ('game'))
             ))
-            self.exit["command"] = lambda: self.state.tasks.add (task.sequence(
-                task.run (self.do_disable_this),
-                task.parallel(
-                    self.options_menu.do_destroy (),
-                    self.credits_menu.do_destroy (),
-                    task.run (self.state.to_smile),
-                ),
-                task.run (self.state.manager.leave_state)
-            ))
-            self.state.events.event ('panda-escape').connect (lambda:
-                self.state.tasks.add (task.sequence (
-                    task.delay (),
-                    task.run (self.exit["command"]))))
+            if IN_BROWSER:
+                # A web page cannot quit; leaving the last state would
+                # only freeze the game on its final frame.
+                self.exit.hide ()
+            else:
+                self.exit["command"] = lambda: self.state.tasks.add (task.sequence(
+                    task.run (self.do_disable_this),
+                    task.parallel(
+                        self.options_menu.do_destroy (),
+                        self.credits_menu.do_destroy (),
+                        task.run (self.state.to_smile),
+                    ),
+                    task.run (self.state.manager.leave_state)
+                ))
+                self.state.events.event ('panda-escape').connect (lambda:
+                    self.state.tasks.add (task.sequence (
+                        task.delay (),
+                        task.run (self.exit["command"]))))
 
         if self.type == 'ingame':
             self.start["command"] = lambda: self.state.tasks.add( task.sequence(

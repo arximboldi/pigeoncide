@@ -29,7 +29,7 @@ from base.signal import weak_slot
 from core import task
 from core.util import to_rad, normalize
 from phys import geom
-import physics
+from . import physics
 import weakref
 from pandac.PandaModules import Vec3
 import math
@@ -101,6 +101,8 @@ class WeaponEntity (SpatialEntity, TaskEntity):
     weapon_hpr      = Vec3 (0, 0, 0)
     weapon_scale    = Vec3 (1, 1, 1)
 
+    # Geometry factories are functools.partial objects. Subclasses must wrap
+    # them in staticmethod so Python 3.14+ does not bind them as methods.
     weapon_geom_owned = None
     weapon_geom_free  = None
     weapon_hit_radius = 7.
@@ -112,10 +114,10 @@ class WeaponEntity (SpatialEntity, TaskEntity):
         self._owner        = None
         self._child_entity = None
         self._make_free_entity ()        
-        self._hit_sounds   = map (self.entities.audio3d.loadSfx,
-                                  self.weapon_sounds)
-        self._swing_sounds = map (self.entities.audio3d.loadSfx,
-                                  self.weapon_swing)
+        self._hit_sounds   = list(map (self.entities.audio3d.loadSfx,
+                                  self.weapon_sounds))
+        self._swing_sounds = list(map (self.entities.audio3d.loadSfx,
+                                  self.weapon_swing))
     
     def play_random_sound (self, sounds):
         snd = random.choice (sounds)
@@ -200,7 +202,7 @@ class WeaponEntity (SpatialEntity, TaskEntity):
             other.on_hit (self)
     
     def do_update (self, timer):
-        super (WeaponEntity, self).do_update (self)
+        super (WeaponEntity, self).do_update (timer)
         self._timer = timer
                 
     def start_hitting (self):
@@ -253,9 +255,9 @@ class WeaponEntity (SpatialEntity, TaskEntity):
 
 class BaseballBat (WeaponEntity):
 
-    weapon_model    = 'obj/baseball-bat.egg'
+    weapon_model    = 'obj/baseball-bat'
 
-    weapon_geom_free = geom.box (5, 5, 1)
+    weapon_geom_free = staticmethod (geom.box (5, 5, 1))
     weapon_scale     = Vec3 (.3, .3, .3)
     weapon_position  = Vec3 (-2*.3, -5*.3, 1*.3)
     weapon_hpr       = Vec3 (0, -90, 0)
@@ -263,9 +265,9 @@ class BaseballBat (WeaponEntity):
 
 class Lollypop (WeaponEntity):
 
-    weapon_model    = 'obj/lollypop.egg'
+    weapon_model    = 'obj/lollypop'
 
-    weapon_geom_free = geom.box (5, 5, 1)
+    weapon_geom_free = staticmethod (geom.box (5, 5, 1))
     weapon_scale     = Vec3 (.3, .3, .3)
     weapon_position  = Vec3 (-2*.3, -5*.3, 1*.3)
     weapon_hpr       = Vec3 (0, -90, 0)
@@ -273,9 +275,9 @@ class Lollypop (WeaponEntity):
 
 class RollingPin (WeaponEntity):
 
-    weapon_model    = 'obj/rolling-pin.egg'
+    weapon_model    = 'obj/rolling-pin'
 
-    weapon_geom_free = geom.box (5, 5, 1)
+    weapon_geom_free = staticmethod (geom.box (5, 5, 1))
     weapon_scale     = Vec3 (.3, .3, .3)
     weapon_position  = Vec3 (-2*.3, -5*.3, 1*.3)
     weapon_hpr       = Vec3 (0, -90, 0)

@@ -22,8 +22,9 @@ from base.util import printfn
 from ent.physical import PhysicalEntityBase
 from ent.panda import ModelEntityBase
 from ent.task import TaskEntity
-from laser import Field
+from .laser import Field
 from core import task
+from core.shader import GLOW_STAGE
 
 from pandac.PandaModules import *
 from direct.particles.ParticleEffect import ParticleEffect
@@ -45,9 +46,9 @@ class KillableEntity (ModelEntityBase, PhysicalEntityBase, TaskEntity):
         self.on_death = Signal ()
         self.on_collide += self.on_kill_collision
 
-        self._smoke_particles = self.load_particles ('data/part/smoke.ptf')
-        self._fire_particles  = self.load_particles ('data/part/fireish.ptf')
-        self.death_sounds = map (self.load_sound, self.kill_death_sounds)
+        self._smoke_particles = self.load_particles ('part/smoke.ptf')
+        self._fire_particles  = self.load_particles ('part/fireish.ptf')
+        self.death_sounds = list(map (self.load_sound, self.kill_death_sounds))
         self.is_dead = False
 
     def do_update (self, timer):
@@ -89,13 +90,21 @@ class KillableEntity (ModelEntityBase, PhysicalEntityBase, TaskEntity):
         self.is_dead = True
     
     def load_particles (self, name):
+        # loadConfig reads the file as given, without consulting the model
+        # path, so resolve it against the model path first.
+        path = Filename (name)
+        VirtualFileSystem.getGlobalPtr ().resolveFilename (
+            path, getModelPath ().getValue ())
         p = ParticleEffect ()
-        p.loadConfig (Filename (name))
+        p.loadConfig (path)
         p.setLightOff () 
         p.setTransparency (TransparencyAttrib.MAlpha) 
         p.setBin ('fixed', 0) 
         p.setDepthWrite (False)
         p.setShaderOff ()
+        # Particles glow: render them as they are in the glow pass, without
+        # the black glow map that pass gives everything else.
+        p.setTextureOff (GLOW_STAGE)
         return p
     
     def dispose (self):

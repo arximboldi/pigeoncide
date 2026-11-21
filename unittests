@@ -1,4 +1,3 @@
 #!/bin/sh
 
-python src/test_main.py $*
-
+exec python3 "$(dirname "$0")/src/test_main.py" "$@"

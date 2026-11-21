@@ -21,8 +21,8 @@ from weakref import ref
 
 from base.log import get_log
 from base.event import *
-from error import *
-import task
+from .error import *
+from . import task
 
 _log = get_log (__name__)
 

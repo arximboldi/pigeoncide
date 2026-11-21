@@ -21,11 +21,11 @@
 This module provides a slot-signal mechanism.
 """
 
-from connection import *
-from sender import *
-from util import *
-from meta import *
-from proxy import *
+from .connection import *
+from .sender import *
+from .util import *
+from .meta import *
+from .proxy import *
 import weakref
 
 class Slot (Destiny):

@@ -23,10 +23,9 @@ provide the two endpoints the Observer design pattern, the Subject and
 Listener.
 """
 
-import new
 
-from signal import signal
-from sender import Receiver, Sender
+from .signal import signal
+from .sender import Receiver, Sender
 
 class Naming:
     SUBJECT_CLASS_POSTFIX  = 'Subject'

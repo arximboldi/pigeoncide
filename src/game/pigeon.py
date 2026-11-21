@@ -29,15 +29,16 @@ from ent.physical import (DynamicPhysicalEntity, StandingPhysicalEntity,
 from core.state import StateManager, State
 from core.util import *
 from core import task
+from core.shader import attach_glow_maps
 
 import phys.geom as geom
 import phys.mass as mass
 
-from flock import BoidParams, BoidEntity, FlockEntity
-from kill import KillableEntity
-from crawler import CrawlerEntityDecorator
-from weapon import Hittable
-from physics import pigeon_category
+from .flock import BoidParams, BoidEntity, FlockEntity
+from .kill import KillableEntity
+from .crawler import CrawlerEntityDecorator
+from .weapon import Hittable
+from .physics import pigeon_category
 
 import random
 import weakref
@@ -50,7 +51,7 @@ class PigeonFood (ModelEntity,
                   DynamicPhysicalEntity,
                   ObservableSpatialEntity):
 
-    food_model = 'obj/food.egg'
+    food_model = 'obj/food'
     amount     = 1.0
     food_scale = 0.5
     
@@ -60,6 +61,7 @@ class PigeonFood (ModelEntity,
             geometry = geom.box (2, 2, 0.5),
             *a, **k)
         self.model.setTexture (loader.loadTexture ('obj/food.png'))
+        attach_glow_maps (self.model)
         self.model_scale = self.food_scale
         # A bit hackish, I guess
         self.entities.game.pigeon_food.append (self)
@@ -89,12 +91,12 @@ class Pigeon (BoidEntity,
     use.
     """
     
-    pigeon_model = 'char/pigeon-anims.egg'
-    pigeon_anims = { 'walk'    : 'char/pigeon-walk.egg',
-                     'fly'     : 'char/pigeon-fly.egg',
-                     'takeoff' : 'char/pigeon-takeoff.egg',
-                     'land'    : 'char/pigeon-land.egg',
-                     'idle'    : 'char/pigeon-idle.egg' }
+    pigeon_model = 'char/pigeon-anims'
+    pigeon_anims = { 'walk'    : 'char/pigeon-walk',
+                     'fly'     : 'char/pigeon-fly',
+                     'takeoff' : 'char/pigeon-takeoff',
+                     'land'    : 'char/pigeon-land',
+                     'idle'    : 'char/pigeon-idle' }
 
     pigeon_sweeping = True
     pigeon_min_eat_distance = 100.
@@ -145,9 +147,8 @@ class Pigeon (BoidEntity,
         # some kinds of sounds.
         
         if random.uniform (0, 10) < 2.:
-            self._coo_sounds = map (self.load_sound,
-                                    map (lambda x: "snd/pigeon-coo-%i.wav" % x,
-                                         range (1, 5)))
+            self._coo_sounds = list(map (self.load_sound,
+                                    ["snd/pigeon-coo-%i.wav" % x for x in range (1, 5)]))
             self.tasks.add (task.sequence (
                 task.wait (random.uniform (0, 20)),
                 task.loop (
@@ -268,7 +269,7 @@ class PigeonState (State, BoidParams):
         self.manager.change_params (self)
         self.manager.anim_speed = self.anim_speed
         self.resume ()
-        self.do_pigeon_unsink (self)
+        self.do_pigeon_unsink ()
         
     def do_update (self, timer):
         super (PigeonState, self).do_update (timer)
@@ -344,7 +345,7 @@ class EatState (FollowState):
         self.happy_meal = target
 
     def do_update (self, timer):
-        super (EatState, self).do_update (self)
+        super (EatState, self).do_update (timer)
         best = self.manager.find_food ()
         if best != self.happy_meal and best:
             self.manager.change_state ('eat', best)

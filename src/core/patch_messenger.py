@@ -18,5 +18,5 @@
 #
 
 import sys
-import messenger_patch
+from . import messenger_patch
 sys.modules ['direct.showbase.Messenger'] = messenger_patch

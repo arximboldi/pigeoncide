@@ -17,9 +17,9 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from signal import *
-from meta import *
-from connection import *
+from .signal import *
+from .meta import *
+from .connection import *
 
 
 CleverSlot = mixin (Trackable, Slot)

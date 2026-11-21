@@ -21,6 +21,7 @@
 This module provides a generic implementation of the Composite
 pattern.
 """
+from functools import reduce
 
 class AutoTreeTraits (object):
     """
@@ -214,7 +215,7 @@ class AutoTree (object):
         """
         
         func (self)
-        for child in self._childs.values ():
+        for child in list(self._childs.values ()):
             child.dfs_preorder (func)
 
     def dfs_postorder (self, func):
@@ -222,7 +223,7 @@ class AutoTree (object):
         Same as 'dfs_preorder', but using postorder deep-first-search.
         """
         
-        for child in self._childs.values ():
+        for child in list(self._childs.values ()):
             child.dfs_postorder (func)
         func (self)
 
@@ -230,7 +231,7 @@ class AutoTree (object):
         """
         Returns a iterator over the childs of this node.
         """
-        return self._childs.values ()
+        return list(self._childs.values ())
     
     def _handle_tree_new_child (self, child):
         pass
