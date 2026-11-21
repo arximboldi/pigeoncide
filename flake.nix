@@ -16,9 +16,13 @@
         # interpreter is pinned to the one the wheel was built for.
         python = pkgs.python313;
         panda3d = pkgs.callPackage ./nix/packages/panda3d.nix { inherit python; };
+        pigeoncide = pkgs.callPackage ./nix/package.nix { inherit python panda3d; };
       in
       {
-        packages.panda3d = panda3d;
+        packages = {
+          default = pigeoncide;
+          inherit panda3d;
+        };
         devShells.default = pkgs.callPackage ./nix/devshell.nix { inherit python panda3d; };
       }
     );
