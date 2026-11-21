@@ -95,8 +95,9 @@ class GlowFilter (object):
                                        lens = base.cam.node ().getLens ())
 
         # Tell the glow camera to use the glow shader. Models without their
-        # own glow map get a black one, since Panda versions differ in what
-        # an unbound sampler reads (black in 1.10, white in later versions).
+        # own glow map get a black one, since what an unbound sampler reads
+        # depends on the shader language and Panda version: black with the
+        # original Cg shader, not black with GLSL in 1.10, white later on.
         temp_node = NodePath (PandaNode("temp_node"))
         temp_node.setShader (glow_shader)
         temp_node.setTexture (GLOW_STAGE, make_black_texture ())

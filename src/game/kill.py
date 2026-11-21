@@ -24,6 +24,7 @@ from ent.panda import ModelEntityBase
 from ent.task import TaskEntity
 from .laser import Field
 from core import task
+from core.shader import GLOW_STAGE
 
 from pandac.PandaModules import *
 from direct.particles.ParticleEffect import ParticleEffect
@@ -101,6 +102,9 @@ class KillableEntity (ModelEntityBase, PhysicalEntityBase, TaskEntity):
         p.setBin ('fixed', 0) 
         p.setDepthWrite (False)
         p.setShaderOff ()
+        # Particles glow: render them as they are in the glow pass, without
+        # the black glow map that pass gives everything else.
+        p.setTextureOff (GLOW_STAGE)
         return p
     
     def dispose (self):
