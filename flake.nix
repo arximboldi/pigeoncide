@@ -23,6 +23,8 @@
           default = pigeoncide;
           inherit panda3d;
         };
+        # Building the package runs the unit tests.
+        checks.default = pigeoncide;
         devShells.default = pkgs.callPackage ./nix/devshell.nix { inherit python panda3d; };
       }
     );
