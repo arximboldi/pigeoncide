@@ -21,8 +21,8 @@ from direct.gui.DirectGui import *
 
 from core import task
 
-from option_menu import *
-from credits import *
+from .option_menu import *
+from .credits import *
 
 class MainMenu (object):
 

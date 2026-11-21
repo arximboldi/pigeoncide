@@ -17,12 +17,12 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from util import flip_dict
-from conf import NullBackend, ConfNode, ConfError
-from log import *
+from .util import flip_dict
+from .conf import NullBackend, ConfNode, ConfError
+from .log import *
 
 from xml.sax import make_parser, SAXException
-from xml_util import AutoContentHandler
+from .xml_util import AutoContentHandler
 
 def read_bool (msg):
     return True if msg.lower () == 'true' else False
@@ -57,7 +57,7 @@ class XmlConfBackend (NullBackend):
 
         try:
             fh = open (self.file_name, 'r')
-        except IOError, e:
+        except IOError as e:
             raise XmlConfError (message =
                                 'Could not open config file. ' +
                                 'If this is the first time you ' +

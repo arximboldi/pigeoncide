@@ -29,13 +29,13 @@ from ent.entity import Entity
 from ent.task import TaskEntity
 from pandac.PandaModules import Vec3
 
-from boy import Boy, DelegateBoy
-from pigeon import PigeonFood
+from .boy import Boy, DelegateBoy
+from .pigeon import PigeonFood
 
 from functools import partial
 from operator import add
 
-import laser
+from . import laser
 import math
 import random
 
@@ -92,9 +92,8 @@ class PlayerEntityBase (TaskEntity):
         
         self._anim_interval = None
         self._curr_anim     = 'idle'
-        self._move_sounds   = map (self.load_sound,
-                                   map (lambda x: "snd/movement-%i.wav" % x,
-                                        range (1, 6)))
+        self._move_sounds   = list(map (self.load_sound,
+                                   ["snd/movement-%i.wav" % x for x in range (1, 6)]))
         self._run_snd_task  = self.entities.tasks.add (task.loop (
             task.run (lambda: random.choice (self._move_sounds).play ()),
             task.wait (.5)))
@@ -258,7 +257,8 @@ class PlayerEntityBase (TaskEntity):
         self.emit_move_noise ()
         self._do_force (timer, self.strafe_force, math.pi/2)
 
-    def on_steer (self, (px, py)):
+    def on_steer (self, xxx_todo_changeme):
+        (px, py) = xxx_todo_changeme
         self.angle  += px * self.steer_speed
 
     def emit_move_noise (self):

@@ -22,10 +22,10 @@ import os.path
 import os
 import traceback
 
-from xml_conf import *
-from conf import *
-from log import *
-from arg_parser import *
+from .xml_conf import *
+from .conf import *
+from .log import *
+from .arg_parser import *
 
 _log = get_log (__name__)
 
@@ -98,13 +98,13 @@ Options:
 
             ret_val = self.do_execute (args.free_args)
             self.save_config ()
-        except AppSuccess, e:
+        except AppSuccess as e:
             ret_val = getattr(os, 'EX_OK', 0)  # Only available on Unix
-        except LoggableError, e:
+        except LoggableError as e:
             e.log ()
             _log.debug (traceback.format_exc ())
             ret_val = e.get_code ()
-        except Exception, e:
+        except Exception as e:
             _log.fatal ("Unexpected error:\n" + e.message)
             _log.debug (traceback.format_exc ())
             ret_val = getattr(os, 'EX_SOFTWARE', 70)  # Only available on Unix
@@ -115,17 +115,17 @@ Options:
         return ret_val
         
     def print_help (self):
-        print self.DESCRIPTION
-        print self.USAGE % { "program" : self.NAME}
-        print self.OPTIONS
+        print(self.DESCRIPTION)
+        print(self.USAGE % { "program" : self.NAME})
+        print(self.OPTIONS)
         
         raise AppSuccess ()
 
     def print_version (self):
-        print self.NAME, self.VERSION, '\n'
-        print self.COPYRIGHT
-        print self.LICENSE
-        print "Written by", self.AUTHOR
+        print(self.NAME, self.VERSION, '\n')
+        print(self.COPYRIGHT)
+        print(self.LICENSE)
+        print("Written by", self.AUTHOR)
         
         raise AppSuccess ()
     
@@ -148,14 +148,14 @@ Options:
                 GlobalConf ().set_backend (XmlConfBackend (
                     os.path.join (self.get_config_folder (), self.CONFIG_FILE)))
                 GlobalConf ().load ()
-            except LoggableError, e:
+            except LoggableError as e:
                 e.log ()
         
     def save_config (self):
         if self.GLOBAL:
             try:
                 GlobalConf ().save ()
-            except LoggableError, e:
+            except LoggableError as e:
                 e.log ()
 
     def setup_log (self):
@@ -167,7 +167,7 @@ Options:
                                                    self._log_file,
                                                    self._log_file)
                 GlobalLog ().connect (self._file_logger)
-            except Exception, e:
+            except Exception as e:
                 _log.warning ("Could not open log file, " + fname)
 
         if self._arg_verbose.value:

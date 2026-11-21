@@ -17,8 +17,8 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from entity import *
-from task import TaskEntity
+from .entity import *
+from .task import TaskEntity
 
 from pandac.PandaModules import *
 from direct.actor.Actor import Actor
@@ -109,7 +109,7 @@ class PandaEntityBase (SpatialEntity):
         
     def dispose (self):
         audio3d = self.entities.audio3d
-        map (audio3d.detachSound, self._panda_sounds)
+        list(map (audio3d.detachSound, self._panda_sounds))
         for x in self._panda_sounds:
             x.stop ()
         self._node.removeNode ()

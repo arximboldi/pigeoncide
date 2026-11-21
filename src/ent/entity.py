@@ -76,7 +76,7 @@ class Entity (object):
         self._disposed = True
         self.entities._del_entity (self)
 
-    def __nonzero__ (self):
+    def __bool__ (self):
         return not self._disposed
 
     

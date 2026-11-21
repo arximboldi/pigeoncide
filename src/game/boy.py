@@ -29,8 +29,8 @@ from pandac.PandaModules import Vec3
 from phys import geom
 from phys import mass
 
-from kill import KillableEntity
-from weapon import WeaponOwner, DelegateWeaponOwner
+from .kill import KillableEntity
+from .weapon import WeaponOwner, DelegateWeaponOwner
 
 
 class BoyBase (Entity):

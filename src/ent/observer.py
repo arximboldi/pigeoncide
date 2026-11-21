@@ -18,7 +18,7 @@
 #
 
 from base.observer import make_observer
-from entity import SpatialEntity
+from .entity import SpatialEntity
 
 
 SpatialEntitySubject, SpatialEntityListener = make_observer (

@@ -119,7 +119,7 @@ class Physics (Task):
         #self._geoms = remove_if (lambda (g, _): g == geom, self._geoms)
         try:
             self._geoms.remove (geom)
-        except ValueError, e:
+        except ValueError as e:
             pass
         
     def collide_world (self, geom):
@@ -132,7 +132,7 @@ class Physics (Task):
             cb = self._geom_cbs [geom_id]
         cb1, data1 = cb
         
-        collisions = map (partial (OdeUtil.collide, geom), self._geoms)
+        collisions = list(map (partial (OdeUtil.collide, geom), self._geoms))
         for ev in collisions:
             if ev and not ev.isEmpty ():
                 geomid = str (ev.getGeom2 ())

@@ -22,9 +22,9 @@ from direct.gui.OnscreenText import OnscreenText
 
 from core import task
 
-from screen import *
-from sound import *
-from keyboard import *
+from .screen import *
+from .sound import *
+from .keyboard import *
 
 
 class OptionsMenu (object):
@@ -196,7 +196,7 @@ class OptionsMenu (object):
                 task.run (self.screen.destroy)
                 )
             
-            for n in self.sub_menus.keys():
+            for n in list(self.sub_menus.keys()):
                 if self.sub_menus[n].active:
                     self.sub_menus[n].do_destroy ()
                 
@@ -208,7 +208,7 @@ class OptionsMenu (object):
         return self.move_task
 
     def do_show (self, submenu):
-        for n in self.sub_menus.keys():
+        for n in list(self.sub_menus.keys()):
             if n == submenu:
                 if not self.sub_menus[n].active:
                     self.sub_menus[n].do_paint ()

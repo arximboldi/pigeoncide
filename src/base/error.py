@@ -21,7 +21,7 @@
 Provides some error base clases to be used in all the project.
 """
 
-from log import *
+from .log import *
 
 class LoggableError (Exception):
     

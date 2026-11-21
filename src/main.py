@@ -17,7 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import __builtin__
+import builtins
 import weakref
 
 # old_object = object
@@ -29,7 +29,7 @@ import weakref
 # object = NewObject
 # __builtin__.object = object
 
-from app.pigeoncide import PigeoncideApp
+from .app.pigeoncide import PigeoncideApp
 
 def pigeoncide_main ():    
     app = PigeoncideApp ()

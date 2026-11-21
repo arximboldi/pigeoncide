@@ -268,7 +268,7 @@ def make_random_flock (entities,
     flock = flock_cls (entities = entities)
     (minx, miny, minz), (maxx, maxy, maxz) = bounds
 
-    for i in xrange (num_boids):
+    for i in range (num_boids):
         b = boid_cls (flock = flock)
         b.position = Vec3 (random.uniform (minx, maxx),
                            random.uniform (miny, maxy),

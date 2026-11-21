@@ -19,10 +19,10 @@
 
 from core.state import State
 
-from entity import EntityManager
-from physical import PhysicalEntityManager
-from task import TaskEntityManager
-from panda import PandaEntityManager
+from .entity import EntityManager
+from .physical import PhysicalEntityManager
+from .task import TaskEntityManager
+from .panda import PandaEntityManager
 
 import weakref
 

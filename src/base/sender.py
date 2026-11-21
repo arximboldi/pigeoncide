@@ -22,7 +22,7 @@ This module provides a way to send different messages named objects
 between objects.
 """
 
-from connection import *
+from .connection import *
 
 class Receiver (Destiny):
     """

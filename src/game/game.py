@@ -30,17 +30,17 @@ from core import shader
 from core.input import KeyboardTask
 from ent.game import GameState, LightGameState
 
-from loader import LoaderInterState
-from camera import FastEntityFollower, SlowEntityFollower
-from boy import Boy
-from level import Level
-from player import PlayerEntityDecorator
-from pigeon import Pigeon
-from flock import FlockEntity, make_random_flock
-from hud import Hud
-from defaults import load_game_defaults
+from .loader import LoaderInterState
+from .camera import FastEntityFollower, SlowEntityFollower
+from .boy import Boy
+from .level import Level
+from .player import PlayerEntityDecorator
+from .pigeon import Pigeon
+from .flock import FlockEntity, make_random_flock
+from .hud import Hud
+from .defaults import load_game_defaults
 
-import ui
+from . import ui
 import random
 
 """ TODO: Make configurable """

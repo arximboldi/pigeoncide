@@ -22,7 +22,7 @@ from base.util import printfn
 from ent.physical import PhysicalEntityBase
 from ent.panda import ModelEntityBase
 from ent.task import TaskEntity
-from laser import Field
+from .laser import Field
 from core import task
 
 from pandac.PandaModules import *
@@ -47,7 +47,7 @@ class KillableEntity (ModelEntityBase, PhysicalEntityBase, TaskEntity):
 
         self._smoke_particles = self.load_particles ('data/part/smoke.ptf')
         self._fire_particles  = self.load_particles ('data/part/fireish.ptf')
-        self.death_sounds = map (self.load_sound, self.kill_death_sounds)
+        self.death_sounds = list(map (self.load_sound, self.kill_death_sounds))
         self.is_dead = False
 
     def do_update (self, timer):

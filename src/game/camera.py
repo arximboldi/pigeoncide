@@ -26,7 +26,7 @@ from base.util import clamp
 from ent.observer import SpatialEntityListener
 from ent.entity import SpatialEntity, Entity
 
-from physics import level_category
+from .physics import level_category
 
 import math
 import weakref
@@ -88,14 +88,16 @@ class FastEntityFollower (EntityFollowerBase):
             self.distance = self.min_distance
         self.update_camera ()
         
-    def on_angle_change (self, (px, py)):
+    def on_angle_change (self, xxx_todo_changeme):
+        (px, py) = xxx_todo_changeme
         if self.control_angle:
             self.angle  += px * self.speed
         self.hangle += py * self.speed
         self.hangle = clamp (self.hangle, - math.pi / 2, math.pi / 2)
         self.update_camera ()
 
-    def on_entity_set_hpr (self, ent, (h, p, r)):
+    def on_entity_set_hpr (self, ent, xxx_todo_changeme1):
+        (h, p, r) = xxx_todo_changeme1
         self.ent_angle = (- h / 180. + 1) * math.pi
     
     def on_entity_set_position (self, ent, pos):

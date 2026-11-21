@@ -19,7 +19,7 @@
 
 import unittest
 
-from util import *
+from .util import *
 from base.arg_parser import *
 
 class TestArgParser (unittest.TestCase):

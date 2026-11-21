@@ -33,11 +33,11 @@ from core import task
 import phys.geom as geom
 import phys.mass as mass
 
-from flock import BoidParams, BoidEntity, FlockEntity
-from kill import KillableEntity
-from crawler import CrawlerEntityDecorator
-from weapon import Hittable
-from physics import pigeon_category
+from .flock import BoidParams, BoidEntity, FlockEntity
+from .kill import KillableEntity
+from .crawler import CrawlerEntityDecorator
+from .weapon import Hittable
+from .physics import pigeon_category
 
 import random
 import weakref
@@ -145,9 +145,8 @@ class Pigeon (BoidEntity,
         # some kinds of sounds.
         
         if random.uniform (0, 10) < 2.:
-            self._coo_sounds = map (self.load_sound,
-                                    map (lambda x: "snd/pigeon-coo-%i.wav" % x,
-                                         range (1, 5)))
+            self._coo_sounds = list(map (self.load_sound,
+                                    ["snd/pigeon-coo-%i.wav" % x for x in range (1, 5)]))
             self.tasks.add (task.sequence (
                 task.wait (random.uniform (0, 20)),
                 task.loop (

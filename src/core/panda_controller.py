@@ -21,12 +21,12 @@
 Import this or patch_messenger before any other module usin Panda base.
 """
 
-import patch_messenger
+from . import patch_messenger
 
 from base.conf import GlobalConf
-from timer import Timer
-from input import MouseTask
-import task
+from .timer import Timer
+from .input import MouseTask
+from . import task
 
 from direct.showbase.ShowBase import ShowBase
 from direct.showbase.Audio3DManager import Audio3DManager

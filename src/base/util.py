@@ -35,7 +35,7 @@ def nop (*a, **k):
     pass
 
 def trace (val):
-    print val
+    print(val)
     return val
 
 def clamp (val, vmin, vmax):
@@ -127,7 +127,7 @@ class memoize:
 
 
 def printfn (message):
-    print message
+    print(message)
 
 
 def remove_if (predicate, lst):
@@ -136,7 +136,7 @@ def remove_if (predicate, lst):
 
 def flip_dict (dct):
     new_dct = {}
-    for k, v in dct.items ():
+    for k, v in list(dct.items ()):
         new_dct [v] = k
     return new_dct
 

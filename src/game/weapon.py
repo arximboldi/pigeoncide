@@ -29,7 +29,7 @@ from base.signal import weak_slot
 from core import task
 from core.util import to_rad, normalize
 from phys import geom
-import physics
+from . import physics
 import weakref
 from pandac.PandaModules import Vec3
 import math
@@ -112,10 +112,10 @@ class WeaponEntity (SpatialEntity, TaskEntity):
         self._owner        = None
         self._child_entity = None
         self._make_free_entity ()        
-        self._hit_sounds   = map (self.entities.audio3d.loadSfx,
-                                  self.weapon_sounds)
-        self._swing_sounds = map (self.entities.audio3d.loadSfx,
-                                  self.weapon_swing)
+        self._hit_sounds   = list(map (self.entities.audio3d.loadSfx,
+                                  self.weapon_sounds))
+        self._swing_sounds = list(map (self.entities.audio3d.loadSfx,
+                                  self.weapon_swing))
     
     def play_random_sound (self, sounds):
         snd = random.choice (sounds)

@@ -28,7 +28,7 @@ from core.state import State
 #from core.panda_controller import PandaController
 from core import task
 
-from main_menu import *
+from .main_menu import *
 from game.loader import *
 
 _log = get_log (__name__)

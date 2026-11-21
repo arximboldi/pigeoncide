@@ -20,10 +20,10 @@
 from base.log import get_log
 from base.app import *
 
-from state import *
+from .state import *
 import weakref
 
-from panda_controller import PandaController
+from .panda_controller import PandaController
 
 _log = get_log (__name__)
 

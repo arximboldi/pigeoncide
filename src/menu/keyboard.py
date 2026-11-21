@@ -67,7 +67,7 @@ class Keyboard (object):
         self.keys_btn = {}
         self.keys_lab = {}
         
-        for func, (i, bt_text) in self.keys_txt.iteritems ():
+        for func, (i, bt_text) in self.keys_txt.items ():
             self.keys_btn [func] = DirectButton(
                 text = bt_text,
                 text_font = self.state.font,
@@ -96,18 +96,18 @@ class Keyboard (object):
 
     def do_enable (self):
         if self.active:
-            for n in self.keys_btn.itervalues ():
+            for n in self.keys_btn.values ():
                 n.setProp ('state', DGG.NORMAL)
         
     def do_disable (self):
         if self.active:
-            for n in self.keys_btn.itervalues ():
+            for n in self.keys_btn.values ():
                 n.setProp ('state', DGG.DISABLED)
         
     def do_destroy (self):
-        for n in self.keys_btn.itervalues ():
+        for n in self.keys_btn.values ():
             n.destroy ()
-        for n in self.keys_lab.itervalues ():
+        for n in self.keys_lab.values ():
             n.destroy ()
         self.info_txt.destroy()
         self.active = False

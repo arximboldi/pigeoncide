@@ -24,13 +24,13 @@ from ent.physical import StaticPhysicalEntity
 from ent.panda import ModelEntity
 from phys import geom
 
-from boy import Boy
-from pigeon import Pigeon
-from flock import make_random_flock
-from loader import LoaderData
-from sky import SkyEntity
-import physics
-import weapon
+from .boy import Boy
+from .pigeon import Pigeon
+from .flock import make_random_flock
+from .loader import LoaderData
+from .sky import SkyEntity
+from . import physics
+from . import weapon
 
 import random
 

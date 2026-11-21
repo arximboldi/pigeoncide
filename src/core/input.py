@@ -23,8 +23,8 @@ from base.signal import Signal
 from base.sender import Sender, Receiver
 from base.log import get_log
 from base.util import flip_dict
-from error import CoreError
-from task import Task
+from .error import CoreError
+from .task import Task
 import os
 
 _log = get_log (__name__)
@@ -55,7 +55,7 @@ class EventMap (Receiver):
         del self._map [key]
 
     def unassoc_action (self, action):
-        for k, a in dict (self._map).iteritems ():
+        for k, a in dict (self._map).items ():
             if a == action:
                 del self._map [k]
     
@@ -98,7 +98,7 @@ class KeyboardTask (EventMap, Task):
             
     def do_update (self, timer):
         super (KeyboardTask, self).do_update (timer)
-        for f in self._running.itervalues ():
+        for f in self._running.values ():
             f (timer)
 
 

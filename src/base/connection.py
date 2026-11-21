@@ -23,7 +23,7 @@ connections between objects.
 """
 
 from weakref import ref
-from util import remove_if
+from .util import remove_if
 
 
 class Source (object):

@@ -17,7 +17,7 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from util import memoize, nop
+from .util import memoize, nop
 
 class Mockup (object):
 
@@ -82,7 +82,7 @@ def instance_decorator (decorator):
 
 
 def extend_methods (cls, **kws):
-    for name, new_method in kws.items ():
+    for name, new_method in list(kws.items ()):
         if hasattr (cls, name):
             old_method = getattr (cls, name)
             if not callable (old_method):
