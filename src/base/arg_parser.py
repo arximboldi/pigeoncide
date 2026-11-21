@@ -229,7 +229,8 @@ class ArgParser (object):
                     else:
                         i = self._parse_short (i)
                 else:
-                    self._free_args.append (arg)
+                    self._free_args.append (argv[i])
+                    i += 1
         except KeyError as e:
             raise UnknownArgError (str (e))
     

@@ -57,3 +57,8 @@ class TestArgParser (unittest.TestCase):
         self._args.parse (['test', '-ad', '2', '2.5'])
         self.assertEqual (self._op_a.value, 2)
         self.assertEqual (self._op_d.value, 2.5)
+
+    def test_free_args (self):
+        self._args.parse (['test', 'one', '-a', '3', 'two'])
+        self.assertEqual (self._op_a.value, 3)
+        self.assertEqual (self._args.free_args, ['one', 'two'])
