@@ -45,6 +45,10 @@ stdenv.mkDerivation {
     # Panda never noticed pointer lock engaging, so it could not re-centre
     # the pointer and mouse look spun the view. Not yet reported upstream.
     ./pointerlockchange-on-document.patch
+    # Panda sized the canvas in CSS pixels, so on high-DPI screens the game
+    # was rendered at a lower resolution and stretched. Not yet reported
+    # upstream.
+    ./canvas-device-pixels.patch
   ];
 
   nativeBuildInputs = emscriptenTools ++ [ python312 ];

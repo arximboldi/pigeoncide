@@ -1,0 +1,116 @@
+diff --git a/panda/src/webgldisplay/webGLGraphicsWindow.cxx b/panda/src/webgldisplay/webGLGraphicsWindow.cxx
+index 247d8e1..1a7afbf 100644
+--- a/panda/src/webgldisplay/webGLGraphicsWindow.cxx
++++ b/panda/src/webgldisplay/webGLGraphicsWindow.cxx
+@@ -29,6 +29,17 @@ _canvas_resized(WebGLGraphicsWindow *window, double width, double height) {
+ 
+ TypeHandle WebGLGraphicsWindow::_type_handle;
+ 
++/**
++ * Sizes the canvas drawing buffer to the given window size, which is in
++ * device pixels, and shows it at the corresponding size in CSS pixels.
++ */
++static void
++set_canvas_size(const char *target, int width, int height) {
++  double ratio = emscripten_get_device_pixel_ratio();
++  emscripten_set_canvas_element_size(target, width, height);
++  emscripten_set_element_css_size(target, width / ratio, height / ratio);
++}
++
+ /**
+  *
+  */
+@@ -179,8 +190,7 @@ set_properties_now(WindowProperties &properties) {
+ 
+   if (properties.has_size()) {
+     _properties.set_size(properties.get_size());
+-    emscripten_set_canvas_element_size(target, properties.get_x_size(), properties.get_y_size());
+-    emscripten_set_element_css_size(target, properties.get_x_size(), properties.get_y_size());
++    set_canvas_size(target, properties.get_x_size(), properties.get_y_size());
+     properties.clear_size();
+     set_size_and_recalc(_properties.get_x_size(), _properties.get_y_size());
+     throw_event(get_window_event(), this);
+@@ -339,11 +349,13 @@ open_window() {
+   emscripten_get_element_css_size(target, &css_width, &css_height);
+ 
+   if (_properties.has_size() && (_properties.get_fixed_size() || css_width == 0.0 || css_height == 0.0)) {
+-    emscripten_set_canvas_element_size(target, _properties.get_x_size(), _properties.get_y_size());
+-    emscripten_set_element_css_size(target, _properties.get_x_size(), _properties.get_y_size());
++    set_canvas_size(target, _properties.get_x_size(), _properties.get_y_size());
+   } else {
+-    int width = (int)css_width;
+-    int height = (int)css_height;
++    // The drawing buffer is sized in device pixels, so that the scene is not
++    // rendered at a lower resolution and stretched on high-DPI screens.
++    double ratio = emscripten_get_device_pixel_ratio();
++    int width = (int)(css_width * ratio + 0.5);
++    int height = (int)(css_height * ratio + 0.5);
+     if (width == 0 || height == 0) {
+       emscripten_get_canvas_element_size(target, &width, &height);
+     } else {
+@@ -412,17 +424,30 @@ open_window() {
+   EM_ASM({
+     var canvas = document.getElementById('canvas');
+     if (canvas) {
++      // Report the size in device pixels. The device-pixel box is exact and
++      // also changes with the pixel ratio (zoom, another screen); browsers
++      // without it get the CSS size scaled by the ratio.
+       var observer = new ResizeObserver(function(entries) {
+         var entry = entries[0];
+         if (entry) {
+-          var width = entry.contentRect.width;
+-          var height = entry.contentRect.height;
++          var width, height;
++          if (entry.devicePixelContentBoxSize) {
++            width = entry.devicePixelContentBoxSize[0].inlineSize;
++            height = entry.devicePixelContentBoxSize[0].blockSize;
++          } else {
++            width = Math.round(entry.contentRect.width * window.devicePixelRatio);
++            height = Math.round(entry.contentRect.height * window.devicePixelRatio);
++          }
+           if (width != 0 && height != 0) {
+-            __canvas_resized($0, entry.contentRect.width, entry.contentRect.height);
++            __canvas_resized($0, width, height);
+           }
+         }
+       });
+-      observer.observe(canvas);
++      try {
++        observer.observe(canvas, {box: 'device-pixel-content-box'});
++      } catch (e) {
++        observer.observe(canvas);
++      }
+       if (canvas._p3d_resizeObserver) {
+         canvas._p3d_resizeObserver.disconnect();
+       }
+@@ -637,13 +662,19 @@ on_mouse_event(int type, const EmscriptenMouseEvent *event, void *user_data) {
+ 
+   const char *target = "#canvas";
+ 
++  // Positions arrive in CSS pixels, but the window is sized in device pixels.
++  // Relative motion is left as it is, so that mouse look feels the same.
++  double ratio = emscripten_get_device_pixel_ratio();
++  double x = event->targetX * ratio;
++  double y = event->targetY * ratio;
++
+   switch (type) {
+   case EMSCRIPTEN_EVENT_MOUSEDOWN:
+     // Don't register out-of-bounds mouse downs.
+-    if (event->targetX >= 0 && event->targetY >= 0) {
++    if (x >= 0 && y >= 0) {
+       int w, h;
+       emscripten_get_canvas_element_size(target, &w, &h);
+-      if (event->targetX < w && event->targetY < h) {
++      if (x < w && y < h) {
+         device->button_down(MouseButton::button(event->button));
+         return true;
+       }
+@@ -664,7 +695,7 @@ on_mouse_event(int type, const EmscriptenMouseEvent *event, void *user_data) {
+         device->set_pointer_in_window(md.get_x() + event->movementX,
+                                       md.get_y() + event->movementY);
+       } else {
+-        device->set_pointer_in_window(event->targetX, event->targetY);
++        device->set_pointer_in_window(x, y);
+       }
+     }
+     return true;
