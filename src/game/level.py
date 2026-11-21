@@ -157,7 +157,13 @@ class Level (LoaderData):
         wep = weapon.RollingPin (entities = entities)
         wep.position = Vec3 (-100, -100, 20)
 
-        self.level.model.setTexture (loader.loadTexture ('lvl/world.png'))
+        # The grass repeats all over the level, so it needs mipmaps not to
+        # shimmer in the distance, and anisotropic filtering not to blur on
+        # slopes seen at a grazing angle.
+        grass = loader.loadTexture ('lvl/world.png')
+        grass.setMinfilter (SamplerState.FT_linear_mipmap_linear)
+        grass.setAnisotropicDegree (8)
+        self.level.model.setTexture (grass)
         attach_glow_maps (self.level.model)
                 
         plightnode = PointLight ("point light")

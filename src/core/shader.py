@@ -74,7 +74,12 @@ def find_glow_map (texture):
     # the web server, which logs a failed request for each one.
     if not os.path.exists (path.toOsSpecific ()):
         return None
-    return loader.loadTexture (path)
+    # Sampled at the same coordinates, so filtered the same way.
+    glow = loader.loadTexture (path)
+    glow.setMinfilter (texture.getMinfilter ())
+    glow.setMagfilter (texture.getMagfilter ())
+    glow.setAnisotropicDegree (texture.getAnisotropicDegree ())
+    return glow
 
 
 _no_glow = None
