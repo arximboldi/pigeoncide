@@ -75,7 +75,13 @@ Options:
         pass
 
     def run_and_exit (self):
-        sys.exit (self.run ())
+        ret_val = self.run ()
+        if IN_BROWSER:
+            # The page keeps running the main loop after run returns, so
+            # keep the app alive, and do not exit the interpreter under it.
+            AppBase.running_app = self
+        else:
+            sys.exit (ret_val)
         
     def run (self):
         self._std_logger  = None

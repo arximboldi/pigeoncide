@@ -79,6 +79,10 @@ class PandaController (object):
         self.update_properties (cfg)
         self.listen_conf (cfg)
 
+        # Models are named without an extension. The desktop game loads the
+        # .egg sources; the web build ships them converted to .bam.
+        loadPrcFileData ("", "default-model-extension " +
+                         (".bam" if IN_BROWSER else ".egg"))
         loadPrcFileData ("", "interpolate-frames 1")
         loadPrcFileData ("", "support-threads #f")
         path = getModelPath ()
