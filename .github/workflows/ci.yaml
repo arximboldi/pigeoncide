@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+# A newer push to the same branch or pull request supersedes a running build.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Builds the desktop game, which runs the unit tests, and evaluates the
+  # development shell.
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: cachix/install-nix-action@v31
+      # Keeps built store paths in the GitHub Actions cache between runs.
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
+      - name: Flake checks
+        run: nix flake check --print-build-logs
+
+  # Builds the browser version. The first run compiles CPython, ODE and
+  # Panda3D with Emscripten, which takes a while; later runs take them from
+  # the cache unless they changed.
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v7
+      - uses: cachix/install-nix-action@v31
+      - uses: DeterminateSystems/magic-nix-cache-action@v15
+      - name: Build the web version
+        run: nix build .#pigeoncide-web --print-build-logs
+      # The site, ready to download from the run's page and serve.
+      - name: Copy the site out of the Nix store
+        run: cp -rL result site
+      - uses: actions/upload-artifact@v7
+        with:
+          name: pigeoncide-web
+          path: site
