@@ -67,6 +67,7 @@
     }
     window.Module = {
       canvas,
+      locateFile: (path) => path + '?build=@build@',
       print: (text) => log(text, console.log),
       printErr: (text) => log(text, console.warn),
       setStatus: (text) => { if (!failed) status.textContent = text; },
@@ -82,7 +83,7 @@
     window.addEventListener('unhandledrejection',
                             (e) => fail('Could not load the game: ' + e.reason));
     const script = document.createElement('script');
-    script.src = 'pigeoncide.js';
+    script.src = 'pigeoncide.js?build=@build@';
     script.onerror = () => fail('Could not load the game. Try reloading the page.');
     document.body.appendChild(script);
   }

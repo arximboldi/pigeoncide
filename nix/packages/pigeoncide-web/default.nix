@@ -66,7 +66,11 @@ stdenv.mkDerivation {
     runHook preInstall
     mkdir -p $out
     cp out/pigeoncide.js out/pigeoncide.wasm out/pigeoncide.data $out/
-    cp ${./index.html} $out/index.html
+    # The page asks for the game files with a hash of their contents in the
+    # URL, so browsers never combine a cached file from an older build.
+    build=$(cat out/pigeoncide.js out/pigeoncide.wasm out/pigeoncide.data \
+              | sha256sum | cut -c1-16)
+    substitute ${./index.html} $out/index.html --subst-var build
     runHook postInstall
   '';
 
