@@ -26,6 +26,7 @@ from .paths import SHADER_DIR
 from direct.showbase.ShowBase import ShowBase
 
 from pandac.PandaModules import Filename,Buffer,Shader,VirtualFileSystem
+from pandac.PandaModules import Texture,TextureStage
 from pandac.PandaModules import PandaNode,NodePath
 from pandac.PandaModules import ColorBlendAttrib
 from pandac.PandaModules import AmbientLight,DirectionalLight
@@ -43,6 +44,19 @@ def load_shader (vertex, fragment):
         path = Filename.fromOsSpecific (os.path.join (SHADER_DIR, name))
         return GLSL_HEADER + vfs.readFile (path, True).decode ()
     return Shader.make (Shader.SL_GLSL, read (vertex), read (fragment))
+
+
+# Models glow where they have a glow map on this stage, which the glow
+# shader reads as its second texture.
+GLOW_STAGE = TextureStage ('glow')
+GLOW_STAGE.setSort (1)
+
+
+def make_black_texture ():
+    tex = Texture ('black')
+    tex.setup2dTexture (1, 1, Texture.TUnsignedByte, Texture.FRgba)
+    tex.setRamImage (b'\x00\x00\x00\xff')
+    return tex
 
 
 def make_filter_buffer (srcbuffer, name, sort, shader):
@@ -79,9 +93,12 @@ class GlowFilter (object):
         glow_camera = base.makeCamera (glow_buffer,
                                        lens = base.cam.node ().getLens ())
 
-        # Tell the glow camera to use the glow shader
+        # Tell the glow camera to use the glow shader. Models without their
+        # own glow map get a black one, since Panda versions differ in what
+        # an unbound sampler reads (black in 1.10, white in later versions).
         temp_node = NodePath (PandaNode("temp_node"))
         temp_node.setShader (glow_shader)
+        temp_node.setTexture (GLOW_STAGE, make_black_texture ())
         glow_camera.node ().setInitialState (temp_node.getState ())
 
         # set up the pipeline: from glow scene to blur x to blur y to
