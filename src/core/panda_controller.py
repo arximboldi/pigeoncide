@@ -26,6 +26,7 @@ from . import patch_messenger
 import os
 
 from base.conf import GlobalConf
+from base.util import IN_BROWSER
 from .timer import Timer
 from .input import MouseTask
 from . import task
@@ -57,7 +58,6 @@ class PandaController (object):
         self._timer = Timer ()
         self._timer.max_delta = self.DEFAULT_MAX_DELTA
         self._tasks = task.TaskGroup ()
-        self._tasks.add (self._panda_task)
         self._music = None
         self._mouse_task = None
         self._relative_mouse = False
@@ -92,12 +92,27 @@ class PandaController (object):
                 
         self.base.enableParticles ()
         
-    def loop (self):        
+    def loop (self):
+        """
+        Runs the game until its last task finishes. Panda's task manager
+        drives the frames: the game update runs after input is processed
+        and before the frame is rendered. In a browser run() returns at
+        once and the page calls the task manager every frame.
+        """
         self._timer.reset ()
-        self._timer.loop (self._loop_fn)
+        self._timer.tick ()
+        self.base.taskMgr.add (self._frame_task, 'pigeoncide-frame')
+        self.base.run ()
+
+    def _frame_task (self, ptask):
+        if self._loop_fn (self._timer):
+            self._timer.tick ()
+            return ptask.cont
+        self.base.taskMgr.stop ()
+        return ptask.done
 
     def _loop_fn (self, timer):
-        task_count = 1               # _panda_task
+        task_count = 0
         if self._relative_mouse:
             task_count += 1          # _mouse_task
         if self._tasks.count > task_count:
@@ -162,7 +177,8 @@ class PandaController (object):
         self.base.setFrameRateMeter (cfg.value)
 
     def update_fps (self, cfg):
-        self._timer.fps = cfg.value
+        # Browsers pace frames themselves, and sleeping would block the page.
+        self._timer.fps = -1 if IN_BROWSER else cfg.value
 
     def update_music_volume (self, cfg):
         if self._music:
@@ -171,10 +187,6 @@ class PandaController (object):
     def update_sound_volume (self, cfg):
         if self.audio:
             self.audio.setVolume (cfg.value)
-
-    def _panda_task (self, timer):
-        taskMgr.step ()
-        return task.running
 
     def set_background_color (self, *color):
         base.setBackgroundColor (*color)

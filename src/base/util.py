@@ -18,6 +18,7 @@
 #
 
 import functools
+import sys
 
 near0 = 0.0001
 
@@ -146,3 +147,8 @@ def read_file (fname):
     content = fh.read ()
     fh.close ()
     return content
+
+
+# True when running as WebAssembly in a browser, where the page drives the
+# main loop and the program never exits.
+IN_BROWSER = sys.platform == 'emscripten'

@@ -26,6 +26,7 @@ from .xml_conf import *
 from .conf import *
 from .log import *
 from .arg_parser import *
+from .util import IN_BROWSER
 
 _log = get_log (__name__)
 
@@ -97,6 +98,10 @@ Options:
             self.load_config ()
 
             ret_val = self.do_execute (args.free_args)
+            if IN_BROWSER:
+                # do_execute only scheduled the main loop; the page keeps
+                # running it, so there is nothing to save or release yet.
+                return ret_val
             self.save_config ()
         except AppSuccess as e:
             ret_val = getattr(os, 'EX_OK', 0)  # Only available on Unix

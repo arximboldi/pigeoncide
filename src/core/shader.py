@@ -18,9 +18,9 @@
 #
 
 import os
-import sys
 
 from base.singleton import Singleton
+from base.util import IN_BROWSER
 
 from direct.showbase.ShowBase import ShowBase
 
@@ -36,7 +36,7 @@ SHADER_DIR = os.path.join (os.path.dirname (os.path.abspath (__file__)), 'sha')
 # The shader sources are written in the common subset of desktop GLSL 1.30
 # and GLSL ES 3.00 (WebGL 2), so only the version header differs.
 GLSL_HEADER = ('#version 300 es\nprecision mediump float;\n'
-               if sys.platform == 'emscripten' else '#version 130\n')
+               if IN_BROWSER else '#version 130\n')
 
 def load_shader (vertex, fragment):
     vfs = VirtualFileSystem.getGlobalPtr ()
