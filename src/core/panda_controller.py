@@ -101,6 +101,12 @@ class PandaController (object):
                          (".bam" if IN_BROWSER else ".egg"))
         loadPrcFileData ("", "interpolate-frames 1")
         loadPrcFileData ("", "support-threads #f")
+        if IN_BROWSER:
+            # Dual transparency (the laser fields) draws the opaque parts
+            # first, picked out with an alpha test. WebGL has no alpha test
+            # and our shaders do not do one, so whole surfaces came out
+            # opaque. Plain alpha blending does not need one.
+            loadPrcFileData ("", "m-dual #f")
         path = getModelPath ()
         path.prependDirectory (Filename.fromOsSpecific (DATA_DIR))
                 
