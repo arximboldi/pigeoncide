@@ -267,7 +267,7 @@ class PigeonState (State, BoidParams):
         self.manager.change_params (self)
         self.manager.anim_speed = self.anim_speed
         self.resume ()
-        self.do_pigeon_unsink (self)
+        self.do_pigeon_unsink ()
         
     def do_update (self, timer):
         super (PigeonState, self).do_update (timer)
@@ -343,7 +343,7 @@ class EatState (FollowState):
         self.happy_meal = target
 
     def do_update (self, timer):
-        super (EatState, self).do_update (self)
+        super (EatState, self).do_update (timer)
         best = self.manager.find_food ()
         if best != self.happy_meal and best:
             self.manager.change_state ('eat', best)

@@ -202,7 +202,7 @@ class WeaponEntity (SpatialEntity, TaskEntity):
             other.on_hit (self)
     
     def do_update (self, timer):
-        super (WeaponEntity, self).do_update (self)
+        super (WeaponEntity, self).do_update (timer)
         self._timer = timer
                 
     def start_hitting (self):
