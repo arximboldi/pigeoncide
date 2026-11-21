@@ -98,6 +98,19 @@
     }
   }).observe(canvas, { attributes: true, attributeFilter: ['style'] });
 
+  // Browsers can refuse pointer lock, for example for a moment after the
+  // player released it with Escape, and Chrome reports that as a rejected
+  // promise. It is not an error: the game asks again on the next click.
+  if (HTMLCanvasElement.prototype.requestPointerLock) {
+    canvas.requestPointerLock = function (...args) {
+      const result = HTMLCanvasElement.prototype.requestPointerLock.apply(this, args);
+      if (result && result.catch) {
+        result.catch((e) => console.warn('Pointer lock refused: ' + e.message));
+      }
+      return result;
+    };
+  }
+
   start.addEventListener('click', launch, { once: true });
 </script>
 </body>

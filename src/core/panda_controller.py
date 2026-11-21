@@ -61,6 +61,7 @@ class PandaController (object):
         self._music = None
         self._mouse_task = None
         self._relative_mouse = False
+        self._pointer_locked = False
         
     @property
     def timer (self):
@@ -104,6 +105,9 @@ class PandaController (object):
         path.prependDirectory (Filename.fromOsSpecific (DATA_DIR))
                 
         self.base.enableParticles ()
+
+        if IN_BROWSER:
+            self.base.accept ('mouse1', self._capture_pointer)
         
     def loop (self):
         """
@@ -119,6 +123,8 @@ class PandaController (object):
 
     def _frame_task (self, ptask):
         try:
+            if IN_BROWSER:
+                self._check_pointer_lock ()
             running = self._loop_fn (self._timer)
         except Exception as e:
             if not IN_BROWSER:
@@ -176,6 +182,29 @@ class PandaController (object):
                 messenger.send ('mouse-move', [(x, y)])
             self._relative_mouse = True
         
+    def _check_pointer_lock (self):
+        """
+        In a browser relative mouse mode is pointer lock, which only
+        starts on a click or key press, and which the browser ends by
+        itself when the player presses Escape or leaves the page. The
+        page never sees that Escape, so the end of pointer lock while in
+        relative mode is sent as the 'pointer-unlocked' event instead.
+        """
+        locked = self.base.win.getProperties ().getMouseMode () == \
+            WindowProperties.MRelative
+        if self._pointer_locked and not locked and self._relative_mouse:
+            messenger.send ('pointer-unlocked')
+        self._pointer_locked = locked
+
+    def _capture_pointer (self):
+        """
+        Asks for pointer lock again on a click, in case the request made
+        by relative_mouse was refused: browsers refuse it for a moment
+        after it was released.
+        """
+        if self._relative_mouse and not self._pointer_locked:
+            self.base.win.requestProperties (self._prop)
+
     def absolute_mouse (self):
         if self._relative_mouse:
             self._relative_mouse = False

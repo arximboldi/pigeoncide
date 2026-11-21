@@ -110,6 +110,9 @@ class Game (GameState):
         self.enter_transition ()
         
         self.events.event ('panda-escape').connect (self.enter_menu)
+        # In a browser, Escape releases the mouse instead of reaching
+        # the game; so does leaving the page.
+        self.events.event ('panda-pointer-unlocked').connect (self.enter_menu)
         self.events.event ('panda-p').connect (self.toggle_pause)
 
         self.manager.enter_state (
