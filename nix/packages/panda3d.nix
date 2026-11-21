@@ -9,12 +9,9 @@
   autoPatchelfHook,
   libGL,
   libx11,
-  libxext,
   libxrandr,
   libxcursor,
   libxxf86dga,
-  libxi,
-  zlib,
   alsa-lib,
 }:
 
@@ -49,19 +46,19 @@ python.pkgs.buildPythonPackage {
     stdenv.cc.cc.lib
     libGL
     libx11
-    libxext
+  ];
+
+  # These are dlopened rather than linked, so autoPatchelf cannot see them:
+  # the X11 display plugin loads XRandR (fullscreen resolution), Xcursor and
+  # XF86DGA (relative mouse), and the statically linked OpenAL Soft loads its
+  # audio backend. Only ALSA is wired up: OpenAL's PulseAudio backend
+  # rejects current libpulse, and PipeWire serves ALSA clients anyway.
+  appendRunpaths = map (pkg: "${lib.getLib pkg}/lib") [
     libxrandr
     libxcursor
     libxxf86dga
-    libxi
-    zlib
+    alsa-lib
   ];
-
-  # The bundled OpenAL Soft is linked statically and dlopens its audio
-  # backend, so autoPatchelf cannot see it as a NEEDED entry. Only ALSA is
-  # wired up: its PulseAudio backend rejects current libpulse, and PipeWire
-  # systems serve ALSA clients through their ALSA plugin anyway.
-  appendRunpaths = [ "${lib.getLib alsa-lib}/lib" ];
 
   # deploy_libs holds frozen-app support modules for the wheel's own CPython
   # build, and the pstats profiler GUI links against GTK 2. Neither is needed
@@ -69,6 +66,7 @@ python.pkgs.buildPythonPackage {
   postInstall = ''
     rm -rf $out/${python.sitePackages}/deploy_libs
     rm $out/${python.sitePackages}/panda3d_tools/pstats
+    rm $out/bin/pstats
   '';
 
   pythonImportsCheck = [
@@ -80,6 +78,9 @@ python.pkgs.buildPythonPackage {
   meta = {
     description = "Panda3D game engine (official binary wheel)";
     homepage = "https://www.panda3d.org/";
+    # Panda3D itself is BSD. The wheel also bundles LGPL code (FFmpeg,
+    # OpenAL Soft) and NVIDIA's redistributable but unfree Cg runtime;
+    # listing those would make the package require allowUnfree.
     license = lib.licenses.bsd3;
     sourceProvenance = [ lib.sourceTypes.binaryNativeCode ];
     platforms = builtins.attrNames wheels;
