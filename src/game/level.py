@@ -85,7 +85,7 @@ class Level (LoaderData):
                       'hud/pigeon.png',
                       'hud/clock.png' ]
     
-    load_sounds = [ 'snd/houmdrak.mp3',
+    load_sounds = [ 'snd/houmdrak.ogg',
                     'snd/electrocute-medium.wav',
                     'snd/electrocute-short.wav',
                     'snd/electrocute-long.wav' ]
@@ -95,7 +95,7 @@ class Level (LoaderData):
                     'font/alte-bold.ttf' ]
     load_increasing = True
     
-    music       = 'snd/houmdrak.mp3'
+    music       = 'snd/houmdrak.ogg'
     model       = 'lvl/world'
     geometry    = 'lvl/world'
     offset      = Vec3 (0, 0, 0)
