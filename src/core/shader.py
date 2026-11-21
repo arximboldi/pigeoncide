@@ -18,26 +18,41 @@
 #
 
 import os
+import sys
 
 from base.singleton import Singleton
 
 from direct.showbase.ShowBase import ShowBase
 
-from pandac.PandaModules import Filename,Buffer,Shader
+from pandac.PandaModules import Filename,Buffer,Shader,VirtualFileSystem
 from pandac.PandaModules import PandaNode,NodePath
 from pandac.PandaModules import ColorBlendAttrib
 from pandac.PandaModules import AmbientLight,DirectionalLight
 from pandac.PandaModules import TextNode,Point3,Vec4
 
 
-def make_filter_buffer (srcbuffer, name, sort, prog):
+SHADER_DIR = os.path.join (os.path.dirname (os.path.abspath (__file__)), 'sha')
+
+# The shader sources are written in the common subset of desktop GLSL 1.30
+# and GLSL ES 3.00 (WebGL 2), so only the version header differs.
+GLSL_HEADER = ('#version 300 es\nprecision mediump float;\n'
+               if sys.platform == 'emscripten' else '#version 130\n')
+
+def load_shader (vertex, fragment):
+    vfs = VirtualFileSystem.getGlobalPtr ()
+    def read (name):
+        path = Filename.fromOsSpecific (os.path.join (SHADER_DIR, name))
+        return GLSL_HEADER + vfs.readFile (path, True).decode ()
+    return Shader.make (Shader.SL_GLSL, read (vertex), read (fragment))
+
+
+def make_filter_buffer (srcbuffer, name, sort, shader):
     blur_buffer = base.win.makeTextureBuffer (name, 512, 512)
     blur_buffer.setSort (sort)
     blur_buffer.setClearColor (Vec4 (1, 0, 0, 1))
     blur_camera = base.makeCamera2d (blur_buffer)
     blur_scene = NodePath ("filter_scene")
     blur_camera.node ().setScene (blur_scene)
-    shader = Shader.load (prog)
     card = srcbuffer.getTextureCard ()
     card.reparentTo (blur_scene)
     card.setShader (shader)
@@ -48,10 +63,8 @@ class GlowFilter (object):
 
     is_init = False
     
-    def make_glow (self, data_dir = os.path.join (os.path.dirname (
-            os.path.abspath (__file__)), 'sha')):
-
-        glow_shader = Shader.load (data_dir + "/glow_shader.sha")
+    def make_glow (self):
+        glow_shader = load_shader ('glow.vert', 'glow.frag')
         
         # create the glow buffer. This buffer renders like a normal
         # scene, except that only the glowing materials should show up
@@ -74,10 +87,10 @@ class GlowFilter (object):
 
         # set up the pipeline: from glow scene to blur x to blur y to
         # main window.
-        blur_xbuffer = make_filter_buffer (glow_buffer, "blur_x", -2,
-                                           data_dir + "/x_blur_shader.sha")
-        blur_ybuffer = make_filter_buffer (blur_xbuffer, "blur_y", -1,
-                                           data_dir + "/y_blur_shader.sha")
+        blur_xbuffer = make_filter_buffer (
+            glow_buffer, "blur_x", -2, load_shader ('glow.vert', 'x_blur.frag'))
+        blur_ybuffer = make_filter_buffer (
+            blur_xbuffer, "blur_y", -1, load_shader ('glow.vert', 'y_blur.frag'))
 
         final_card = blur_ybuffer.getTextureCard ()
         final_card.setAttrib (ColorBlendAttrib.make (ColorBlendAttrib.MAdd))
