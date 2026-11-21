@@ -86,9 +86,11 @@ class GameMessage (LightGameState):
         self.parent_state.camera_ctl.loop_angle (duration = 4.)
         
     def finish_intro (self):
+        # Leave only once, after the text has faded out.
+        self.events.event ('panda-enter').disconnect (self.finish_intro)
         self.help_text.fade_out ()
         self.text.fade_out ().add_next (task.run (
-            self.manager.leave_state (self.action)))
+            lambda: self.manager.leave_state (self.action)))
         self.parent_state.camera_ctl.restore_angle ()
 
 
