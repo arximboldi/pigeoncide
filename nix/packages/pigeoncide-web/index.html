@@ -112,6 +112,17 @@
     };
   }
 
+  // Panda uses anisotropic texture filtering when the browser supports it,
+  // but never enables the WebGL extension for it, so the browser would reject
+  // its calls. Enable it as soon as the game creates its context.
+  canvas.getContext = function (type, ...args) {
+    const context = HTMLCanvasElement.prototype.getContext.call(this, type, ...args);
+    if (context && type.startsWith('webgl')) {
+      context.getExtension('EXT_texture_filter_anisotropic');
+    }
+    return context;
+  };
+
   start.addEventListener('click', launch, { once: true });
 </script>
 </body>
