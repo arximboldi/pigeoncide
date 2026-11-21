@@ -10,12 +10,25 @@ world.
 Usage
 -----
 
-To be able to Pidgeoncide you should have the Panda3D engine properly
-installed. Once you meet all the requirements you can just execute:
+The easiest way to play is with [Nix](https://nixos.org) (flakes
+enabled) on x86_64 or aarch64 Linux:
 
 > ```
-> ./pidgeoncide
+> nix run github:arximboldi/pigeoncide
 > ```
+
+From a checkout, `nix run` starts the game, `nix flake check` runs
+the unit tests, and `nix develop` opens a shell with Python 3.13 and
+Panda3D where you can use the scripts directly:
+
+> ```
+> ./pigeoncide        # play
+> ./pigeoncide -s game  # skip the menu and start a level
+> ./unittests         # run the unit tests
+> ```
+
+Without Nix you need Python 3 and Panda3D 1.10 (`pip install
+panda3d`); then run `./pigeoncide`.
 
 For more information, visit the **project page** at:
 https://savannah.nongnu.org/projects/pigeoncide/
