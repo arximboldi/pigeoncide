@@ -97,8 +97,8 @@ class Screen (object):
             pos = (0.5, 0, -0.4)
             )
         
-        #checked = loader.loadModel ('menu/checked.egg')
-        #unchecked = loader.loadModel ('menu/unchecked.egg')
+        #checked = loader.loadModel ('menu/checked')
+        #unchecked = loader.loadModel ('menu/unchecked')
         self.full_screen = DirectCheckButton (text = "Full screen",
             text_font = self.state.font,     
             text_scale = tx_scale,

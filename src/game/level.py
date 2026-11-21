@@ -41,22 +41,22 @@ class LevelEntity (
 
 class Level (LoaderData):
     
-    load_models   = [ 'char/boy-anims.egg',
-                      'char/boy-walk.egg',
-                      'char/boy-feed.egg',
-                      'char/boy-hit.egg',
-                      'char/boy-run.egg',
-                      'char/pigeon-anims.egg',
-                      'char/pigeon-walk.egg',
-                      'char/pigeon-takeoff.egg',
-                      'char/pigeon-land.egg',
-                      'char/pigeon-idle.egg',
-                      'char/pigeon-fly.egg',
-                      'lvl/world.egg',
-                      'obj/stick.egg',
-                      'obj/stick-hl.egg',
-                      'obj/baseball-bat.egg',
-                      'obj/food.egg' ]
+    load_models   = [ 'char/boy-anims',
+                      'char/boy-walk',
+                      'char/boy-feed',
+                      'char/boy-hit',
+                      'char/boy-run',
+                      'char/pigeon-anims',
+                      'char/pigeon-walk',
+                      'char/pigeon-takeoff',
+                      'char/pigeon-land',
+                      'char/pigeon-idle',
+                      'char/pigeon-fly',
+                      'lvl/world',
+                      'obj/stick',
+                      'obj/stick-hl',
+                      'obj/baseball-bat',
+                      'obj/food' ]
     
     load_textures = [ 'char/boy.png',
                       'char/boy-glow.png',
@@ -96,10 +96,10 @@ class Level (LoaderData):
     load_increasing = True
     
     music       = 'snd/houmdrak.mp3'
-    model       = 'lvl/world.egg'
-    geometry    = 'lvl/world.egg'
+    model       = 'lvl/world'
+    geometry    = 'lvl/world'
     offset      = Vec3 (0, 0, 0)
-    sky         = 'sky/green-sky.egg'
+    sky         = 'sky/green-sky'
     sky_scale   = 1000.
     spawn_spots = [ (Vec3 (0, 0, 20), 0) ]
     flocks_def  = [ 20 ]

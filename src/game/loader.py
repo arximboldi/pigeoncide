@@ -135,7 +135,7 @@ class LoaderState (LightGameState):
         # TODO: We should cleanup the ui code to avoid this kind of shit.
         camera.setPosHpr (Vec3 (0.0, -22.0, 0.0), Vec3 (0.0, 0.0, 0))
         self._pic_boy = panda.ModelEntity (entities = self.entities,
-                                           model = 'menu/bg_smile.egg')
+                                           model = 'menu/bg_smile')
         self._pic_boy.model.setTransparency (TransparencyAttrib.MAlpha)
         self._pic_boy.model_position = Vec3 (-4.33, 0, -0.89)
         self._pic_boy.model_scale    = Vec3 (1748./2480.*10, 1, 10)

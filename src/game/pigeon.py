@@ -50,7 +50,7 @@ class PigeonFood (ModelEntity,
                   DynamicPhysicalEntity,
                   ObservableSpatialEntity):
 
-    food_model = 'obj/food.egg'
+    food_model = 'obj/food'
     amount     = 1.0
     food_scale = 0.5
     
@@ -89,12 +89,12 @@ class Pigeon (BoidEntity,
     use.
     """
     
-    pigeon_model = 'char/pigeon-anims.egg'
-    pigeon_anims = { 'walk'    : 'char/pigeon-walk.egg',
-                     'fly'     : 'char/pigeon-fly.egg',
-                     'takeoff' : 'char/pigeon-takeoff.egg',
-                     'land'    : 'char/pigeon-land.egg',
-                     'idle'    : 'char/pigeon-idle.egg' }
+    pigeon_model = 'char/pigeon-anims'
+    pigeon_anims = { 'walk'    : 'char/pigeon-walk',
+                     'fly'     : 'char/pigeon-fly',
+                     'takeoff' : 'char/pigeon-takeoff',
+                     'land'    : 'char/pigeon-land',
+                     'idle'    : 'char/pigeon-idle' }
 
     pigeon_sweeping = True
     pigeon_min_eat_distance = 100.

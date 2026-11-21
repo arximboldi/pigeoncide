@@ -93,8 +93,8 @@ class Field (PandaEntity, StaticPhysicalEntity):
         
 class Stick (ModelEntity, StaticPhysicalEntity):
 
-    MODEL = 'obj/stick.egg'
-    HL_MODEL = 'obj/stick-hl.egg'
+    MODEL = 'obj/stick'
+    HL_MODEL = 'obj/stick-hl'
 
     _is_highlight = False
     

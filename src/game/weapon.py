@@ -255,7 +255,7 @@ class WeaponEntity (SpatialEntity, TaskEntity):
 
 class BaseballBat (WeaponEntity):
 
-    weapon_model    = 'obj/baseball-bat.egg'
+    weapon_model    = 'obj/baseball-bat'
 
     weapon_geom_free = staticmethod (geom.box (5, 5, 1))
     weapon_scale     = Vec3 (.3, .3, .3)
@@ -265,7 +265,7 @@ class BaseballBat (WeaponEntity):
 
 class Lollypop (WeaponEntity):
 
-    weapon_model    = 'obj/lollypop.egg'
+    weapon_model    = 'obj/lollypop'
 
     weapon_geom_free = staticmethod (geom.box (5, 5, 1))
     weapon_scale     = Vec3 (.3, .3, .3)
@@ -275,7 +275,7 @@ class Lollypop (WeaponEntity):
 
 class RollingPin (WeaponEntity):
 
-    weapon_model    = 'obj/rolling-pin.egg'
+    weapon_model    = 'obj/rolling-pin'
 
     weapon_geom_free = staticmethod (geom.box (5, 5, 1))
     weapon_scale     = Vec3 (.3, .3, .3)
