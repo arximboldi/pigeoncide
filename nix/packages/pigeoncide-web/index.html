@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pigeoncide</title>
+<link rel="icon" href="data:,">
+<style>
+  :root { color-scheme: dark; }
+  html, body { margin: 0; height: 100%; background: #111; color: #eee;
+               font: 16px/1.4 system-ui, sans-serif; }
+  main { display: grid; place-items: center; height: 100%; }
+  #stage { position: relative; width: min(100vw, 133.33vh); aspect-ratio: 4 / 3; }
+  #canvas { display: block; width: 100%; height: 100%; outline: none; background: #000; }
+  #overlay { position: absolute; inset: 0; display: grid; place-items: center;
+             align-content: center; gap: 1rem; background: rgba(0, 0, 0, .75);
+             text-align: center; padding: 1rem; }
+  #overlay[hidden] { display: none; }
+  button { font: inherit; font-size: 1.25rem; padding: .6em 1.6em; border: 0;
+           border-radius: 999px; background: #b3261e; color: #fff; cursor: pointer; }
+  button:disabled { opacity: .5; cursor: progress; }
+  #status { min-height: 1.4em; opacity: .8; }
+</style>
+</head>
+<body>
+<main>
+  <div id="stage">
+    <canvas id="canvas" tabindex="-1" oncontextmenu="event.preventDefault()"></canvas>
+    <div id="overlay">
+      <h1>Pigeoncide</h1>
+      <p>Kill all the pigeons. Move with W A S D, hit with E, look with the mouse.</p>
+      <button id="start">Play</button>
+      <div id="status"></div>
+    </div>
+  </div>
+</main>
+<script>
+  const overlay = document.getElementById('overlay');
+  const status = document.getElementById('status');
+  const start = document.getElementById('start');
+
+  // The game is loaded on the first click: browsers only allow audio and
+  // pointer lock after a user gesture.
+  function launch() {
+    start.disabled = true;
+    window.Module = {
+      canvas: document.getElementById('canvas'),
+      print: (text) => console.log(text),
+      printErr: (text) => console.warn(text),
+      setStatus: (text) => { status.textContent = text; },
+      onRuntimeInitialized: () => {
+        overlay.hidden = true;
+        Module.canvas.focus();
+      },
+    };
+    const script = document.createElement('script');
+    script.src = 'pigeoncide.js';
+    document.body.appendChild(script);
+  }
+
+  start.addEventListener('click', launch, { once: true });
+</script>
+</body>
+</html>
