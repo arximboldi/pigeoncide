@@ -19,6 +19,7 @@
 
 from .entity import *
 from .task import TaskEntity
+from core.shader import attach_glow_maps
 
 from pandac.PandaModules import *
 from direct.actor.Actor import Actor
@@ -248,7 +249,7 @@ class ModelEntityImpl (ModelEntityBase):
                   *a, **k):
         super (ModelEntityImpl, self).__init__ (*a, **k)
 
-        self._model = loader.loadModel (model)
+        self._model = attach_glow_maps (loader.loadModel (model))
         self._model.reparentTo (self._node)
 
 class RelativeModelEntity (
@@ -271,6 +272,7 @@ class ActorEntityImpl (ModelEntityBase):
         super (ActorEntityImpl, self).__init__ (*a, **k)
 
         self._model = Actor (loader.loadModel (model), anims)
+        attach_glow_maps (self._model)
         self._model.loadAnims (anims)
         self._model.reparentTo (self._node)
 

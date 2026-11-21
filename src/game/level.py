@@ -29,6 +29,7 @@ from .pigeon import Pigeon
 from .flock import make_random_flock
 from .loader import LoaderData
 from .sky import SkyEntity
+from core.shader import attach_glow_maps
 from . import physics
 from . import weapon
 
@@ -157,6 +158,7 @@ class Level (LoaderData):
         wep.position = Vec3 (-100, -100, 20)
 
         self.level.model.setTexture (loader.loadTexture ('lvl/world.png'))
+        attach_glow_maps (self.level.model)
                 
         plightnode = PointLight ("point light")
         plightnode.setAttenuation (Vec3 (1, 0.0000005, 0.0000001))

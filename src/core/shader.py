@@ -26,7 +26,8 @@ from .paths import SHADER_DIR
 from direct.showbase.ShowBase import ShowBase
 
 from pandac.PandaModules import Filename,Buffer,Shader,VirtualFileSystem
-from pandac.PandaModules import Texture,TextureStage
+from pandac.PandaModules import Texture,TextureStage,TextureAttrib
+from pandac.PandaModules import GeomNode
 from pandac.PandaModules import PandaNode,NodePath
 from pandac.PandaModules import ColorBlendAttrib
 from pandac.PandaModules import AmbientLight,DirectionalLight
@@ -48,9 +49,66 @@ def load_shader (vertex, fragment):
 
 
 # Models glow where they have a glow map on this stage, which the glow
-# shader reads as its second texture.
+# shader reads as its second texture. As a glow stage, fixed-function
+# rendering leaves it out, so it does not tint the normal render.
 GLOW_STAGE = TextureStage ('glow')
 GLOW_STAGE.setSort (1)
+GLOW_STAGE.setMode (TextureStage.MGlow)
+
+# A texture's glow map is the image file of the same name with this suffix:
+# laser.png glows as laser-glow.png says.
+GLOW_SUFFIX = '-glow'
+
+
+def find_glow_map (texture):
+    """
+    Returns the glow map of a texture, or None if it has none. The original
+    Cg glow shader found it by itself, through its tex_0_glow input; GLSL
+    has no such thing, so the glow maps are attached to the models instead.
+    """
+    path = Filename (texture.getFullpath ())
+    if path.empty ():
+        return None
+    path.setBasenameWoExtension (path.getBasenameWoExtension () + GLOW_SUFFIX)
+    # Not Panda's file system: in a browser it looks for missing files on
+    # the web server, which logs a failed request for each one.
+    if not os.path.exists (path.toOsSpecific ()):
+        return None
+    return loader.loadTexture (path)
+
+
+_no_glow = None
+
+def _with_glow_map (state):
+    global _no_glow
+    attrib = state.getAttrib (TextureAttrib)
+    if attrib is None or attrib.getNumOnStages () == 0 or \
+       attrib.hasOnStage (GLOW_STAGE):
+        return state
+    stage = attrib.getOnStage (0)
+    glow = find_glow_map (attrib.getOnTexture (stage))
+    if glow is None:
+        # Black, explicitly, so that no glow map is inherited from above.
+        if _no_glow is None:
+            _no_glow = make_black_texture ()
+        glow = _no_glow
+    return state.setAttrib (attrib.addOnStage (GLOW_STAGE, glow))
+
+
+def attach_glow_maps (model):
+    """
+    Puts the glow map of each texture in the model on GLOW_STAGE, next to
+    the texture, wherever the model applies one. Parts whose texture has no
+    glow map get a black one, and do not glow. Call it again after changing
+    a texture. Returns the model.
+    """
+    for path in [model] + list (model.findAllMatches ('**')):
+        path.setState (_with_glow_map (path.getState ()))
+        node = path.node ()
+        if isinstance (node, GeomNode):
+            for i in range (node.getNumGeoms ()):
+                node.setGeomState (i, _with_glow_map (node.getGeomState (i)))
+    return model
 
 
 def make_black_texture ():

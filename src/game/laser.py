@@ -28,6 +28,7 @@ from ent.entity import Entity
 from functools import partial
 from operator import lt
 from core import task
+from core.shader import attach_glow_maps
 from phys import geom
 
 import weakref
@@ -107,7 +108,7 @@ class Stick (ModelEntity, StaticPhysicalEntity):
         self.model_position = Vec3 (0, 0, -5)
         self.model.setTwoSided (True) # HACK
 
-        self.hl_model = loader.loadModel (self.HL_MODEL)
+        self.hl_model = attach_glow_maps (loader.loadModel (self.HL_MODEL))
         self.hl_model.setScale (1.3, 1.3, 1)
         
         self.scale = Vec3 (near0, near0, near0)
@@ -207,10 +208,5 @@ def make_laser_model (fst, snd, height):
     ts = TextureStage ('ts')
     laser.setTexture (ts, tex)
     laser.setTransparency (TransparencyAttrib.MDual) 
-    
-    # tex = loader.loadTexture ('./data/tex/laser2-glow.png')
-    # ts = TextureStage ('ts')
-    # ts.setMode (TextureStage.MGlow)
-    # laser.setTexture (ts, tex)
 
-    return laser
+    return attach_glow_maps (laser)

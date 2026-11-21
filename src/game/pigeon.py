@@ -29,6 +29,7 @@ from ent.physical import (DynamicPhysicalEntity, StandingPhysicalEntity,
 from core.state import StateManager, State
 from core.util import *
 from core import task
+from core.shader import attach_glow_maps
 
 import phys.geom as geom
 import phys.mass as mass
@@ -60,6 +61,7 @@ class PigeonFood (ModelEntity,
             geometry = geom.box (2, 2, 0.5),
             *a, **k)
         self.model.setTexture (loader.loadTexture ('obj/food.png'))
+        attach_glow_maps (self.model)
         self.model_scale = self.food_scale
         # A bit hackish, I guess
         self.entities.game.pigeon_food.append (self)
