@@ -1,6 +1,8 @@
 Pidgeoncide
 -----------
 
+[![CI](https://github.com/arximboldi/pigeoncide/actions/workflows/ci.yaml/badge.svg)](https://github.com/arximboldi/pigeoncide/actions/workflows/ci.yaml)
+
 Pidgeoncide is a funny game where you control an ill-minded child
 whose imaginary friend tells him to kill all the pidgeons in the
 world.
@@ -34,6 +36,23 @@ Panda3D where you can use the scripts directly:
 Without Nix you need Python 3 and Panda3D 1.10 (`pip install
 panda3d`); then run `./pigeoncide`.
 
+Controls
+--------
+
+| Key          | Action                                              |
+|--------------|-----------------------------------------------------|
+| W A S D      | Move and strafe                                     |
+| Mouse, K L   | Turn                                                |
+| C (hold)     | Run                                                 |
+| Space        | Jump                                                |
+| E            | Hit with the weapon in hand                         |
+| R            | Throw the weapon away                               |
+| F            | Drop food to lure the pigeons                       |
+| Q            | Place a stick; two sticks close together make a laser fence |
+| Escape       | Pause menu                                          |
+
+The keys can be changed in the options menu.
+
 Web version
 -----------
 
@@ -42,7 +61,12 @@ The game also builds for web browsers, compiled to WebAssembly:
 > ```
 > nix build .#pigeoncide-web   # static site in ./result
 > nix run .#serve-web          # try it at http://localhost:8000/
+> nix run .#serve-web -- 8001  # or on another port
 > ```
+
+CI builds the site for every pull request and push to master too:
+download the `pigeoncide-web` artifact from a run's page to get the
+same four files.
 
 To publish it, upload the four files in `result` (`index.html`,
 `pigeoncide.js`, `pigeoncide.wasm` and `pigeoncide.data`) to any
@@ -51,8 +75,20 @@ Brotli compression on the server if it can. The page needs a browser
 with WebGL 2.
 
 The web build uses Panda3D's WebGL port, which is not released yet,
-from a pinned commit of Panda3D's master branch. The first build
-compiles CPython and Panda3D to WebAssembly and takes several minutes.
+from a pinned commit of Panda3D's master branch, with two small fixes
+in `nix/packages/panda3d-wasm`. The first build compiles CPython and
+Panda3D to WebAssembly and takes several minutes.
+
+The level model
+---------------
+
+The level's grass is mapped by `tools/retexture.py`, which gives the
+grass the same scale everywhere. To change that scale, run it again
+with a different number of world units per grass tile (100 now):
+
+> ```
+> nix develop -c python3 tools/retexture.py data/lvl/world.egg data/lvl/world.egg 100
+> ```
 
 For more information, visit the **project page** at:
 https://savannah.nongnu.org/projects/pigeoncide/
