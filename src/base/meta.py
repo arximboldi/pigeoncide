@@ -81,18 +81,24 @@ def instance_decorator (decorator):
     return Decorator
 
 
+def _chain_methods (new_method, old_method):
+    def extended (*args, **kw):
+        new_method (*args, **kw)
+        return old_method (*args, **kw)
+    return extended
+
+
 def extend_methods (cls, **kws):
-    for name, new_method in list(kws.items ()):
+    for name, new_method in kws.items ():
         if hasattr (cls, name):
             old_method = getattr (cls, name)
             if not callable (old_method):
                 raise AttributeError ("Can not extend a non callable attribute")
-            def extended (*args, **kw):
-                new_method (*args, **kw)
-                return old_method (*args, **kw)
-            method = extended
+            # Built in a separate function so each method closes over its
+            # own pair instead of the loop variables' final values.
+            method = _chain_methods (new_method, old_method)
         else:
             method = new_method
         setattr (cls, name, method)
-    
+
     return cls 

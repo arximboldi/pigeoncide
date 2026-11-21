@@ -1,7 +1,7 @@
 import cProfile
 import pstats
 
-from .main import pigeoncide_main
+from main import pigeoncide_main
 
 file_name = 'pigeoncide-profile'
 cProfile.run ('pigeoncide_main ()', file_name)

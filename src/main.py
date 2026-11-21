@@ -29,7 +29,7 @@ import weakref
 # object = NewObject
 # __builtin__.object = object
 
-from .app.pigeoncide import PigeoncideApp
+from app.pigeoncide import PigeoncideApp
 
 def pigeoncide_main ():    
     app = PigeoncideApp ()
