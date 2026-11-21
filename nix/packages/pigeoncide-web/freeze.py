@@ -49,7 +49,9 @@ def link_flags():
     flags.append(f'{ODE_PREFIX}/lib/libode.a')
     flags += ['-sUSE_ZLIB=1', '-sUSE_VORBIS=1', '-sUSE_FREETYPE=1',
               '-sUSE_HARFBUZZ=1', '-sUSE_BZIP2=1', '-sUSE_SQLITE3=1',
-              '-sDISABLE_EXCEPTION_THROWING=0', '-sMAX_WEBGL_VERSION=2',
+              '-sDISABLE_EXCEPTION_THROWING=0',
+              # The shaders are GLSL ES 3.00, so WebGL 1 cannot run them.
+              '-sMIN_WEBGL_VERSION=2', '-sMAX_WEBGL_VERSION=2',
               '-sNO_EXIT_RUNTIME=1', '-sALLOW_MEMORY_GROWTH=1',
               f'-sINITIAL_HEAP={INITIAL_HEAP}', f'-sSTACK_SIZE={STACK_SIZE}',
               '--preload-file', f'{ASSET_DIR}@{WEB_ROOT}']
