@@ -45,8 +45,8 @@ class KillableEntity (ModelEntityBase, PhysicalEntityBase, TaskEntity):
         self.on_death = Signal ()
         self.on_collide += self.on_kill_collision
 
-        self._smoke_particles = self.load_particles ('data/part/smoke.ptf')
-        self._fire_particles  = self.load_particles ('data/part/fireish.ptf')
+        self._smoke_particles = self.load_particles ('part/smoke.ptf')
+        self._fire_particles  = self.load_particles ('part/fireish.ptf')
         self.death_sounds = list(map (self.load_sound, self.kill_death_sounds))
         self.is_dead = False
 
@@ -89,8 +89,13 @@ class KillableEntity (ModelEntityBase, PhysicalEntityBase, TaskEntity):
         self.is_dead = True
     
     def load_particles (self, name):
+        # loadConfig reads the file as given, without consulting the model
+        # path, so resolve it against the model path first.
+        path = Filename (name)
+        VirtualFileSystem.getGlobalPtr ().resolveFilename (
+            path, getModelPath ().getValue ())
         p = ParticleEffect ()
-        p.loadConfig (Filename (name))
+        p.loadConfig (path)
         p.setLightOff () 
         p.setTransparency (TransparencyAttrib.MAlpha) 
         p.setBin ('fixed', 0) 

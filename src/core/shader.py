@@ -17,6 +17,8 @@
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import os
+
 from base.singleton import Singleton
 
 from direct.showbase.ShowBase import ShowBase
@@ -46,11 +48,9 @@ class GlowFilter (object):
 
     is_init = False
     
-    def make_glow (self, data_dir = './src/core/sha'):
-        """
-        TODO: data_dir = current module directory?
-        """
-    
+    def make_glow (self, data_dir = os.path.join (os.path.dirname (
+            os.path.abspath (__file__)), 'sha')):
+
         glow_shader = Shader.load (data_dir + "/glow_shader.sha")
         
         # create the glow buffer. This buffer renders like a normal

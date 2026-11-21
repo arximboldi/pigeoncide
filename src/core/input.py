@@ -122,8 +122,8 @@ class MouseTask (Task):
         window = base.win
         prop = window.getProperties ()
         if prop.hasSize ():
-            new_x = prop.getXSize () / 2
-            new_y = prop.getYSize () / 2
+            new_x = prop.getXSize () // 2
+            new_y = prop.getYSize () // 2
             window.movePointer (0, new_x, new_y)
             self._last_x = new_x 
             self._last_y = new_y

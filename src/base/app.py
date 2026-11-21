@@ -105,7 +105,7 @@ Options:
             _log.debug (traceback.format_exc ())
             ret_val = e.get_code ()
         except Exception as e:
-            _log.fatal ("Unexpected error:\n" + e.message)
+            _log.fatal ("Unexpected error:\n" + str (e))
             _log.debug (traceback.format_exc ())
             ret_val = getattr(os, 'EX_SOFTWARE', 70)  # Only available on Unix
 
