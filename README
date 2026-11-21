@@ -34,5 +34,25 @@ Panda3D where you can use the scripts directly:
 Without Nix you need Python 3 and Panda3D 1.10 (`pip install
 panda3d`); then run `./pigeoncide`.
 
+Web version
+-----------
+
+The game also builds for web browsers, compiled to WebAssembly:
+
+> ```
+> nix build .#pigeoncide-web   # static site in ./result
+> nix run .#serve-web          # try it at http://localhost:8000/
+> ```
+
+To publish it, upload the four files in `result` (`index.html`,
+`pigeoncide.js`, `pigeoncide.wasm` and `pigeoncide.data`) to any
+static web host. They are large (about 60 MB), so enable gzip or
+Brotli compression on the server if it can. The page needs a browser
+with WebGL 2.
+
+The web build uses Panda3D's WebGL port, which is not released yet,
+from a pinned commit of Panda3D's master branch. The first build
+compiles CPython and Panda3D to WebAssembly and takes several minutes.
+
 For more information, visit the **project page** at:
 https://savannah.nongnu.org/projects/pigeoncide/
