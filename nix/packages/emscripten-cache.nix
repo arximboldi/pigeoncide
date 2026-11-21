@@ -59,6 +59,10 @@ let
     echo "${port.url}" > "$out/ports/${name}/.emscripten_url"
   '';
 in
+assert lib.assertMsg (emscripten.version == "6.0.9") ''
+  emscripten-cache: the port list matches Emscripten 6.0.9, not ${emscripten.version}.
+  Update it from tools/ports/*.py of the new version.
+'';
 stdenvNoCC.mkDerivation {
   pname = "emscripten-cache";
   inherit (emscripten) version;
