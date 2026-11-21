@@ -17,6 +17,10 @@ enabled) on x86_64 or aarch64 Linux:
 > nix run github:arximboldi/pigeoncide
 > ```
 
+On Linux distributions other than NixOS, Nix-built programs cannot see
+the system's OpenGL drivers; run it through
+[nixGL](https://github.com/nix-community/nixGL) instead.
+
 From a checkout, `nix run` starts the game, `nix flake check` runs
 the unit tests, and `nix develop` opens a shell with Python 3.13 and
 Panda3D where you can use the scripts directly:
