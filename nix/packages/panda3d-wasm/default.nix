@@ -41,6 +41,12 @@ stdenv.mkDerivation {
     hash = "sha256-1U6kgItFQEo0kaGKAuXFWg1qtzkMCHPuf9WieVfDQd4=";
   };
 
+  patches = [
+    # Panda never noticed pointer lock engaging, so it could not re-centre
+    # the pointer and mouse look spun the view. Not yet reported upstream.
+    ./pointerlockchange-on-document.patch
+  ];
+
   nativeBuildInputs = emscriptenTools ++ [ python312 ];
 
   dontConfigure = true;
