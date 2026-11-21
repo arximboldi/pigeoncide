@@ -23,7 +23,10 @@ Import this or patch_messenger before any other module usin Panda base.
 
 from . import patch_messenger
 
+import traceback
+
 from base.conf import GlobalConf
+from base.log import get_log
 from base.util import IN_BROWSER
 from .paths import DATA_DIR
 from .shader import load_shader
@@ -35,6 +38,8 @@ from direct.showbase.ShowBase import ShowBase
 from direct.showbase.Audio3DManager import Audio3DManager
 from direct.filter.CommonFilters import CommonFilters
 from pandac.PandaModules import *
+
+_log = get_log (__name__)
 
 class PandaController (object):
 
@@ -113,7 +118,18 @@ class PandaController (object):
         self.base.run ()
 
     def _frame_task (self, ptask):
-        if self._loop_fn (self._timer):
+        try:
+            running = self._loop_fn (self._timer)
+        except Exception as e:
+            if not IN_BROWSER:
+                raise
+            # On the desktop the error ends ShowBase.run and reaches
+            # AppBase.run. In a browser nothing would report it and the
+            # task would fail again every frame, so report it and stop.
+            _log.fatal ("Unexpected error: %s: %s\n%s" % (
+                type (e).__name__, e, traceback.format_exc ()))
+            running = False
+        if running:
             self._timer.tick ()
             return ptask.cont
         self.base.taskMgr.stop ()
@@ -173,12 +189,15 @@ class PandaController (object):
         return self.base.win.getGsg().getSupportsBasicShaders() == 0
         
     def update_properties (self, cfg):
-        self._prop.setSize (cfg.child ('width').value,
-                            cfg.child ('height').value)
+        # In a browser the canvas takes its size from the page layout;
+        # setting one here would pin it with an inline style.
+        if not IN_BROWSER:
+            self._prop.setSize (cfg.child ('width').value,
+                                cfg.child ('height').value)
         self._prop.setFullscreen (cfg.child ('fullscreen').value)
         self.base.win.requestProperties (self._prop)
-        
-        self._timer.fps = cfg.child ('fps').value
+
+        self.update_fps (cfg.child ('fps'))
         self.base.setFrameRateMeter (cfg.child ('frame-meter').value)
 
     def update_frame_meter (self, cfg):
