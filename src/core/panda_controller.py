@@ -26,6 +26,7 @@ from . import patch_messenger
 from base.conf import GlobalConf
 from base.util import IN_BROWSER
 from .paths import DATA_DIR
+from .shader import load_shader
 from .timer import Timer
 from .input import MouseTask
 from . import task
@@ -70,6 +71,15 @@ class PandaController (object):
         self.set_defaults (cfg)
         self.base = ShowBase ()
         self.base.disableMouse ()
+        if IN_BROWSER:
+            # WebGL has no fixed-function lighting, so the main camera
+            # renders with an equivalent shader. It goes in the camera's
+            # initial state rather than on the scene so that other cameras
+            # (the glow pass) and nodes with their own shader settings
+            # still take precedence.
+            lit = NodePath ('lit')
+            lit.setShader (load_shader ('lit.vert', 'lit.frag'))
+            self.base.cam.node ().setInitialState (lit.getState ())
         self.audio = self.base.sfxManagerList [0]
         self.audio3d = Audio3DManager (self.audio, camera)
         self.audio3d.setListenerVelocityAuto ()

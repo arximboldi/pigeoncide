@@ -34,8 +34,9 @@ from pandac.PandaModules import TextNode,Point3,Vec4
 
 
 # The shader sources are written in the common subset of desktop GLSL 1.30
-# and GLSL ES 3.00 (WebGL 2), so only the version header differs.
-GLSL_HEADER = ('#version 300 es\nprecision mediump float;\n'
+# and GLSL ES 3.00 (WebGL 2), so only the version header differs. WebGL 2
+# guarantees highp; mediump overflows on the level's light distances.
+GLSL_HEADER = ('#version 300 es\nprecision highp float;\n'
                if IN_BROWSER else '#version 130\n')
 
 def load_shader (vertex, fragment):
