@@ -21,6 +21,7 @@ import os
 
 from base.singleton import Singleton
 from base.util import IN_BROWSER
+from .paths import SHADER_DIR
 
 from direct.showbase.ShowBase import ShowBase
 
@@ -30,8 +31,6 @@ from pandac.PandaModules import ColorBlendAttrib
 from pandac.PandaModules import AmbientLight,DirectionalLight
 from pandac.PandaModules import TextNode,Point3,Vec4
 
-
-SHADER_DIR = os.path.join (os.path.dirname (os.path.abspath (__file__)), 'sha')
 
 # The shader sources are written in the common subset of desktop GLSL 1.30
 # and GLSL ES 3.00 (WebGL 2), so only the version header differs.

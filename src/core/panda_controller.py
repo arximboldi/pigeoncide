@@ -23,10 +23,9 @@ Import this or patch_messenger before any other module usin Panda base.
 
 from . import patch_messenger
 
-import os
-
 from base.conf import GlobalConf
 from base.util import IN_BROWSER
+from .paths import DATA_DIR
 from .timer import Timer
 from .input import MouseTask
 from . import task
@@ -35,11 +34,6 @@ from direct.showbase.ShowBase import ShowBase
 from direct.showbase.Audio3DManager import Audio3DManager
 from direct.filter.CommonFilters import CommonFilters
 from pandac.PandaModules import *
-
-# Game assets live in data/ next to src/, both in the source tree and in
-# installed copies, so the game can be started from any directory.
-DATA_DIR = os.path.join (os.path.dirname (os.path.abspath (__file__)),
-                         os.pardir, os.pardir, 'data')
 
 class PandaController (object):
 
